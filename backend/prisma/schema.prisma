@@ -1,0 +1,171 @@
+// Esquema de base de datos para MiPage Marketplace
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  USER        // Usuario regular que puede dejar reseñas
+  PUBLISHER   // Proveedor de servicios que puede publicar
+  ADMIN       // Administrador del sitio
+}
+
+enum Category {
+  MODELAJE              // Servicios de modelaje
+  MASAJES_PROFESIONALES // Servicios de masajes profesionales
+}
+
+enum ServiceStatus {
+  PENDING   // Pendiente de aprobación
+  APPROVED  // Aprobado y visible
+  REJECTED  // Rechazado por admin
+  ARCHIVED  // Archivado por el publisher
+}
+
+// Modelos
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  phone         String?
+  avatar        String?
+  bio           String?
+  role          Role      @default(USER)
+  isVerified    Boolean   @default(false)
+
+  // Relaciones
+  services      Service[]
+  reviews       Review[]
+  posts         Post[]
+  favorites     Favorite[]
+  notifications Notification[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@map("users")
+}
+
+model Service {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category    Category
+  title       String
+  description String        @db.Text
+  price       Float
+  priceType   String        @default("hour") // hour, session, day
+  location    String
+  city        String
+  region      String?
+
+  // Fotos (array de URLs de Cloudinary)
+  photos      String[]
+  coverPhoto  String?       // Foto principal
+
+  // Disponibilidad
+  availability Json?        // { days: [], hours: [] }
+
+  // Status y moderación
+  status      ServiceStatus @default(PENDING)
+  views       Int           @default(0)
+  isPremium   Boolean       @default(false)
+
+  // Relaciones
+  reviews     Review[]
+  favorites   Favorite[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([status])
+  @@index([city])
+  @@map("services")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  rating    Int      // 1-5
+  comment   String   @db.Text
+  photos    String[] // Fotos opcionales en la reseña
+
+  // Respuesta del publisher
+  response  String?  @db.Text
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([serviceId, userId]) // Un usuario solo puede dejar una reseña por servicio
+  @@index([serviceId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  content   String   @db.Text
+  photos    String[] // Fotos del post
+  type      String   @default("update") // update, promotion, announcement
+
+  likes     Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("posts")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, serviceId])
+  @@index([userId])
+  @@map("favorites")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title     String
+  message   String
+  type      String   // review, favorite, service_approved, etc.
+  link      String?
+  isRead    Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
