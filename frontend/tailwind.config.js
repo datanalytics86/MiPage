@@ -34,7 +34,16 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: [
+          'system-ui',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"Segoe UI"',
+          'Roboto',
+          '"Helvetica Neue"',
+          'Arial',
+          'sans-serif',
+        ],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
@@ -52,9 +61,5 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/aspect-ratio'),
-  ],
+  plugins: [],
 };
