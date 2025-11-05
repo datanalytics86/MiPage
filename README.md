@@ -2,15 +2,40 @@
 
 **Plataforma web moderna para servicios de Modelaje y Masajes Profesionales**
 
+📸 **Las fotos son lo primero** - Marketplace centrado en contenido visual de alta calidad
+
 ## 🚀 Características Principales
 
 - **Grid de Fotos Intuitivo**: Visualización atractiva de servicios con imágenes de alta calidad
+- **Sistema de Publicación**: Publishers pueden crear servicios con múltiples fotos
+- **Moderación de Contenido**: Panel de admin para aprobar/rechazar servicios
+- **Sistema de Roles**: USER, PUBLISHER, ADMIN con permisos específicos
 - **Sistema de Reseñas**: Usuarios pueden dejar comentarios y calificaciones
-- **Perfiles de Usuario**: Timeline cronológico de publicaciones por usuario
 - **Búsqueda Avanzada**: Filtros por categoría, ubicación y precio
 - **Responsive & PWA**: Optimizado para móviles y desktop
-- **Tiempo Real**: Notificaciones instantáneas con Socket.io
+- **Datos de Prueba**: Script de seed con usuarios y servicios listos para usar
 - **SEO Optimizado**: Next.js con SSR para mejor indexación
+
+## 🎯 Nuevo Sistema Completo
+
+### Para Publishers
+- ✅ Página de creación de servicios (`/services/new`)
+- ✅ Upload de fotos mediante URLs
+- ✅ Preview de fotos en tiempo real
+- ✅ Validación de formularios
+
+### Para Administradores
+- ✅ Panel de moderación (`/admin`)
+- ✅ Preview de fotos de servicios pendientes
+- ✅ Modal de galería completa
+- ✅ Información del publicador
+- ✅ Aprobación/rechazo con un click
+
+### Flujo Completo
+1. **Publisher** crea servicio → Estado PENDING
+2. **Admin** revisa fotos y datos
+3. **Admin** aprueba → Estado APPROVED (visible públicamente)
+4. **Usuario** puede ver, reseñar y contactar
 
 ## 🛠️ Stack Tecnológico
 
@@ -144,9 +169,28 @@ FRONTEND_URL="http://localhost:3000"
 
 **Generar migraciones de Prisma:**
 ```bash
+# Generar cliente de Prisma
 npx prisma generate
+
+# Aplicar migraciones a la base de datos
 npx prisma db push
-npx prisma db seed
+
+# 🌱 IMPORTANTE: Ejecutar seed para crear datos de prueba
+npm run seed
+```
+
+**El seed creará:**
+- ✅ 5 usuarios (1 admin, 3 publishers, 1 usuario regular)
+- ✅ 6 servicios con fotos (3 modelaje, 3 masajes)
+- ✅ 2 reseñas de ejemplo
+- ✅ 2 posts de ejemplo
+
+**Credenciales de acceso:**
+```
+Admin:        admin@mipage.cl / password123
+Publisher 1:  maria@example.com / password123
+Publisher 2:  carlos@example.com / password123
+Usuario:      juan@example.com / password123
 ```
 
 **Iniciar backend:**
@@ -204,18 +248,22 @@ npm run dev
 
 ### Para Publicadores
 - ✅ Crear perfil de proveedor de servicios
-- ✅ Publicar múltiples servicios con fotos
+- ✅ Publicar servicios en `/services/new`
+- ✅ Upload de múltiples fotos mediante URLs
+- ✅ Preview de fotos en tiempo real
 - ✅ Timeline cronológico de publicaciones
 - ✅ Responder a reseñas
-- ✅ Editar y actualizar publicaciones
 - ✅ Ver estadísticas de visualizaciones
 
 ### Para Administradores
-- ✅ Panel de administración
-- ✅ Aprobar/rechazar publicaciones
-- ✅ Moderar contenido y reseñas
+- ✅ Panel de administración en `/admin`
+- ✅ Ver servicios pendientes de aprobación
+- ✅ Preview de fotos de cada servicio
+- ✅ Modal con galería completa de fotos
+- ✅ Información del publicador (avatar, email, nombre)
+- ✅ Aprobar/rechazar con un click
+- ✅ Ver estadísticas del sitio (usuarios, servicios, reseñas)
 - ✅ Gestionar usuarios
-- ✅ Ver analytics del sitio
 
 ## 🔒 Seguridad
 
