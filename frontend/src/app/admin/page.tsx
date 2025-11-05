@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuthStore } from '@/lib/auth';
 import { adminAPI } from '@/lib/api';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Card, { CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import Modal from '@/components/ui/Modal';
 import Spinner from '@/components/ui/Spinner';
 import toast from 'react-hot-toast';
 
@@ -17,6 +19,8 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [pendingServices, setPendingServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [showPhotosModal, setShowPhotosModal] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -69,6 +73,11 @@ export default function AdminDashboard() {
     } catch (error) {
       toast.error('Error al rechazar servicio');
     }
+  };
+
+  const handleViewPhotos = (service: any) => {
+    setSelectedService(service);
+    setShowPhotosModal(true);
   };
 
   if (loading) {
@@ -152,7 +161,7 @@ export default function AdminDashboard() {
         {/* Pending Services */}
         <Card>
           <CardHeader>
-            <CardTitle>Servicios Pendientes de Aprobación</CardTitle>
+            <CardTitle>Servicios Pendientes de Aprobación ({pendingServices.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {pendingServices.length === 0 ? (
@@ -161,43 +170,112 @@ export default function AdminDashboard() {
                 <p className="text-gray-600">No hay servicios pendientes</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {pendingServices.map((service) => (
                   <div
                     key={service.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
+                    className="border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow bg-white"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg">{service.title}</h3>
-                          <Badge variant="warning">Pendiente</Badge>
-                          <Badge variant="info">
-                            {service.category === 'MODELAJE' ? 'Modelaje' : 'Masajes'}
-                          </Badge>
-                        </div>
-                        <p className="text-gray-600 text-sm mb-2">{service.description}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>📍 {service.city}</span>
-                          <span>💰 ${service.price}</span>
-                          <span>👤 {service.user.name}</span>
-                        </div>
+                    <div className="flex gap-6">
+                      {/* Photo Preview */}
+                      <div className="flex-shrink-0">
+                        {service.coverPhoto && (
+                          <div
+                            className="relative w-48 h-48 rounded-lg overflow-hidden cursor-pointer group"
+                            onClick={() => handleViewPhotos(service)}
+                          >
+                            <Image
+                              src={service.coverPhoto}
+                              alt={service.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform"
+                            />
+                            {service.photos?.length > 1 && (
+                              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                📷 {service.photos.length} fotos
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                              <div className="text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                👁️ Ver todas
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex gap-2 ml-4">
-                        <Button
-                          variant="primary"
-                          size="sm"
-                          onClick={() => handleApprove(service.id)}
-                        >
-                          ✅ Aprobar
-                        </Button>
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          onClick={() => handleReject(service.id)}
-                        >
-                          ❌ Rechazar
-                        </Button>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-xl text-gray-900">{service.title}</h3>
+                              <Badge variant="warning">Pendiente</Badge>
+                            </div>
+                            <div className="flex items-center gap-2 mb-3">
+                              <Badge variant="info">
+                                {service.category === 'MODELAJE' ? '📸 Modelaje' : '💆 Masajes'}
+                              </Badge>
+                              <span className="text-lg font-bold text-primary-600">
+                                ${service.price.toLocaleString()} CLP
+                              </span>
+                              <span className="text-sm text-gray-500">/ {service.priceType}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <p className="text-gray-600 mb-4 line-clamp-3">{service.description}</p>
+
+                        {/* Publisher Info */}
+                        <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                          <div className="flex items-center gap-3">
+                            {service.user?.avatar && (
+                              <Image
+                                src={service.user.avatar}
+                                alt={service.user.name}
+                                width={40}
+                                height={40}
+                                className="rounded-full"
+                              />
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">Publicador: {service.user?.name}</p>
+                              <p className="text-sm text-gray-500">{service.user?.email}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                          <span>📍 {service.location}, {service.city}</span>
+                          {service.region && <span>🗺️ {service.region}</span>}
+                          <span>📅 {new Date(service.createdAt).toLocaleDateString('es-CL')}</span>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-3 pt-4 border-t">
+                          <Button
+                            variant="primary"
+                            size="md"
+                            onClick={() => handleApprove(service.id)}
+                            className="flex-1"
+                          >
+                            ✅ Aprobar Servicio
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="md"
+                            onClick={() => handleViewPhotos(service)}
+                          >
+                            👁️ Ver Fotos
+                          </Button>
+                          <Button
+                            variant="danger"
+                            size="md"
+                            onClick={() => handleReject(service.id)}
+                          >
+                            ❌ Rechazar
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -207,6 +285,59 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Photos Modal */}
+      <Modal
+        isOpen={showPhotosModal}
+        onClose={() => {
+          setShowPhotosModal(false);
+          setSelectedService(null);
+        }}
+        title={`Fotos: ${selectedService?.title || ''}`}
+      >
+        {selectedService && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {selectedService.photos?.map((photo: string, index: number) => (
+                <div key={index} className="relative aspect-[4/3] rounded-lg overflow-hidden">
+                  <Image
+                    src={photo}
+                    alt={`Foto ${index + 1}`}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 justify-end pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowPhotosModal(false)}
+              >
+                Cerrar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  handleApprove(selectedService.id);
+                  setShowPhotosModal(false);
+                }}
+              >
+                ✅ Aprobar
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  handleReject(selectedService.id);
+                  setShowPhotosModal(false);
+                }}
+              >
+                ❌ Rechazar
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
