@@ -98,9 +98,16 @@ export default function AdminDashboard() {
               <h1 className="text-2xl font-bold text-gray-900">Panel de Administración</h1>
               <p className="text-gray-600">Bienvenido, {user?.name}</p>
             </div>
-            <Link href="/" className="text-gray-600 hover:text-gray-900">
-              ← Volver al sitio
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/admin/users">
+                <Button variant="fire">
+                  👥 Gestión de Usuarios
+                </Button>
+              </Link>
+              <Link href="/" className="text-gray-600 hover:text-gray-900">
+                ← Volver al sitio
+              </Link>
+            </div>
           </div>
         </div>
       </header>
