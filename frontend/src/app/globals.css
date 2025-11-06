@@ -37,28 +37,69 @@
   --error: #ef4444;
   --info: #3b82f6;
 
-  /* Variables de Next.js (mantener compatibilidad) */
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
-}
+  /* Dark Theme Colors */
+  --dark-950: #0a0a0a;
+  --dark-900: #1a1a1a;
+  --dark-850: #1f1f1f;
+  --dark-800: #262626;
+  --dark-700: #404040;
+  --dark-600: #525252;
+  --dark-500: #737373;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+  /* Fire Palette */
+  --fire-500: #ff6b35;
+  --fire-600: #e64f1f;
+  --fire-700: #cc3d15;
+  --fire-800: #b33000;
+
+  /* Lust Palette */
+  --lust-500: #ef4444;
+  --lust-600: #dc2626;
+  --lust-700: #b91c1c;
+  --lust-800: #991b1b;
+  --lust-900: #7f1d1d;
+
+  /* Variables de Next.js - Dark Theme */
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 10, 10, 10;
+  --background-end-rgb: 26, 26, 26;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
-      transparent,
+      rgb(var(--background-start-rgb)),
       rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+    );
+  min-height: 100vh;
+}
+
+/* Custom Fire-themed Scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-900);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--fire-500) 0%, var(--fire-700) 100%);
+  border-radius: 10px;
+  border: 2px solid var(--dark-900);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--fire-600) 0%, var(--fire-800) 100%);
+}
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--fire-500) var(--dark-900);
 }
 
 @layer utilities {
@@ -122,4 +163,120 @@ html {
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ============================================ */
+/* DARK THEME COMPONENT UTILITIES - FASE 3 */
+/* ============================================ */
+
+/* Fire Button Styles */
+.btn-fire {
+  @apply bg-gradient-to-r from-fire-500 to-fire-600 text-white font-semibold;
+  @apply px-6 py-3 rounded-lg shadow-fire transition-all duration-300;
+  @apply hover:shadow-fire-lg hover:scale-105 active:scale-95;
+}
+
+.btn-fire-outline {
+  @apply border-2 border-fire-500 text-fire-500 font-semibold;
+  @apply px-6 py-3 rounded-lg transition-all duration-300;
+  @apply hover:bg-fire-500 hover:text-white hover:shadow-fire;
+}
+
+/* Lust Button Styles */
+.btn-lust {
+  @apply bg-gradient-to-r from-lust-500 to-lust-700 text-white font-semibold;
+  @apply px-6 py-3 rounded-lg shadow-lust transition-all duration-300;
+  @apply hover:shadow-lust-lg hover:scale-105 active:scale-95;
+}
+
+/* Dark Card Styles */
+.card-dark {
+  @apply bg-dark-850 border border-dark-700 rounded-xl shadow-dark;
+  @apply transition-all duration-300 hover:shadow-dark-lg hover:border-dark-600;
+}
+
+.card-dark-solid {
+  @apply bg-dark-900 border border-dark-800 rounded-xl shadow-dark;
+}
+
+/* Input Dark Styles */
+.input-dark {
+  @apply bg-dark-850 border border-dark-700 text-warm-50 rounded-lg;
+  @apply px-4 py-2.5 transition-all duration-200;
+  @apply focus:border-fire-500 focus:ring-2 focus:ring-fire-500/20 focus:outline-none;
+  @apply placeholder:text-dark-500;
+}
+
+.input-dark-error {
+  @apply bg-dark-850 border-2 border-lust-500 text-warm-50 rounded-lg;
+  @apply px-4 py-2.5 transition-all duration-200;
+  @apply focus:border-lust-600 focus:ring-2 focus:ring-lust-500/20 focus:outline-none;
+}
+
+/* Badge Styles for Service Types */
+.badge-modelaje {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium;
+  @apply bg-secondary-500/20 text-secondary-400 border border-secondary-500/30;
+}
+
+.badge-masajes {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium;
+  @apply bg-fire-500/20 text-fire-400 border border-fire-500/30;
+}
+
+.badge-acompanantes {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium;
+  @apply bg-lust-500/20 text-lust-400 border border-lust-500/30;
+}
+
+.badge-otros {
+  @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium;
+  @apply bg-primary-500/20 text-primary-400 border border-primary-500/30;
+}
+
+/* Table Dark Styles */
+.table-dark {
+  @apply bg-dark-850 border border-dark-700 rounded-lg overflow-hidden;
+}
+
+.table-dark th {
+  @apply bg-dark-900 text-warm-300 font-semibold text-left px-4 py-3 border-b border-dark-700;
+}
+
+.table-dark td {
+  @apply text-warm-100 px-4 py-3 border-b border-dark-800;
+}
+
+.table-dark tr:hover {
+  @apply bg-dark-800;
+}
+
+/* Status Badges */
+.status-active {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  @apply bg-success/20 text-green-400 border border-success/30;
+}
+
+.status-pending {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  @apply bg-warning/20 text-yellow-400 border border-warning/30;
+}
+
+.status-inactive {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  @apply bg-gray-500/20 text-gray-400 border border-gray-500/30;
+}
+
+.status-rejected {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  @apply bg-lust-500/20 text-lust-400 border border-lust-500/30;
+}
+
+/* Glow Effects */
+.glow-fire {
+  @apply shadow-fire animate-glow;
+}
+
+.glow-lust {
+  @apply shadow-lust animate-glow;
 }

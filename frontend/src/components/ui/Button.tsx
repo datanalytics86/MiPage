@@ -2,7 +2,7 @@ import { ButtonHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'fire' | 'lust' | 'dark';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   fullWidth?: boolean;
@@ -23,19 +23,25 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+      'inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 disabled:opacity-50 disabled:cursor-not-allowed';
 
     const variants = {
       primary:
-        'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 active:bg-primary-800',
+        'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 active:bg-primary-800 hover:scale-105 active:scale-95',
       secondary:
-        'bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500 active:bg-secondary-800',
+        'bg-secondary-600 text-white hover:bg-secondary-700 focus:ring-secondary-500 active:bg-secondary-800 hover:scale-105 active:scale-95',
       outline:
-        'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 focus:ring-primary-500 active:bg-primary-100',
+        'border-2 border-fire-500 text-fire-500 hover:bg-fire-500 hover:text-white focus:ring-fire-500 active:bg-fire-600',
       ghost:
-        'text-gray-700 hover:bg-gray-100 focus:ring-gray-500 active:bg-gray-200',
+        'text-warm-200 hover:bg-dark-800 focus:ring-dark-600 active:bg-dark-700',
       danger:
-        'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 active:bg-red-800',
+        'bg-lust-600 text-white hover:bg-lust-700 focus:ring-lust-500 active:bg-lust-800 shadow-lust hover:shadow-lust-lg hover:scale-105 active:scale-95',
+      fire:
+        'bg-gradient-to-r from-fire-500 to-fire-600 text-white hover:from-fire-600 hover:to-fire-700 focus:ring-fire-500 active:from-fire-700 active:to-fire-800 shadow-fire hover:shadow-fire-lg hover:scale-105 active:scale-95',
+      lust:
+        'bg-gradient-to-r from-lust-500 to-lust-700 text-white hover:from-lust-600 hover:to-lust-800 focus:ring-lust-500 active:from-lust-700 active:to-lust-900 shadow-lust hover:shadow-lust-lg hover:scale-105 active:scale-95',
+      dark:
+        'bg-dark-850 text-warm-50 border border-dark-700 hover:bg-dark-800 hover:border-dark-600 focus:ring-dark-600 active:bg-dark-900 shadow-dark',
     };
 
     const sizes = {
