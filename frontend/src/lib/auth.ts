@@ -8,6 +8,18 @@ interface User {
   role: 'USER' | 'PUBLISHER' | 'ADMIN';
   avatar?: string;
   isVerified: boolean;
+  phone?: string;
+  bio?: string;
+  metadata?: {
+    businessName?: string;
+    address?: string;
+    website?: string;
+    socialMedia?: {
+      instagram?: string;
+      facebook?: string;
+      twitter?: string;
+    };
+  };
 }
 
 interface AuthState {
@@ -15,6 +27,7 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   setAuth: (user: User, token: string) => void;
+  setUser: (user: User) => void;
   logout: () => void;
 }
 
@@ -27,6 +40,9 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, token) => {
         localStorage.setItem('token', token);
         set({ user, token, isAuthenticated: true });
+      },
+      setUser: (user) => {
+        set({ user });
       },
       logout: () => {
         localStorage.removeItem('token');
