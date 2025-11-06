@@ -28,6 +28,53 @@ enum ServiceStatus {
   ARCHIVED  // Archivado por el publisher
 }
 
+enum ApprovalStatus {
+  PENDING           // Esperando aprobación inicial
+  APPROVED          // Aprobado para registrarse
+  REGISTERED        // Ya completó registro
+  ACTIVE            // Anuncio activo
+  INACTIVE          // Anuncio desactivado
+  REJECTED          // Rechazado
+}
+
+enum Contextura {
+  DELGADA
+  ATLETICA
+  PROMEDIO
+  ROBUSTA
+  PLUS_SIZE
+}
+
+enum FieldType {
+  TEXT
+  TEXTAREA
+  NUMBER
+  EMAIL
+  PHONE
+  URL
+  SELECT
+  MULTISELECT
+  CHECKBOX
+  RADIO
+  DATE
+  TIME
+}
+
+enum FieldCategory {
+  PERSONAL        // Datos personales
+  FISICA          // Características físicas
+  SERVICIO        // Info del servicio
+  CONTACTO        // Datos de contacto
+  OTROS           // Otros
+}
+
+enum UpdateType {
+  PROMOTION      // Promoción especial
+  ANNOUNCEMENT   // Anuncio general
+  NEWS           // Novedad
+  SCHEDULE       // Cambio de horarios
+}
+
 // Modelos
 
 model User {
@@ -41,17 +88,30 @@ model User {
   role          Role      @default(USER)
   isVerified    Boolean   @default(false)
 
+  // Nuevos campos para sistema de aprobación
+  isActive      Boolean   @default(false)     // Activar/desactivar anuncio
+  approvalStatus ApprovalStatus @default(PENDING) // Estado de aprobación
+  approvedAt    DateTime?
+  approvedBy    String?                       // ID del admin que aprobó
+  registrationToken String? @unique           // Token para registro
+  tokenExpiresAt DateTime?
+
   // Relaciones
   services      Service[]
   reviews       Review[]
   posts         Post[]
   favorites     Favorite[]
   notifications Notification[]
+  metadata      UserMetadata?                 // Relación con metadata
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([approvalStatus])
+  @@index([registrationToken])
   @@map("users")
 }
 
@@ -81,9 +141,15 @@ model Service {
   views       Int           @default(0)
   isPremium   Boolean       @default(false)
 
+  // Nuevos campos para promociones y estadísticas
+  viewCount   Int      @default(0)           // Contador de vistas
+  isPromoted  Boolean  @default(false)       // En promoción
+  promotedUntil DateTime?                    // Hasta cuando está en promoción
+
   // Relaciones
   reviews     Review[]
   favorites   Favorite[]
+  updates     ServiceUpdate[]                // Nueva relación con actualizaciones
 
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -168,4 +234,150 @@ model Notification {
   @@index([userId])
   @@index([isRead])
   @@map("notifications")
+}
+
+// ==========================================
+// NUEVOS MODELOS - SISTEMA DE METADATA
+// ==========================================
+
+model UserMetadata {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // DATOS PERSONALES FIJOS (optimizados para búsqueda)
+  rut           String?   @db.VarChar(12)
+  edad          Int?
+  nacionalidad  String?   @db.VarChar(50)
+
+  // DATOS FÍSICOS FIJOS
+  altura        Int?                          // en cm
+  peso          Int?                          // en kg
+  contextura    Contextura?
+  medidas       String?   @db.VarChar(20)     // Ej: "90-60-90"
+
+  // UBICACIÓN FIJA
+  region        String?   @db.VarChar(100)
+  ciudad        String?   @db.VarChar(100)
+  comuna        String?   @db.VarChar(100)
+  direccion     String?   @db.Text
+
+  // SERVICIO
+  tipoServicio  Category?
+
+  // OTROS
+  biografia     String?   @db.Text
+  horarios      String?   @db.Text            // JSON string con horarios
+  tarifas       String?   @db.Text            // Detalles de precios
+
+  // Relación con campos custom
+  customValues  CustomFieldValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([rut])
+  @@index([ciudad])
+  @@index([tipoServicio])
+  @@index([contextura])
+  @@map("user_metadata")
+}
+
+model MetadataField {
+  id          String   @id @default(uuid())
+  fieldName   String   @unique              // ej: "colorOjos" (sin espacios, camelCase)
+  fieldLabel  String                        // ej: "Color de Ojos"
+  fieldType   FieldType                     // Tipo de campo
+  category    FieldCategory                 // Categoría para agrupar
+
+  required    Boolean  @default(false)
+  placeholder String?
+  helpText    String?  @db.Text
+
+  // Para campos tipo SELECT o MULTISELECT
+  options     Json?                         // ["Azul", "Verde", "Café", "Negro"]
+
+  // Para validación
+  minLength   Int?
+  maxLength   Int?
+  minValue    Int?
+  maxValue    Int?
+  pattern     String?                       // Regex para validación
+
+  // UI
+  order       Int      @default(0)          // Orden de aparición en formulario
+  isActive    Boolean  @default(true)       // Mostrar/ocultar campo
+  showInTable Boolean  @default(true)       // Mostrar en tabla admin
+
+  // Relaciones
+  values      CustomFieldValue[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([fieldName])
+  @@index([category])
+  @@index([order])
+  @@map("metadata_fields")
+}
+
+model CustomFieldValue {
+  id          String   @id @default(uuid())
+
+  metadataId  String
+  metadata    UserMetadata @relation(fields: [metadataId], references: [id], onDelete: Cascade)
+
+  fieldId     String
+  field       MetadataField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  value       String   @db.Text              // Valor como string (parsear según fieldType)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([metadataId, fieldId])           // Un usuario, un valor por campo
+  @@index([metadataId])
+  @@index([fieldId])
+  @@map("custom_field_values")
+}
+
+model ServiceUpdate {
+  id          String   @id @default(uuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  type        UpdateType
+  title       String?  @db.VarChar(200)
+  content     String   @db.Text
+  imageUrl    String?  @db.Text
+
+  isActive    Boolean  @default(true)
+  isPinned    Boolean  @default(false)       // Fijar arriba en timeline
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([serviceId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("service_updates")
+}
+
+model ServiceType {
+  id          String   @id @default(uuid())
+  name        String   @unique              // "MASAJES", "MODELAJE", etc
+  label       String                        // "Masajes Profesionales"
+  description String?  @db.Text
+  icon        String?                       // Emoji o nombre de icono
+  color       String?  @db.VarChar(20)      // Color hex para UI
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@index([order])
+  @@map("service_types")
 }
