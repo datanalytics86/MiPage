@@ -2,266 +2,340 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { servicesAPI } from '@/lib/api';
-import { formatPrice, getCategoryLabel } from '@/lib/utils';
-import { MagnifyingGlassIcon, MapPinIcon, StarIcon } from '@heroicons/react/24/outline';
-
-// Servicios de ejemplo (fallback si el backend no responde)
-const EXAMPLE_SERVICES = [
-  {
-    id: 'example-1',
-    title: 'Sesión Fotográfica Profesional',
-    category: 'MODELAJE',
-    price: 50000,
-    priceType: 'hour',
-    city: 'Santiago',
-    coverPhoto: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=800&h=1000&fit=crop',
-    isPremium: true,
-    averageRating: 4.9,
-  },
-  {
-    id: 'example-2',
-    title: 'Masaje Terapéutico Profesional',
-    category: 'MASAJES_PROFESIONALES',
-    price: 35000,
-    priceType: 'session',
-    city: 'Santiago',
-    coverPhoto: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
-    isPremium: false,
-    averageRating: 5.0,
-  },
-  {
-    id: 'example-3',
-    title: 'Modelo para Eventos',
-    category: 'MODELAJE',
-    price: 80000,
-    priceType: 'day',
-    city: 'Providencia',
-    coverPhoto: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1000&fit=crop',
-    isPremium: true,
-    averageRating: 4.8,
-  },
-  {
-    id: 'example-4',
-    title: 'Masaje Deportivo',
-    category: 'MASAJES_PROFESIONALES',
-    price: 40000,
-    priceType: 'session',
-    city: 'Las Condes',
-    coverPhoto: 'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&h=600&fit=crop',
-    isPremium: false,
-    averageRating: 4.7,
-  },
-  {
-    id: 'example-5',
-    title: 'Sesión Lifestyle y Fitness',
-    category: 'MODELAJE',
-    price: 60000,
-    priceType: 'hour',
-    city: 'Vitacura',
-    coverPhoto: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=800&h=1000&fit=crop',
-    isPremium: false,
-    averageRating: 4.9,
-  },
-  {
-    id: 'example-6',
-    title: 'Masaje Relajante',
-    category: 'MASAJES_PROFESIONALES',
-    price: 30000,
-    priceType: 'session',
-    city: 'Ñuñoa',
-    coverPhoto: 'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&h=600&fit=crop',
-    isPremium: false,
-    averageRating: 4.6,
-  },
-];
-
-// Testimonios
-const TESTIMONIALS = [
-  {
-    id: 1,
-    name: 'Juan Pérez',
-    role: 'Cliente',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Juan',
-    rating: 5,
-    comment: 'Excelente plataforma! Encontré justo lo que buscaba. Los profesionales son de primer nivel.',
-  },
-  {
-    id: 2,
-    name: 'María González',
-    role: 'Publisher - Modelo',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maria',
-    rating: 5,
-    comment: 'MiPage me ha ayudado a conseguir más clientes. La plataforma es muy intuitiva.',
-  },
-  {
-    id: 3,
-    name: 'Carlos Ramírez',
-    role: 'Publisher - Terapeuta',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Carlos',
-    rating: 5,
-    comment: 'Mis reservas han aumentado un 300% desde que uso la plataforma.',
-  },
-];
+import { useAuthStore } from '@/lib/auth';
+import Button from '@/components/ui/Button';
+import HeroSection from '@/components/home/HeroSection';
+import CategoryTabs from '@/components/home/CategoryTabs';
+import ServiceCard from '@/components/home/ServiceCard';
 
 export default function HomePage() {
-  const [services, setServices] = useState<any[]>(EXAMPLE_SERVICES);
-  const [loading, setLoading] = useState(false);
-  const [backendConnected, setBackendConnected] = useState(false);
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const [services, setServices] = useState<any[]>([]);
+  const [filteredServices, setFilteredServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchCity, setSearchCity] = useState('');
 
   useEffect(() => {
     fetchServices();
   }, []);
 
+  useEffect(() => {
+    filterServices();
+  }, [services, selectedCategory, searchQuery, searchCity]);
+
   const fetchServices = async () => {
     try {
       setLoading(true);
       const { data } = await servicesAPI.getAll({ status: 'APPROVED' });
-      if (data.services && data.services.length > 0) {
-        setServices(data.services);
-        setBackendConnected(true);
-      }
+      setServices(data.services || []);
     } catch (error) {
-      console.log('Backend no disponible, mostrando servicios de ejemplo');
-      setServices(EXAMPLE_SERVICES);
-      setBackendConnected(false);
+      console.error('Error al cargar servicios:', error);
+      setServices([]);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Backend Warning */}
-      {!backendConnected && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-3">
-          <div className="max-w-7xl mx-auto text-center text-yellow-800 text-sm">
-            <span>⚠️ <strong>Modo demo:</strong> Backend no conectado.</span>
-            <span className="ml-2">Ver <a href="https://github.com/yourusername/mipage" className="underline font-semibold">guía de inicio</a></span>
-          </div>
-        </div>
-      )}
+  const filterServices = () => {
+    let filtered = [...services];
 
+    // Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter((s) => s.category === selectedCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter((s) =>
+        s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by city
+    if (searchCity) {
+      filtered = filtered.filter((s) =>
+        s.city?.toLowerCase().includes(searchCity.toLowerCase())
+      );
+    }
+
+    setFilteredServices(filtered);
+  };
+
+  const handleSearch = (query: string, city: string) => {
+    setSearchQuery(query);
+    setSearchCity(city);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-dark">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
+      <header className="bg-dark-900/95 backdrop-blur-sm shadow-dark border-b border-dark-800 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-primary-600">
-              📸 MiPage
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-fire-500 to-lust-500 bg-clip-text text-transparent">
+                MiPage
+              </h1>
             </Link>
-            <nav className="hidden md:flex space-x-8">
-              <Link href="/services" className="text-gray-700 hover:text-primary-600">
-                Servicios
+
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link
+                href="/services"
+                className="text-warm-300 hover:text-fire-400 transition-colors font-medium"
+              >
+                Explorar
               </Link>
-              <Link href="/services/new" className="text-gray-700 hover:text-primary-600">
-                Publicar
-              </Link>
+              {user?.role === 'PUBLISHER' && (
+                <Link
+                  href="/services/new"
+                  className="text-warm-300 hover:text-fire-400 transition-colors font-medium"
+                >
+                  Publicar
+                </Link>
+              )}
+              {user?.role === 'ADMIN' && (
+                <Link
+                  href="/admin"
+                  className="text-warm-300 hover:text-fire-400 transition-colors font-medium"
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/auth/login"
-                className="text-gray-700 hover:text-primary-600 font-medium"
-              >
-                Login
-              </Link>
-              <Link
-                href="/auth/register"
-                className="bg-primary-600 text-white px-6 py-2.5 rounded-lg hover:bg-primary-700 transition font-medium"
-              >
-                Registro
-              </Link>
+
+            {/* Auth Buttons */}
+            <div className="flex items-center space-x-3">
+              {user ? (
+                <>
+                  <span className="text-warm-300 text-sm hidden md:inline">
+                    Hola, {user.name}
+                  </span>
+                  <Link href="/services/new">
+                    <Button variant="fire" size="md">
+                      Publicar
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login">
+                    <Button variant="dark" size="md">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <Button variant="fire" size="md">
+                      Registro
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Servicios Profesionales en Chile
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-primary-100">
-            Modelaje y Masajes Profesionales
-          </p>
-        </div>
-      </section>
+      {/* Hero Section */}
+      <HeroSection onSearch={handleSearch} />
 
-      {/* Services */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h2 className="text-3xl font-bold mb-8">Servicios Destacados</h2>
-        <div className="photo-grid">
-          {services.map((service) => (
-            <Link key={service.id} href={`/services/${service.id}`} className="group">
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden mb-4 bg-gray-200">
-                <Image
-                  src={service.coverPhoto}
-                  alt={service.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform"
-                />
-                {service.isPremium && (
-                  <div className="absolute top-2 right-2 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                    ⭐ Premium
-                  </div>
-                )}
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="bg-primary-100 text-primary-800 px-3 py-1 rounded-full text-sm font-semibold">
-                    {getCategoryLabel(service.category)}
-                  </span>
-                  <div className="flex items-center text-yellow-500">
-                    <span className="text-sm font-semibold">{service.averageRating?.toFixed(1)}</span>
-                    <span className="ml-1">★</span>
-                  </div>
-                </div>
-                <h3 className="text-lg font-semibold mb-1">{service.title}</h3>
-                <div className="flex items-center text-gray-600 text-sm mb-2">
-                  <MapPinIcon className="h-4 w-4 mr-1" />
-                  <span>{service.city}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xl font-bold text-primary-600">{formatPrice(service.price)}</span>
-                  <span className="text-sm text-gray-500">/{service.priceType}</span>
-                </div>
-              </div>
-            </Link>
-          ))}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Category Tabs */}
+        <div className="mb-8">
+          <CategoryTabs
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+          />
         </div>
-      </section>
 
-      {/* Testimonios */}
-      <section className="bg-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Testimonios</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {TESTIMONIALS.map((t) => (
-              <div key={t.id} className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center mb-4">
-                  <Image src={t.avatar} alt={t.name} width={60} height={60} className="rounded-full" />
-                  <div className="ml-4">
-                    <h3 className="font-semibold">{t.name}</h3>
-                    <p className="text-sm text-gray-600">{t.role}</p>
-                    <div className="flex text-yellow-500">
-                      {[...Array(t.rating)].map((_, i) => (
-                        <StarIcon key={i} className="h-4 w-4 fill-current" />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-700 italic">"{t.comment}"</p>
+        {/* Active Filters */}
+        {(searchQuery || searchCity || selectedCategory) && (
+          <div className="mb-6 flex flex-wrap items-center gap-2">
+            <span className="text-warm-500 text-sm">Filtros activos:</span>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="px-3 py-1 bg-dark-850 text-warm-300 rounded-full text-sm border border-dark-700 hover:border-fire-500 flex items-center gap-2"
+              >
+                <span>🔍 {searchQuery}</span>
+                <span className="text-fire-500">×</span>
+              </button>
+            )}
+            {searchCity && (
+              <button
+                onClick={() => setSearchCity('')}
+                className="px-3 py-1 bg-dark-850 text-warm-300 rounded-full text-sm border border-dark-700 hover:border-fire-500 flex items-center gap-2"
+              >
+                <span>📍 {searchCity}</span>
+                <span className="text-fire-500">×</span>
+              </button>
+            )}
+            {selectedCategory && (
+              <button
+                onClick={() => setSelectedCategory(null)}
+                className="px-3 py-1 bg-dark-850 text-warm-300 rounded-full text-sm border border-dark-700 hover:border-fire-500 flex items-center gap-2"
+              >
+                <span>🏷️ {selectedCategory}</span>
+                <span className="text-fire-500">×</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSearchCity('');
+                setSelectedCategory(null);
+              }}
+              className="px-3 py-1 text-fire-500 hover:text-fire-400 text-sm font-medium"
+            >
+              Limpiar todo
+            </button>
+          </div>
+        )}
+
+        {/* Services Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="card-dark p-4 animate-pulse">
+                <div className="aspect-[4/3] bg-dark-800 rounded-lg mb-4" />
+                <div className="h-6 bg-dark-800 rounded mb-2" />
+                <div className="h-4 bg-dark-800 rounded w-2/3" />
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        ) : filteredServices.length > 0 ? (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-warm-50">
+                {selectedCategory
+                  ? `Servicios de ${selectedCategory}`
+                  : searchQuery || searchCity
+                  ? 'Resultados de búsqueda'
+                  : 'Servicios Destacados'}
+              </h2>
+              <span className="text-warm-500 text-sm">
+                {filteredServices.length} {filteredServices.length === 1 ? 'servicio' : 'servicios'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredServices.map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-16">
+            <div className="text-6xl mb-4">🔍</div>
+            <h3 className="text-2xl font-bold text-warm-50 mb-2">
+              No se encontraron servicios
+            </h3>
+            <p className="text-warm-400 mb-6">
+              Intenta con otros filtros o búsqueda
+            </p>
+            <Button
+              variant="fire"
+              onClick={() => {
+                setSearchQuery('');
+                setSearchCity('');
+                setSelectedCategory(null);
+              }}
+            >
+              Ver todos los servicios
+            </Button>
+          </div>
+        )}
+      </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p>&copy; 2024 MiPage. Todos los derechos reservados.</p>
+      <footer className="bg-dark-950 border-t border-dark-800 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            {/* Brand */}
+            <div>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-fire-500 to-lust-500 bg-clip-text text-transparent mb-3">
+                MiPage
+              </h3>
+              <p className="text-warm-500 text-sm">
+                La plataforma líder de servicios profesionales en Chile
+              </p>
+            </div>
+
+            {/* Links */}
+            <div>
+              <h4 className="text-warm-50 font-semibold mb-3">Explorar</h4>
+              <ul className="space-y-2 text-warm-400 text-sm">
+                <li>
+                  <Link href="/services" className="hover:text-fire-400 transition-colors">
+                    Todos los servicios
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/services?category=MODELAJE" className="hover:text-fire-400 transition-colors">
+                    Modelaje
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/services?category=MASAJES" className="hover:text-fire-400 transition-colors">
+                    Masajes
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Company */}
+            <div>
+              <h4 className="text-warm-50 font-semibold mb-3">Compañía</h4>
+              <ul className="space-y-2 text-warm-400 text-sm">
+                <li>
+                  <Link href="/about" className="hover:text-fire-400 transition-colors">
+                    Sobre nosotros
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="hover:text-fire-400 transition-colors">
+                    Contacto
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="hover:text-fire-400 transition-colors">
+                    Términos y condiciones
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Social */}
+            <div>
+              <h4 className="text-warm-50 font-semibold mb-3">Síguenos</h4>
+              <div className="flex gap-3">
+                <a href="#" className="w-10 h-10 rounded-full bg-dark-850 border border-dark-700 flex items-center justify-center hover:border-fire-500 hover:text-fire-400 text-warm-400 transition-all">
+                  <span className="text-xl">📱</span>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full bg-dark-850 border border-dark-700 flex items-center justify-center hover:border-fire-500 hover:text-fire-400 text-warm-400 transition-all">
+                  <span className="text-xl">📷</span>
+                </a>
+                <a href="#" className="w-10 h-10 rounded-full bg-dark-850 border border-dark-700 flex items-center justify-center hover:border-fire-500 hover:text-fire-400 text-warm-400 transition-all">
+                  <span className="text-xl">🐦</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="border-t border-dark-800 pt-8 text-center">
+            <p className="text-warm-500 text-sm">
+              © 2024 MiPage. Todos los derechos reservados.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

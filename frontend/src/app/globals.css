@@ -130,6 +130,23 @@ body {
   background-size: 1000px 100%;
 }
 
+/* Animación de gradiente para hero */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+}
+
 /* Estilos para grid de fotos - PROMPT.md Sección 6.6 */
 .photo-grid {
   display: grid;
