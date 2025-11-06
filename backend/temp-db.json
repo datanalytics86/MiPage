@@ -1,0 +1,76 @@
+{
+  "users": [
+    {
+      "id": "admin-001",
+      "email": "admin@mipage.cl",
+      "password": "$2a$10$xahJo8qJ/vstv0b/1LHT.OqkTknhGc5v8mXSdeBrR2u8zTEpf.fl2",
+      "name": "Administrador",
+      "role": "ADMIN",
+      "isVerified": true,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
+      "isActive": true,
+      "approvalStatus": "ACTIVE",
+      "createdAt": "2025-11-06T16:06:10.051Z",
+      "updatedAt": "2025-11-06T16:06:10.052Z"
+    },
+    {
+      "id": "publisher-001",
+      "email": "maria@example.com",
+      "password": "$2a$10$xahJo8qJ/vstv0b/1LHT.OqkTknhGc5v8mXSdeBrR2u8zTEpf.fl2",
+      "name": "María González",
+      "role": "PUBLISHER",
+      "isVerified": true,
+      "bio": "Modelo profesional con 5 años de experiencia",
+      "phone": "+56912345678",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maria",
+      "isActive": true,
+      "approvalStatus": "ACTIVE",
+      "createdAt": "2025-11-06T16:06:10.052Z",
+      "updatedAt": "2025-11-06T16:06:10.052Z"
+    },
+    {
+      "id": "user-001",
+      "email": "juan@example.com",
+      "password": "$2a$10$xahJo8qJ/vstv0b/1LHT.OqkTknhGc5v8mXSdeBrR2u8zTEpf.fl2",
+      "name": "Juan Pérez",
+      "role": "USER",
+      "isVerified": true,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=juan",
+      "isActive": true,
+      "approvalStatus": "ACTIVE",
+      "createdAt": "2025-11-06T16:06:10.052Z",
+      "updatedAt": "2025-11-06T16:06:10.052Z"
+    }
+  ],
+  "services": [],
+  "reviews": [],
+  "posts": [],
+  "favorites": [],
+  "notifications": [],
+  "serviceTypes": [
+    {
+      "id": "type-001",
+      "name": "MODELAJE",
+      "label": "Modelaje",
+      "description": "Servicios de modelaje profesional",
+      "icon": "📸",
+      "color": "#EC4899",
+      "order": 1,
+      "isActive": true,
+      "createdAt": "2025-11-06T16:06:10.052Z",
+      "updatedAt": "2025-11-06T16:06:10.052Z"
+    },
+    {
+      "id": "type-002",
+      "name": "MASAJES",
+      "label": "Masajes",
+      "description": "Masajes terapéuticos y relajantes",
+      "icon": "💆",
+      "color": "#FF6B35",
+      "order": 2,
+      "isActive": true,
+      "createdAt": "2025-11-06T16:06:10.052Z",
+      "updatedAt": "2025-11-06T16:06:10.052Z"
+    }
+  ]
+}

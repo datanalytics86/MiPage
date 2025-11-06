@@ -1,5 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
+const { TempPrismaClient } = require('../utils/tempDB');
+const prisma = new TempPrismaClient();
 
 /**
  * @desc    Obtener tipos de servicio activos (público)

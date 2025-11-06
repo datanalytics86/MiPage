@@ -1,12 +1,13 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
+const { TempPrismaClient } = require('../utils/tempDB');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const metadataFieldsController = require('../controllers/metadataFields.controller');
 const userManagementController = require('../controllers/userManagement.controller');
 const serviceTypesController = require('../controllers/serviceTypes.controller');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = new TempPrismaClient();
 
 // Proteger todas las rutas admin
 router.use(authenticateToken);

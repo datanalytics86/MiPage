@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -122,7 +122,7 @@ model Service {
 
   category    Category
   title       String
-  description String        @db.Text
+  description String
   price       Float
   priceType   String        @default("hour") // hour, session, day
   location    String
@@ -130,7 +130,7 @@ model Service {
   region      String?
 
   // Fotos (array de URLs de Cloudinary)
-  photos      String[]
+  photos      Json          // SQLite: Json en lugar de String[]
   coverPhoto  String?       // Foto principal
 
   // Disponibilidad
@@ -169,11 +169,11 @@ model Review {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   rating    Int      // 1-5
-  comment   String   @db.Text
-  photos    String[] // Fotos opcionales en la reseña
+  comment   String
+  photos    Json     // SQLite: Json en lugar de String[]
 
   // Respuesta del publisher
-  response  String?  @db.Text
+  response  String?
   respondedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -190,8 +190,8 @@ model Post {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  content   String   @db.Text
-  photos    String[] // Fotos del post
+  content   String
+  photos    Json     // SQLite: Json en lugar de String[]
   type      String   @default("update") // update, promotion, announcement
 
   likes     Int      @default(0)
@@ -246,29 +246,29 @@ model UserMetadata {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // DATOS PERSONALES FIJOS (optimizados para búsqueda)
-  rut           String?   @db.VarChar(12)
+  rut           String?
   edad          Int?
-  nacionalidad  String?   @db.VarChar(50)
+  nacionalidad  String?
 
   // DATOS FÍSICOS FIJOS
   altura        Int?                          // en cm
   peso          Int?                          // en kg
   contextura    Contextura?
-  medidas       String?   @db.VarChar(20)     // Ej: "90-60-90"
+  medidas       String?                       // Ej: "90-60-90"
 
   // UBICACIÓN FIJA
-  region        String?   @db.VarChar(100)
-  ciudad        String?   @db.VarChar(100)
-  comuna        String?   @db.VarChar(100)
-  direccion     String?   @db.Text
+  region        String?
+  ciudad        String?
+  comuna        String?
+  direccion     String?
 
   // SERVICIO
   tipoServicio  Category?
 
   // OTROS
-  biografia     String?   @db.Text
-  horarios      String?   @db.Text            // JSON string con horarios
-  tarifas       String?   @db.Text            // Detalles de precios
+  biografia     String?
+  horarios      String?                       // JSON string con horarios
+  tarifas       String?                       // Detalles de precios
 
   // Relación con campos custom
   customValues  CustomFieldValue[]
@@ -293,7 +293,7 @@ model MetadataField {
 
   required    Boolean  @default(false)
   placeholder String?
-  helpText    String?  @db.Text
+  helpText    String?
 
   // Para campos tipo SELECT o MULTISELECT
   options     Json?                         // ["Azul", "Verde", "Café", "Negro"]
@@ -331,7 +331,7 @@ model CustomFieldValue {
   fieldId     String
   field       MetadataField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
 
-  value       String   @db.Text              // Valor como string (parsear según fieldType)
+  value       String                         // Valor como string (parsear según fieldType)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -348,9 +348,9 @@ model ServiceUpdate {
   service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
   type        UpdateType
-  title       String?  @db.VarChar(200)
-  content     String   @db.Text
-  imageUrl    String?  @db.Text
+  title       String?
+  content     String
+  imageUrl    String?
 
   isActive    Boolean  @default(true)
   isPinned    Boolean  @default(false)       // Fijar arriba en timeline
@@ -368,9 +368,9 @@ model ServiceType {
   id          String   @id @default(uuid())
   name        String   @unique              // "MASAJES", "MODELAJE", etc
   label       String                        // "Masajes Profesionales"
-  description String?  @db.Text
+  description String?
   icon        String?                       // Emoji o nombre de icono
-  color       String?  @db.VarChar(20)      // Color hex para UI
+  color       String?                       // Color hex para UI
   order       Int      @default(0)
   isActive    Boolean  @default(true)
 
