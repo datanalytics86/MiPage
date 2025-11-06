@@ -13,6 +13,10 @@ const reviewRoutes = require('./routes/review.routes');
 const userRoutes = require('./routes/user.routes');
 const postRoutes = require('./routes/post.routes');
 const adminRoutes = require('./routes/admin.routes');
+// Nuevas rutas - Sistema de Metadata
+const metadataRoutes = require('./routes/metadata.routes');
+const serviceTypesRoutes = require('./routes/serviceTypes.routes');
+const publisherRoutes = require('./routes/publisher.routes');
 
 // Importar middleware
 const { rateLimiter } = require('./middleware/rateLimiter');
@@ -64,6 +68,10 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/admin', adminRoutes);
+// Nuevas rutas - Sistema de Metadata
+app.use('/api/metadata-fields', metadataRoutes);
+app.use('/api/service-types', serviceTypesRoutes);
+app.use('/api/publisher', publisherRoutes);
 
 // Documentación API (Swagger)
 if (process.env.NODE_ENV === 'development') {

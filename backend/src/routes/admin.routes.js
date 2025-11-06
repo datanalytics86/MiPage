@@ -1,6 +1,9 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const metadataFieldsController = require('../controllers/metadataFields.controller');
+const userManagementController = require('../controllers/userManagement.controller');
+const serviceTypesController = require('../controllers/serviceTypes.controller');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -330,5 +333,33 @@ router.put('/users/:id/verify', async (req, res) => {
     });
   }
 });
+
+/**
+ * ============================================
+ * NUEVAS RUTAS - SISTEMA DE METADATA
+ * ============================================
+ */
+
+// === METADATA FIELDS ===
+router.get('/metadata-fields', metadataFieldsController.getAllFields);
+router.post('/metadata-fields', metadataFieldsController.createField);
+router.patch('/metadata-fields/:id', metadataFieldsController.updateField);
+router.delete('/metadata-fields/:id', metadataFieldsController.deleteField);
+router.patch('/metadata-fields/reorder', metadataFieldsController.reorderFields);
+
+// === USER MANAGEMENT (con metadata) ===
+router.get('/users/with-metadata', userManagementController.getUsersWithMetadata);
+router.get('/users/:id/full', userManagementController.getUserFull);
+router.patch('/users/:id/toggle-active', userManagementController.toggleUserActive);
+router.post('/users/invite', userManagementController.inviteUser);
+router.get('/users/export', userManagementController.exportToExcel);
+router.patch('/users/:id/metadata', userManagementController.updateUserMetadata);
+
+// === SERVICE TYPES ===
+router.get('/service-types', serviceTypesController.getAllServiceTypes);
+router.post('/service-types', serviceTypesController.createServiceType);
+router.patch('/service-types/:id', serviceTypesController.updateServiceType);
+router.delete('/service-types/:id', serviceTypesController.deleteServiceType);
+router.patch('/service-types/reorder', serviceTypesController.reorderServiceTypes);
 
 module.exports = router;

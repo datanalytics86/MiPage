@@ -6,6 +6,7 @@ const {
   getProfile,
   updateProfile,
   changePassword,
+  registerWithToken,
 } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
@@ -85,6 +86,24 @@ router.put(
       .withMessage('La nueva contraseña debe tener al menos 6 caracteres'),
   ],
   changePassword
+);
+
+/**
+ * @route   POST /api/auth/register-with-token
+ * @desc    Completar registro con token de invitación
+ * @access  Public
+ */
+router.post(
+  '/register-with-token',
+  authLimiter,
+  [
+    body('token').notEmpty().withMessage('Token es requerido'),
+    body('password')
+      .isLength({ min: 6 })
+      .withMessage('La contraseña debe tener al menos 6 caracteres'),
+    body('name').notEmpty().withMessage('El nombre es requerido'),
+  ],
+  registerWithToken
 );
 
 module.exports = router;

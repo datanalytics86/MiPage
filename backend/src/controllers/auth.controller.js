@@ -255,10 +255,157 @@ const changePassword = async (req, res) => {
   }
 };
 
+/**
+ * Completar registro con token de invitación
+ */
+const registerWithToken = async (req, res) => {
+  try {
+    const {
+      token,
+      password,
+      name,
+      phone,
+      // Metadata fija
+      rut,
+      edad,
+      nacionalidad,
+      altura,
+      peso,
+      contextura,
+      medidas,
+      region,
+      ciudad,
+      comuna,
+      direccion,
+      tipoServicio,
+      biografia,
+      horarios,
+      tarifas,
+      // Campos custom
+      customFields, // { fieldId: value, ... }
+    } = req.body;
+
+    // Validaciones básicas
+    if (!token || !password || !name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Token, password y nombre son requeridos',
+      });
+    }
+
+    // Buscar usuario por token
+    const user = await prisma.user.findUnique({
+      where: { registrationToken: token },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'Token de registro inválido',
+      });
+    }
+
+    // Verificar expiración
+    if (user.tokenExpiresAt && new Date() > user.tokenExpiresAt) {
+      return res.status(400).json({
+        success: false,
+        error: 'El token de registro ha expirado',
+      });
+    }
+
+    // Verificar que no esté ya registrado
+    if (user.approvalStatus === 'REGISTERED' ||
+        user.approvalStatus === 'ACTIVE' ||
+        user.approvalStatus === 'INACTIVE') {
+      return res.status(400).json({
+        success: false,
+        error: 'Este usuario ya ha completado su registro',
+      });
+    }
+
+    // Hashear password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Actualizar usuario
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        name,
+        phone,
+        password: hashedPassword,
+        approvalStatus: 'REGISTERED',
+        registrationToken: null,
+        tokenExpiresAt: null,
+      },
+    });
+
+    // Crear metadata
+    const metadata = await prisma.userMetadata.create({
+      data: {
+        userId: updatedUser.id,
+        rut,
+        edad: edad ? parseInt(edad) : null,
+        nacionalidad,
+        altura: altura ? parseInt(altura) : null,
+        peso: peso ? parseInt(peso) : null,
+        contextura,
+        medidas,
+        region,
+        ciudad,
+        comuna,
+        direccion,
+        tipoServicio,
+        biografia,
+        horarios,
+        tarifas,
+      },
+    });
+
+    // Crear valores de campos custom si existen
+    if (customFields && Object.keys(customFields).length > 0) {
+      const customValuePromises = Object.entries(customFields).map(([fieldId, value]) =>
+        prisma.customFieldValue.create({
+          data: {
+            metadataId: metadata.id,
+            fieldId,
+            value: String(value),
+          },
+        })
+      );
+
+      await Promise.all(customValuePromises);
+    }
+
+    // Generar JWT
+    const jwtToken = generateToken(updatedUser.id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Registro completado exitosamente',
+      token: jwtToken,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        approvalStatus: updatedUser.approvalStatus,
+      },
+    });
+  } catch (error) {
+    console.error('Error in register with token:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error al completar registro',
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
   getProfile,
   updateProfile,
   changePassword,
+  registerWithToken,
 };

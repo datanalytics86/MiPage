@@ -115,8 +115,30 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
+/**
+ * Middleware para verificar que el usuario es Publisher o Admin
+ */
+const isPublisher = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: 'Autenticación requerida',
+    });
+  }
+
+  if (req.user.role !== 'PUBLISHER' && req.user.role !== 'ADMIN') {
+    return res.status(403).json({
+      success: false,
+      error: 'Acceso denegado. Se requiere rol de Publisher.',
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   authenticateToken,
   requireRole,
   optionalAuth,
+  isPublisher,
 };
