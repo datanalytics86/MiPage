@@ -28,7 +28,15 @@ export default function LoginPage() {
       const { data } = await authAPI.login(formData);
       setAuth(data.user, data.token);
       toast.success('¡Bienvenido de vuelta!');
-      router.push('/');
+
+      // Redirección inteligente según el rol del usuario
+      if (data.user.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (data.user.role === 'PUBLISHER') {
+        router.push('/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
       toast.error(errorMessage);
@@ -115,26 +123,88 @@ export default function LoginPage() {
         </div>
 
         {/* Demo Credentials */}
-        <div className="mt-6 card-dark-solid p-5 border-l-4 border-fire-500">
+        <div className="mt-6 space-y-4">
           <p className="text-sm font-semibold text-warm-50 mb-3 flex items-center gap-2">
             <span className="text-xl">🔑</span>
             Credenciales de prueba
           </p>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-warm-500 text-sm w-24">Usuario:</span>
-              <code className="flex-1 bg-dark-900 text-fire-400 px-3 py-1.5 rounded font-mono text-sm border border-dark-700">
-                juan@example.com
-              </code>
+
+          {/* Admin Credentials */}
+          <div className="card-dark-solid p-4 border-l-4 border-lust-500">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">👨‍💼</span>
+              <div>
+                <p className="text-sm font-semibold text-lust-400">Administrador</p>
+                <p className="text-xs text-warm-500">Acceso al panel de administración</p>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-warm-500 text-sm w-24">Contraseña:</span>
-              <code className="flex-1 bg-dark-900 text-fire-400 px-3 py-1.5 rounded font-mono text-sm border border-dark-700">
-                password123
-              </code>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-warm-500 text-xs w-20">Email:</span>
+                <code className="flex-1 bg-dark-900 text-lust-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
+                  admin@mipage.cl
+                </code>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-warm-500 text-xs w-20">Password:</span>
+                <code className="flex-1 bg-dark-900 text-lust-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
+                  password123
+                </code>
+              </div>
             </div>
           </div>
-          <p className="text-xs text-warm-500 mt-3 flex items-center gap-1">
+
+          {/* Publisher Credentials */}
+          <div className="card-dark-solid p-4 border-l-4 border-fire-500">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">⭐</span>
+              <div>
+                <p className="text-sm font-semibold text-fire-400">Publicador</p>
+                <p className="text-xs text-warm-500">Gestiona servicios y dashboard</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-warm-500 text-xs w-20">Email:</span>
+                <code className="flex-1 bg-dark-900 text-fire-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
+                  maria@example.com
+                </code>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-warm-500 text-xs w-20">Password:</span>
+                <code className="flex-1 bg-dark-900 text-fire-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
+                  password123
+                </code>
+              </div>
+            </div>
+          </div>
+
+          {/* User Credentials */}
+          <div className="card-dark-solid p-4 border-l-4 border-green-500">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">👤</span>
+              <div>
+                <p className="text-sm font-semibold text-green-400">Usuario</p>
+                <p className="text-xs text-warm-500">Explora y reserva servicios</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-warm-500 text-xs w-20">Email:</span>
+                <code className="flex-1 bg-dark-900 text-green-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
+                  juan@example.com
+                </code>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-warm-500 text-xs w-20">Password:</span>
+                <code className="flex-1 bg-dark-900 text-green-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
+                  password123
+                </code>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-xs text-warm-500 flex items-center gap-1">
             <span>💡</span>
             Copia y pega estas credenciales para probar la aplicación
           </p>
