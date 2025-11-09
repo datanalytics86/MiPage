@@ -1,6 +1,25 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Detectar automáticamente la URL del API basándose en el entorno
+const getApiUrl = () => {
+  // Si estamos en el navegador
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+
+    // Si estamos en Codespaces (detectar por el patrón de hostname)
+    if (hostname.includes('app.github.dev')) {
+      // Extraer el prefijo único de Codespaces
+      // Ejemplo: upgraded-space-pancake-q7gvrgw947g6cwqx-3000.app.github.dev
+      const prefix = hostname.split('-3000.app.github.dev')[0];
+      return `https://${prefix}-3001.app.github.dev/api`;
+    }
+  }
+
+  // Fallback para desarrollo local o SSR
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+};
+
+const API_URL = getApiUrl();
 
 // Crear instancia de axios
 export const api = axios.create({
