@@ -77,60 +77,70 @@ export default function CategoryTabs({ onCategoryChange, selectedCategory }: Cat
   }
 
   return (
-    <div className="relative">
-      <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+    <div className="relative overflow-hidden rounded-[2.2rem] border border-white/5 bg-white/5 p-3 backdrop-blur-xl">
+      <div className="absolute inset-0 rounded-[2rem] border border-white/5 opacity-30" />
+      <div className="pointer-events-none absolute inset-x-10 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-6 left-0 w-[1px] bg-gradient-to-b from-transparent via-white/15 to-transparent" />
+      <div className="relative flex gap-3 overflow-x-auto pb-2 pl-1 pr-10 hide-scrollbar scroll-smooth">
         {/* Tab "Todos" */}
         <button
+          type="button"
           onClick={() => onCategoryChange(null)}
-          className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold whitespace-nowrap transition-all ${
+          className={`group relative flex items-center gap-3 overflow-hidden rounded-full px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.32em] transition-all duration-300 before:absolute before:inset-0 before:-translate-x-full before:bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.35)_45%,transparent_90%)] before:opacity-0 before:transition before:duration-500 before:ease-out hover:before:translate-x-0 hover:before:opacity-100 ${
             selectedCategory === null
-              ? 'bg-gradient-to-r from-fire-500 to-fire-600 text-white shadow-fire-lg scale-105'
-              : 'bg-dark-850 text-warm-300 border border-dark-700 hover:border-fire-500 hover:text-fire-400'
+              ? 'text-dark-900'
+              : 'text-warm-200'
           }`}
         >
-          <span className="text-xl">🔥</span>
-          <span>Todos</span>
+          <span className="absolute inset-0 rounded-full bg-gradient-to-r from-fire-400 via-fire-500 to-lust-500 opacity-100" style={{ filter: selectedCategory === null ? 'none' : 'grayscale(0.2)', opacity: selectedCategory === null ? 1 : 0.12 }} />
+          <span className="relative flex items-center gap-2">
+            <span className="text-lg">🔥</span>
+            <span>{selectedCategory === null ? 'Todo el universo' : 'Todos'}</span>
+          </span>
         </button>
 
         {/* Tabs dinámicos */}
-        {serviceTypes.map((type) => (
-          <button
-            key={type.id}
-            onClick={() => onCategoryChange(type.name)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold whitespace-nowrap transition-all ${
-              selectedCategory === type.name
-                ? 'text-white shadow-lg scale-105'
-                : 'bg-dark-850 text-warm-300 border border-dark-700 hover:text-warm-50'
-            }`}
-            style={
-              selectedCategory === type.name
-                ? {
-                    background: `linear-gradient(135deg, ${type.color} 0%, ${type.color}dd 100%)`,
-                    boxShadow: `0 4px 14px 0 ${type.color}66`,
-                  }
-                : {
-                    borderColor: selectedCategory === type.name ? type.color : undefined,
-                  }
-            }
-            onMouseEnter={(e) => {
-              if (selectedCategory !== type.name) {
-                e.currentTarget.style.borderColor = type.color || '#FF6B35';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (selectedCategory !== type.name) {
-                e.currentTarget.style.borderColor = '';
-              }
-            }}
-          >
-            {type.icon && <span className="text-xl">{type.icon}</span>}
-            <span>{type.label}</span>
-          </button>
-        ))}
+        {serviceTypes.map((type) => {
+          const isActive = selectedCategory === type.name;
+          return (
+            <button
+              type="button"
+              key={type.id}
+              onClick={() => onCategoryChange(type.name)}
+              className={`group relative flex items-center gap-3 overflow-hidden rounded-full px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.32em] transition-all duration-300 before:absolute before:inset-0 before:bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.3)_45%,transparent_90%)] before:opacity-0 before:transition before:duration-500 before:ease-out hover:before:opacity-100 ${
+                isActive
+                  ? 'text-dark-900'
+                  : 'text-warm-200 hover:text-warm-50'
+              }`}
+            >
+              <span
+                className="absolute inset-0 rounded-full border border-white/10"
+                style={{
+                  background: `linear-gradient(120deg, ${type.color ?? '#ff6b35'}26 0%, ${type.color ?? '#ff0066'}12 100%)`,
+                  boxShadow: isActive ? `0 12px 30px ${type.color ?? '#ff6b35'}40` : undefined,
+                  opacity: isActive ? 1 : 0.14,
+                }}
+              />
+              <div
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-lg transition-all ${
+                  isActive
+                    ? 'scale-110 bg-white/90 text-dark-900'
+                    : 'bg-dark-950/60 text-warm-50 group-hover:scale-105 group-hover:border-white/20'
+                }`}
+              >
+                {type.icon ?? '✨'}
+              </div>
+              <span className="relative whitespace-nowrap">
+                {type.label}
+                <span className="absolute -bottom-2 left-0 right-0 h-px origin-left scale-x-0 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-300 group-hover:scale-x-100" />
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Fade gradient on scroll */}
-      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-dark-950 to-transparent pointer-events-none" />
+      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-dark-950 to-transparent" />
     </div>
   );
 }
