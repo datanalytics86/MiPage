@@ -110,13 +110,15 @@ app.use(errorHandler);
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3001;
+const HOST = process.env.HOST || '0.0.0.0';
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
   console.log(`
 ╔════════════════════════════════════════╗
 ║     🚀 MiPage API Server              ║
 ╠════════════════════════════════════════╣
 ║  Puerto: ${PORT}                        ║
+║  Host: ${HOST}                           ║
 ║  Entorno: ${process.env.NODE_ENV}      ║
 ║  Docs: http://localhost:${PORT}/api-docs  ║
 ╚════════════════════════════════════════╝
