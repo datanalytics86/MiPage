@@ -34,9 +34,30 @@ const io = new Server(server, {
 });
 
 // Middleware de seguridad
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Desactivar CSP en desarrollo para Codespaces
+  crossOriginEmbedderPolicy: false
+}));
+
+// Configuración CORS más permisiva para Codespaces
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'https://upgraded-space-pancake-q7gvrgw947g6cwqx-3000.app.github.dev'
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Permitir peticiones sin origin (como desde curl, Postman, etc)
+    if (!origin) return callback(null, true);
+
+    // Permitir si está en la lista o si es una URL de github.dev
+    if (allowedOrigins.includes(origin) || origin.includes('app.github.dev')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // En desarrollo, permitir todo
+    }
+  },
   credentials: true,
 }));
 
