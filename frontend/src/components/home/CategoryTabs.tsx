@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 interface ServiceType {
   id: string;
@@ -21,46 +21,102 @@ export default function CategoryTabs({ onCategoryChange, selectedCategory }: Cat
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchServiceTypes();
+  const fallbackServiceTypes = useMemo(
+    () => [
+      {
+        id: 'preview-modelaje',
+        name: 'MODELAJE',
+        label: 'Modelaje',
+        icon: '📸',
+        color: '#EC4899',
+        order: 1,
+        isActive: true,
+      },
+      {
+        id: 'preview-masajes',
+        name: 'MASAJES',
+        label: 'Masajes',
+        icon: '💆',
+        color: '#FF6B35',
+        order: 2,
+        isActive: true,
+      },
+      {
+        id: 'preview-eventos',
+        name: 'EVENTOS_PRIVADOS',
+        label: 'Eventos privados',
+        icon: '🎭',
+        color: '#A855F7',
+        order: 3,
+        isActive: true,
+      },
+      {
+        id: 'preview-suites',
+        name: 'SUITES',
+        label: 'Suites inmersivas',
+        icon: '🏩',
+        color: '#22D3EE',
+        order: 4,
+        isActive: true,
+      },
+    ],
+    []
+  );
+
+  const storeServiceTypes = useCallback((types: ServiceType[]) => {
+    const sorted = [...types].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    setServiceTypes(sorted);
   }, []);
 
-  const fetchServiceTypes = async () => {
+  const fetchServiceTypes = useCallback(async () => {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+    const isRemotePreview =
+      typeof window !== 'undefined' &&
+      window.location.hostname !== 'localhost' &&
+      (!!apiBaseUrl
+        ? /localhost|127\.0\.0\.1/.test(apiBaseUrl)
+        : true);
+
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/service-types`);
+
+      if (isRemotePreview) {
+        console.info(
+          'Activando tipos de servicio de demostración para el preview sin backend disponible.'
+        );
+        storeServiceTypes(fallbackServiceTypes);
+        return;
+      }
+
+      if (!apiBaseUrl) {
+        console.info(
+          'NEXT_PUBLIC_API_URL no está configurada. Usando tipos de servicio de demostración.'
+        );
+        storeServiceTypes(fallbackServiceTypes);
+        return;
+      }
+
+      const response = await fetch(`${apiBaseUrl}/api/service-types`);
 
       if (!response.ok) throw new Error('Error al cargar tipos de servicio');
 
       const data = await response.json();
-      setServiceTypes(data.data || []);
+      const resolvedServiceTypes: ServiceType[] =
+        (Array.isArray(data?.data) && data.data.length > 0 ? data.data : null) ??
+        fallbackServiceTypes;
+
+      storeServiceTypes(resolvedServiceTypes);
     } catch (error) {
       console.error('Error:', error);
-      // Fallback con tipos por defecto
-      setServiceTypes([
-        {
-          id: '1',
-          name: 'MODELAJE',
-          label: 'Modelaje',
-          icon: '📸',
-          color: '#EC4899',
-          order: 1,
-          isActive: true,
-        },
-        {
-          id: '2',
-          name: 'MASAJES',
-          label: 'Masajes',
-          icon: '💆',
-          color: '#FF6B35',
-          order: 2,
-          isActive: true,
-        },
-      ]);
+      storeServiceTypes(fallbackServiceTypes);
     } finally {
       setLoading(false);
     }
-  };
+  }, [fallbackServiceTypes, storeServiceTypes]);
+
+  useEffect(() => {
+    fetchServiceTypes();
+  }, [fetchServiceTypes]);
 
   if (loading) {
     return (
