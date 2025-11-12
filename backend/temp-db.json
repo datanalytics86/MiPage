@@ -3,20 +3,20 @@
     {
       "id": "admin-001",
       "email": "admin@mipage.cl",
-      "password": "$2a$10$xahJo8qJ/vstv0b/1LHT.OqkTknhGc5v8mXSdeBrR2u8zTEpf.fl2",
+      "password": "$2a$10$9mfq4Vp2AopX3L8fDVnZ/uu5FoYXXv7B9dU7IKQ9zd/G1nerhsRfC",
       "name": "Administrador",
       "role": "ADMIN",
       "isVerified": true,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
       "isActive": true,
       "approvalStatus": "ACTIVE",
-      "createdAt": "2025-11-06T16:06:10.051Z",
-      "updatedAt": "2025-11-06T16:06:10.052Z"
+      "createdAt": "2025-11-12T17:34:36.069Z",
+      "updatedAt": "2025-11-12T17:34:36.070Z"
     },
     {
       "id": "publisher-001",
       "email": "maria@example.com",
-      "password": "$2a$10$xahJo8qJ/vstv0b/1LHT.OqkTknhGc5v8mXSdeBrR2u8zTEpf.fl2",
+      "password": "$2a$10$9mfq4Vp2AopX3L8fDVnZ/uu5FoYXXv7B9dU7IKQ9zd/G1nerhsRfC",
       "name": "María González",
       "role": "PUBLISHER",
       "isVerified": true,
@@ -25,21 +25,21 @@
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maria",
       "isActive": true,
       "approvalStatus": "ACTIVE",
-      "createdAt": "2025-11-06T16:06:10.052Z",
-      "updatedAt": "2025-11-06T16:06:10.052Z"
+      "createdAt": "2025-11-12T17:34:36.070Z",
+      "updatedAt": "2025-11-12T17:34:36.070Z"
     },
     {
       "id": "user-001",
       "email": "juan@example.com",
-      "password": "$2a$10$xahJo8qJ/vstv0b/1LHT.OqkTknhGc5v8mXSdeBrR2u8zTEpf.fl2",
+      "password": "$2a$10$9mfq4Vp2AopX3L8fDVnZ/uu5FoYXXv7B9dU7IKQ9zd/G1nerhsRfC",
       "name": "Juan Pérez",
       "role": "USER",
       "isVerified": true,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=juan",
       "isActive": true,
       "approvalStatus": "ACTIVE",
-      "createdAt": "2025-11-06T16:06:10.052Z",
-      "updatedAt": "2025-11-06T16:06:10.052Z"
+      "createdAt": "2025-11-12T17:34:36.070Z",
+      "updatedAt": "2025-11-12T17:34:36.070Z"
     }
   ],
   "services": [],
@@ -57,8 +57,8 @@
       "color": "#EC4899",
       "order": 1,
       "isActive": true,
-      "createdAt": "2025-11-06T16:06:10.052Z",
-      "updatedAt": "2025-11-06T16:06:10.052Z"
+      "createdAt": "2025-11-12T17:34:36.071Z",
+      "updatedAt": "2025-11-12T17:34:36.071Z"
     },
     {
       "id": "type-002",
@@ -69,8 +69,8 @@
       "color": "#FF6B35",
       "order": 2,
       "isActive": true,
-      "createdAt": "2025-11-06T16:06:10.052Z",
-      "updatedAt": "2025-11-06T16:06:10.052Z"
+      "createdAt": "2025-11-12T17:34:36.071Z",
+      "updatedAt": "2025-11-12T17:34:36.071Z"
     }
   ]
 }
