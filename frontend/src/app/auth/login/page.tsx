@@ -9,9 +9,30 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 
+type RoleOption = 'ADMIN' | 'PUBLISHER' | 'CLIENT';
+
+const roleLabels: Record<RoleOption, { label: string; description: string; href: string }> = {
+  ADMIN: {
+    label: 'Administrador',
+    description: 'Gestiona catálogo, reportes y cuentas.',
+    href: '/admin',
+  },
+  PUBLISHER: {
+    label: 'Oferente',
+    description: 'Actualiza portafolios, promociones y agenda.',
+    href: '/oferentes',
+  },
+  CLIENT: {
+    label: 'Cliente',
+    description: 'Explora perfiles y deja reseñas verificadas.',
+    href: '/clientes',
+  },
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
+  const [selectedRole, setSelectedRole] = useState<RoleOption>('ADMIN');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,13 +50,12 @@ export default function LoginPage() {
       setAuth(data.user, data.token);
       toast.success('¡Bienvenido de vuelta!');
 
-      // Redirección inteligente según el rol del usuario
       if (data.user.role === 'ADMIN') {
         router.push('/admin');
       } else if (data.user.role === 'PUBLISHER') {
-        router.push('/dashboard');
+        router.push('/oferentes');
       } else {
-        router.push('/');
+        router.push('/clientes');
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
@@ -47,180 +67,144 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-dark flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-fire-500 to-lust-500 bg-clip-text text-transparent">
-              MiPage
-            </h1>
+    <div className="min-h-screen bg-[#f7f6f4]">
+      <header className="border-b border-neutral-200 bg-white/90">
+        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-6">
+          <Link href="/" className="text-xl font-semibold tracking-tight text-neutral-900">
+            MiPage
           </Link>
-          <p className="text-warm-300 mt-3 text-lg">Inicia sesión en tu cuenta</p>
+          <Link href="/" className="text-sm text-neutral-500 transition hover:text-neutral-900">
+            Volver al inicio
+          </Link>
         </div>
+      </header>
 
-        {/* Form Card */}
-        <div className="card-dark p-8 shadow-dark-lg">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              error={errors.email}
-              required
-              fullWidth
-              placeholder="tu@email.com"
-            />
+      <main className="mx-auto flex min-h-[calc(100vh-88px)] max-w-4xl flex-col justify-center px-6 py-12">
+        <div className="grid gap-10 lg:grid-cols-[0.55fr,0.45fr] lg:items-center">
+          <section className="space-y-6">
+            <header className="space-y-3">
+              <p className="text-xs uppercase tracking-[0.28em] text-neutral-500">Portal seguro</p>
+              <h1 className="text-3xl font-semibold text-neutral-900">Elige tu acceso</h1>
+              <p className="text-sm text-neutral-600">
+                Selecciona el perfil con el que deseas ingresar. Cada rol dispone de herramientas específicas según las
+                necesidades del servicio.
+              </p>
+            </header>
 
-            <Input
-              label="Contraseña"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              error={errors.password}
-              required
-              fullWidth
-              placeholder="••••••••"
-            />
+            <div className="grid gap-3 md:grid-cols-3">
+              {(Object.keys(roleLabels) as RoleOption[]).map((role) => {
+                const roleInfo = roleLabels[role];
+                const isActive = selectedRole === role;
 
-            {errors.general && (
-              <div className="bg-lust-500/10 border border-lust-500/30 text-lust-400 px-4 py-3 rounded-lg text-sm">
-                ⚠️ {errors.general}
+                return (
+                  <button
+                    key={role}
+                    type="button"
+                    onClick={() => setSelectedRole(role)}
+                    className={`flex h-full flex-col gap-2 rounded-2xl border p-4 text-left transition ${
+                      isActive
+                        ? 'border-neutral-900 bg-neutral-900 text-white shadow-sm'
+                        : 'border-neutral-200 bg-white text-neutral-700 hover:border-neutral-900 hover:text-neutral-900'
+                    }`}
+                  >
+                    <span className="text-sm font-semibold">{roleInfo.label}</span>
+                    <span className={`text-xs ${isActive ? 'text-neutral-100/80' : 'text-neutral-500'}`}>
+                      {roleInfo.description}
+                    </span>
+                    <span className={`text-xs font-semibold ${isActive ? 'text-neutral-200' : 'text-neutral-400'}`}>
+                      {roleInfo.href.replace('/', '') || 'inicio'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="rounded-3xl border border-neutral-200 bg-white p-6 text-sm text-neutral-600 shadow-sm">
+              <p>
+                ¿Primera vez aquí? Revisa las vistas dedicadas para cada rol y conoce las herramientas disponibles antes de
+                iniciar sesión.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+                <Link href="/admin" className="text-neutral-900 underline underline-offset-4">
+                  Dashboard administrador
+                </Link>
+                <Link href="/oferentes" className="text-neutral-900 underline underline-offset-4">
+                  Portal de oferentes
+                </Link>
+                <Link href="/clientes" className="text-neutral-900 underline underline-offset-4">
+                  Experiencia cliente
+                </Link>
               </div>
-            )}
-
-            <Button
-              type="submit"
-              variant="fire"
-              size="lg"
-              fullWidth
-              isLoading={isLoading}
-            >
-              🔥 Iniciar Sesión
-            </Button>
-          </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-dark-700"></div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-dark-850 text-warm-500">o</span>
-            </div>
-          </div>
+          </section>
 
-          {/* Register Link */}
-          <div className="text-center">
-            <p className="text-warm-300">
+          <section className="rounded-3xl border border-neutral-200 bg-white p-8 shadow-sm">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2 text-sm">
+                <p className="text-neutral-500">Estás iniciando sesión como</p>
+                <p className="text-lg font-semibold text-neutral-900">{roleLabels[selectedRole].label}</p>
+              </div>
+
+              <Input
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                error={errors.email}
+                required
+                fullWidth
+                placeholder="tucorreo@ejemplo.cl"
+              />
+
+              <Input
+                label="Contraseña"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                error={errors.password}
+                required
+                fullWidth
+                placeholder="••••••••"
+              />
+
+              {errors.general && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                  ⚠️ {errors.general}
+                </div>
+              )}
+
+              <Button type="submit" variant="fire" size="lg" fullWidth isLoading={isLoading}>
+                Iniciar sesión
+              </Button>
+            </form>
+
+            <div className="mt-6 space-y-4 text-xs text-neutral-500">
+              <p className="font-semibold text-neutral-700">Accesos de demostración</p>
+              <div className="grid gap-3">
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                  <p className="font-medium text-neutral-800">Administrador</p>
+                  <p>Email: admin@mipage.cl · Contraseña: password123</p>
+                </div>
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                  <p className="font-medium text-neutral-800">Oferente</p>
+                  <p>Email: maria@example.com · Contraseña: password123</p>
+                </div>
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                  <p className="font-medium text-neutral-800">Cliente</p>
+                  <p>Email: juan@example.com · Contraseña: password123</p>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-neutral-500">
               ¿No tienes cuenta?{' '}
-              <Link href="/auth/register" className="text-fire-500 font-semibold hover:text-fire-400 transition-colors">
+              <Link href="/auth/register" className="font-semibold text-neutral-900 underline underline-offset-4">
                 Regístrate aquí
               </Link>
             </p>
-          </div>
+          </section>
         </div>
-
-        {/* Demo Credentials */}
-        <div className="mt-6 space-y-4">
-          <p className="text-sm font-semibold text-warm-50 mb-3 flex items-center gap-2">
-            <span className="text-xl">🔑</span>
-            Credenciales de prueba
-          </p>
-
-          {/* Admin Credentials */}
-          <div className="card-dark-solid p-4 border-l-4 border-lust-500">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">👨‍💼</span>
-              <div>
-                <p className="text-sm font-semibold text-lust-400">Administrador</p>
-                <p className="text-xs text-warm-500">Acceso al panel de administración</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-warm-500 text-xs w-20">Email:</span>
-                <code className="flex-1 bg-dark-900 text-lust-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
-                  admin@mipage.cl
-                </code>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-warm-500 text-xs w-20">Password:</span>
-                <code className="flex-1 bg-dark-900 text-lust-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
-                  password123
-                </code>
-              </div>
-            </div>
-          </div>
-
-          {/* Publisher Credentials */}
-          <div className="card-dark-solid p-4 border-l-4 border-fire-500">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">⭐</span>
-              <div>
-                <p className="text-sm font-semibold text-fire-400">Publicador</p>
-                <p className="text-xs text-warm-500">Gestiona servicios y dashboard</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-warm-500 text-xs w-20">Email:</span>
-                <code className="flex-1 bg-dark-900 text-fire-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
-                  maria@example.com
-                </code>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-warm-500 text-xs w-20">Password:</span>
-                <code className="flex-1 bg-dark-900 text-fire-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
-                  password123
-                </code>
-              </div>
-            </div>
-          </div>
-
-          {/* User Credentials */}
-          <div className="card-dark-solid p-4 border-l-4 border-green-500">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-2xl">👤</span>
-              <div>
-                <p className="text-sm font-semibold text-green-400">Usuario</p>
-                <p className="text-xs text-warm-500">Explora y reserva servicios</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-warm-500 text-xs w-20">Email:</span>
-                <code className="flex-1 bg-dark-900 text-green-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
-                  juan@example.com
-                </code>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-warm-500 text-xs w-20">Password:</span>
-                <code className="flex-1 bg-dark-900 text-green-400 px-2 py-1 rounded font-mono text-xs border border-dark-700">
-                  password123
-                </code>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-warm-500 flex items-center gap-1">
-            <span>💡</span>
-            Copia y pega estas credenciales para probar la aplicación
-          </p>
-        </div>
-
-        {/* Back to Home */}
-        <div className="text-center mt-6">
-          <Link
-            href="/"
-            className="text-warm-300 hover:text-warm-50 text-sm transition-colors inline-flex items-center gap-2"
-          >
-            <span>←</span>
-            <span>Volver al inicio</span>
-          </Link>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
