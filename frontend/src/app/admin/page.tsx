@@ -1,144 +1,164 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 type AccountStatus = 'Activo' | 'Inactivo';
 
-type ProfessionalRow = {
+type Professional = {
   id: string;
   name: string;
   service: string;
   status: AccountStatus;
-  lastUpdate: string;
   city: string;
+  rate: string;
+  rating: string;
+  measurements: string;
+  lastEdited: string;
 };
 
-type Metric = {
-  label: string;
-  value: string;
-  description: string;
-};
-
-const metrics: Metric[] = [
-  {
-    label: 'Profesionales publicados',
-    value: '42',
-    description: 'Perfiles aprobados y visibles en la galería.',
-  },
-  {
-    label: 'Solicitudes pendientes',
-    value: '5',
-    description: 'Nuevos perfiles listos para revisión.',
-  },
-  {
-    label: 'Cuentas inactivas',
-    value: '2',
-    description: 'Perfiles pausados por calidad o disponibilidad.',
-  },
-  {
-    label: 'Satisfacción promedio',
-    value: '4.9',
-    description: 'Calificaciones verificadas de clientes.',
-  },
-];
-
-const professionals: ProfessionalRow[] = [
+const initialProfessionals: Professional[] = [
   {
     id: 'mip-001',
     name: 'Aurora Ramírez',
     service: 'Modelaje editorial',
     status: 'Activo',
-    lastUpdate: '05 Nov · 10:24',
     city: 'Santiago',
+    rate: '$85.000 CLP',
+    rating: '4.9',
+    measurements: '86 · 62 · 90',
+    lastEdited: '05 Nov · 10:24',
   },
   {
     id: 'mip-014',
     name: 'Ignacio Verdugo',
     service: 'Masajes deportivos',
     status: 'Activo',
-    lastUpdate: '04 Nov · 18:02',
     city: 'Viña del Mar',
+    rate: '$65.000 CLP',
+    rating: '4.8',
+    measurements: 'Especialista tejido profundo',
+    lastEdited: '04 Nov · 18:02',
   },
   {
     id: 'mip-027',
     name: 'Emilia Sofía',
     service: 'Masajes sensoriales',
     status: 'Inactivo',
-    lastUpdate: '02 Nov · 09:15',
     city: 'Concepción',
+    rate: '$72.000 CLP',
+    rating: '4.7',
+    measurements: 'Terapia sensorial avanzada',
+    lastEdited: '02 Nov · 09:15',
   },
   {
     id: 'mip-032',
     name: 'Renata Alegría',
     service: 'Modelaje beauty',
     status: 'Activo',
-    lastUpdate: '02 Nov · 08:40',
     city: 'Santiago',
+    rate: '$95.000 CLP',
+    rating: '5.0',
+    measurements: '84 · 60 · 88',
+    lastEdited: '02 Nov · 08:40',
   },
 ];
 
-const reportCards = [
-  {
-    title: 'Performance mensual',
-    detail: 'Reservas confirmadas, cancelaciones y top ciudades.',
-  },
-  {
-    title: 'Moderación de contenido',
-    detail: 'Alertas de comentarios sensibles y seguimiento de SLA.',
-  },
-  {
-    title: 'Disponibilidad por servicio',
-    detail: 'Cruce entre agendas y tendencias de demanda.',
-  },
-];
+type EditableFields = Pick<Professional, 'name' | 'service' | 'city' | 'rate' | 'rating' | 'measurements'>;
 
-const auditTrail = [
-  {
-    id: 'log-981',
-    action: 'Aurora Ramírez · Precio actualizado a $85.000 CLP',
-    author: 'Admin principal',
-    timestamp: '05 Nov · 10:24',
-  },
-  {
-    id: 'log-972',
-    action: 'Se activó cuenta de Ignacio Verdugo',
-    author: 'Equipo soporte',
-    timestamp: '04 Nov · 18:02',
-  },
-  {
-    id: 'log-958',
-    action: 'Nueva promoción publicada por Emilia Sofía',
-    author: 'Sistema automático',
-    timestamp: '03 Nov · 11:47',
-  },
-];
-
-const formFields = [
-  'Nombre completo',
-  'Nacionalidad',
-  'Ciudad base',
-  'Tipo de servicio',
-  'Tarifa CLP',
-  'Medidas o especialidad',
-  'Portafolio fotográfico',
-];
+const ADMIN_CREDENTIALS = {
+  email: 'admin@mipage.cl',
+  password: 'password123',
+};
 
 export default function AdminDashboard() {
-  const [statusFilter, setStatusFilter] = useState<AccountStatus | 'Todos'>('Todos');
+  const [professionals, setProfessionals] = useState<Professional[]>(initialProfessionals);
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>(initialProfessionals[0]?.id ?? '');
+  const [formValues, setFormValues] = useState<EditableFields>(() => ({
+    name: initialProfessionals[0]?.name ?? '',
+    service: initialProfessionals[0]?.service ?? '',
+    city: initialProfessionals[0]?.city ?? '',
+    rate: initialProfessionals[0]?.rate ?? '',
+    rating: initialProfessionals[0]?.rating ?? '',
+    measurements: initialProfessionals[0]?.measurements ?? '',
+  }));
+  const [feedback, setFeedback] = useState<string | null>(null);
 
-  const filteredProfessionals = useMemo(() => {
-    if (statusFilter === 'Todos') return professionals;
-    return professionals.filter((professional) => professional.status === statusFilter);
-  }, [statusFilter]);
+  const selectedProfessional = useMemo(
+    () => professionals.find((professional) => professional.id === selectedProfessionalId),
+    [professionals, selectedProfessionalId],
+  );
+
+  const activeProfessionals = useMemo(
+    () => professionals.filter((professional) => professional.status === 'Activo').length,
+    [professionals],
+  );
+
+  useEffect(() => {
+    if (!selectedProfessional) return;
+    setFormValues({
+      name: selectedProfessional.name,
+      service: selectedProfessional.service,
+      city: selectedProfessional.city,
+      rate: selectedProfessional.rate,
+      rating: selectedProfessional.rating,
+      measurements: selectedProfessional.measurements,
+    });
+  }, [selectedProfessional]);
+
+  const updateLastEdited = () => new Date().toLocaleString('es-CL', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  const handleToggleStatus = (id: string) => {
+    setProfessionals((current) =>
+      current.map((professional) =>
+        professional.id === id
+          ? {
+              ...professional,
+              status: professional.status === 'Activo' ? 'Inactivo' : 'Activo',
+              lastEdited: `${updateLastEdited()} · Admin`,
+            }
+          : professional,
+      ),
+    );
+    setFeedback('Estado actualizado.');
+  };
+
+  const handleInputChange = (field: keyof EditableFields, value: string) => {
+    setFormValues((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedProfessional) return;
+
+    setProfessionals((current) =>
+      current.map((professional) =>
+        professional.id === selectedProfessional.id
+          ? {
+              ...professional,
+              ...formValues,
+              lastEdited: `${updateLastEdited()} · Admin`,
+            }
+          : professional,
+      ),
+    );
+
+    setFeedback('Cambios guardados.');
+  };
+
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 2500);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
 
   return (
     <div className="min-h-screen bg-[#f7f6f4] text-neutral-900">
       <header className="border-b border-neutral-200 bg-white/90">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-[0.28em] text-neutral-500">Panel administrador</p>
-            <h1 className="text-2xl font-semibold text-neutral-900">Control integral</h1>
+            <p className="text-xs uppercase tracking-[0.28em] text-neutral-500">Administrador</p>
+            <h1 className="text-2xl font-semibold text-neutral-900">Control de anuncios</h1>
           </div>
           <Link href="/" className="text-sm text-neutral-500 transition hover:text-neutral-900">
             Volver al inicio
@@ -146,138 +166,177 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-12 space-y-12">
-        <section className="grid gap-4 md:grid-cols-4">
-          {metrics.map((metric) => (
-            <article key={metric.label} className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.16em] text-neutral-500">{metric.label}</p>
-              <p className="mt-3 text-3xl font-semibold text-neutral-900">{metric.value}</p>
-              <p className="mt-2 text-sm text-neutral-500">{metric.description}</p>
-            </article>
-          ))}
-        </section>
+      <main className="mx-auto grid max-w-5xl gap-8 px-6 py-10 lg:grid-cols-[0.58fr,0.42fr]">
+        <section className="space-y-5">
+          <article className="rounded-3xl border border-neutral-200 bg-white px-6 py-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-neutral-900">Credenciales demo</h2>
+            <p className="mt-2 text-sm text-neutral-600">
+              Email <span className="font-medium text-neutral-900">{ADMIN_CREDENTIALS.email}</span> · Contraseña{' '}
+              <span className="font-medium text-neutral-900">{ADMIN_CREDENTIALS.password}</span>
+            </p>
+          </article>
 
-        <section className="grid gap-8 lg:grid-cols-[0.55fr,0.45fr]">
-          <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <header className="mb-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+          <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <header className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-neutral-900">Gestión de profesionales</h2>
-                <p className="text-xs text-neutral-500">Agrega, edita o pausa perfiles con formularios claros.</p>
+                <h2 className="text-lg font-semibold text-neutral-900">Profesionales publicados</h2>
+                <p className="text-sm text-neutral-500">Selecciona uno para editar o pausa el anuncio al instante.</p>
               </div>
-              <div className="flex gap-2">
-                {(['Todos', 'Activo', 'Inactivo'] as (AccountStatus | 'Todos')[]).map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setStatusFilter(option)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                      statusFilter === option
-                        ? 'border-neutral-900 bg-neutral-900 text-white'
-                        : 'border-neutral-300 text-neutral-600 hover:border-neutral-900 hover:text-neutral-900'
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
+              <span className="text-xs uppercase tracking-[0.2em] text-neutral-400">{activeProfessionals} activos</span>
             </header>
 
-            <div className="overflow-hidden rounded-2xl border border-neutral-200">
-              <table className="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead className="bg-neutral-50 text-left uppercase tracking-[0.12em] text-neutral-500">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Profesional</th>
-                    <th className="px-4 py-3 font-medium">Servicio</th>
-                    <th className="px-4 py-3 font-medium">Estado</th>
-                    <th className="px-4 py-3 font-medium">Última acción</th>
-                    <th className="px-4 py-3 font-medium">Ciudad</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-100 bg-white">
-                  {filteredProfessionals.map((professional) => (
-                    <tr key={professional.id}>
-                      <td className="px-4 py-4 font-medium text-neutral-900">{professional.name}</td>
-                      <td className="px-4 py-4 text-neutral-500">{professional.service}</td>
-                      <td className="px-4 py-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            <ul className="space-y-2">
+              {professionals.map((professional) => {
+                const isSelected = professional.id === selectedProfessionalId;
+                return (
+                  <li key={professional.id} className="rounded-2xl border border-neutral-200 bg-neutral-50 transition hover:bg-white">
+                    <button
+                      type="button"
+                      className={`flex w-full flex-col gap-3 rounded-2xl px-4 py-4 text-left transition ${
+                        isSelected ? 'border border-neutral-900 bg-white shadow-sm' : ''
+                      }`}
+                      onClick={() => setSelectedProfessionalId(professional.id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-neutral-900">{professional.name}</p>
+                          <p className="text-xs text-neutral-500">
+                            {professional.service} · {professional.city}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleToggleStatus(professional.id);
+                          }}
+                          className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                             professional.status === 'Activo'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-neutral-200 text-neutral-600'
+                              ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                              : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300'
                           }`}
                         >
-                          {professional.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 text-neutral-500">{professional.lastUpdate}</td>
-                      <td className="px-4 py-4 text-neutral-500">{professional.city}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <article className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-neutral-900">Alta rápida</h2>
-              <p className="mt-2 text-sm text-neutral-500">
-                Formularios concisos con validaciones en vivo y previsualización de fotos.
-              </p>
-              <ul className="mt-5 space-y-2 text-sm text-neutral-600">
-                {formFields.map((field) => (
-                  <li key={field} className="flex items-center gap-2">
-                    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-neutral-900" aria-hidden />
-                    {field}
+                          {professional.status === 'Activo' ? 'Activo · Desactivar' : 'Inactivo · Activar'}
+                        </button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-neutral-500">
+                        <span>Tarifa {professional.rate}</span>
+                        <span>Rating {professional.rating}</span>
+                        <span>Medidas / especialidad {professional.measurements}</span>
+                      </div>
+                      <p className="text-xs text-neutral-400">Última edición {professional.lastEdited}</p>
+                    </button>
                   </li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-neutral-900">Moderación y alertas</h2>
-              <p className="mt-2 text-sm text-neutral-500">
-                Controla promociones, comentarios y documentación con flujos guiados.
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-neutral-600">
-                <li>Activación / desactivación instantánea de perfiles.</li>
-                <li>Historial descargable de cambios por administrador.</li>
-                <li>Notificaciones automáticas al detectar incidencias.</li>
-              </ul>
-            </article>
-          </div>
+                );
+              })}
+            </ul>
+          </section>
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-[0.5fr,0.5fr]">
-          <article className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-neutral-900">Reportes clave</h2>
-            <div className="mt-4 grid gap-4">
-              {reportCards.map((report) => (
-                <div key={report.title} className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-4 text-sm">
-                  <p className="font-semibold text-neutral-900">{report.title}</p>
-                  <p className="mt-1 text-neutral-500">{report.detail}</p>
-                </div>
-              ))}
-            </div>
-            <Link
-              href="/#reportes"
-              className="mt-6 inline-block text-sm font-semibold text-neutral-900 underline underline-offset-4"
-            >
-              Ver más reportes
-            </Link>
-          </article>
+        <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <header className="mb-5 space-y-1">
+            <p className="text-xs uppercase tracking-[0.28em] text-neutral-400">Ficha seleccionada</p>
+            <h2 className="text-xl font-semibold text-neutral-900">{selectedProfessional?.name ?? 'Selecciona un perfil'}</h2>
+            {selectedProfessional && (
+              <p className="text-xs text-neutral-500">ID {selectedProfessional.id} · Estado {selectedProfessional.status}</p>
+            )}
+          </header>
 
-          <article className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-neutral-900">Actividad reciente</h2>
-            <ul className="mt-4 space-y-3 text-sm text-neutral-600">
-              {auditTrail.map((entry) => (
-                <li key={entry.id} className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-                  <p className="font-medium text-neutral-900">{entry.action}</p>
-                  <p className="text-xs text-neutral-500">{entry.author} · {entry.timestamp}</p>
-                </li>
-              ))}
-            </ul>
-          </article>
+          {selectedProfessional ? (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <fieldset className="grid gap-4">
+                <label className="text-sm text-neutral-600">
+                  Nombre profesional
+                  <input
+                    type="text"
+                    value={formValues.name}
+                    onChange={(event) => handleInputChange('name', event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:bg-white focus:outline-none"
+                    required
+                  />
+                </label>
+
+                <label className="text-sm text-neutral-600">
+                  Servicio principal
+                  <input
+                    type="text"
+                    value={formValues.service}
+                    onChange={(event) => handleInputChange('service', event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:bg-white focus:outline-none"
+                    required
+                  />
+                </label>
+
+                <label className="text-sm text-neutral-600">
+                  Ciudad base
+                  <input
+                    type="text"
+                    value={formValues.city}
+                    onChange={(event) => handleInputChange('city', event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:bg-white focus:outline-none"
+                    required
+                  />
+                </label>
+
+                <label className="text-sm text-neutral-600">
+                  Tarifa publicada
+                  <input
+                    type="text"
+                    value={formValues.rate}
+                    onChange={(event) => handleInputChange('rate', event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:bg-white focus:outline-none"
+                    required
+                  />
+                </label>
+
+                <label className="text-sm text-neutral-600">
+                  Calificación visible
+                  <input
+                    type="text"
+                    value={formValues.rating}
+                    onChange={(event) => handleInputChange('rating', event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:bg-white focus:outline-none"
+                    required
+                  />
+                </label>
+
+                <label className="text-sm text-neutral-600">
+                  Medidas / especialidad
+                  <input
+                    type="text"
+                    value={formValues.measurements}
+                    onChange={(event) => handleInputChange('measurements', event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-900 focus:border-neutral-900 focus:bg-white focus:outline-none"
+                    required
+                  />
+                </label>
+              </fieldset>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="submit"
+                  className="rounded-full bg-neutral-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                >
+                  Guardar cambios
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleStatus(selectedProfessional.id)}
+                  className="rounded-full border border-neutral-300 px-5 py-2 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+                >
+                  {selectedProfessional.status === 'Activo' ? 'Pausar anuncio' : 'Reactivar anuncio'}
+                </button>
+              </div>
+
+              {feedback && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  {feedback}
+                </div>
+              )}
+            </form>
+          ) : (
+            <p className="text-sm text-neutral-500">Selecciona un profesional para editar su anuncio.</p>
+          )}
         </section>
       </main>
     </div>
