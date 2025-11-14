@@ -6,7 +6,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuthStore } from '@/lib/auth';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+const API_URL = configuredApiUrl && configuredApiUrl !== '' ? configuredApiUrl.replace(/\/+$/, '') : '';
+
+const buildApiUrl = (path: string) => `${API_URL}${path}`;
 
 type RoleOption = 'ADMIN' | 'PUBLISHER' | 'USER';
 
@@ -80,7 +83,7 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: selectedRole }),
@@ -131,7 +134,7 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
+      const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -173,7 +176,7 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      const response = await fetch(buildApiUrl('/api/auth/forgot-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -197,7 +200,7 @@ const LoginPage = () => {
     if (!pendingConfirmationEmail) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/resend-confirmation`, {
+      const response = await fetch(buildApiUrl('/api/auth/resend-confirmation'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingConfirmationEmail }),
