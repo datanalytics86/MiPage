@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { authAPI } from '@/lib/api';
 import { useAuthStore } from '@/lib/auth';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import toast from 'react-hot-toast';
 
 type RoleOption = 'ADMIN' | 'PUBLISHER' | 'CLIENT';
+
+type FormErrors = Partial<Record<'email' | 'password' | 'general', string>>;
 
 const roleLabels: Record<RoleOption, { label: string; description: string; href: string }> = {
   ADMIN: {
@@ -29,6 +30,49 @@ const roleLabels: Record<RoleOption, { label: string; description: string; href:
   },
 };
 
+const DEMO_CREDENTIALS: Record<
+  RoleOption,
+  {
+    email: string;
+    password: string;
+    user: { id: string; name: string; role: 'ADMIN' | 'PUBLISHER' | 'USER'; email: string; isVerified: boolean };
+  }
+> = {
+  ADMIN: {
+    email: 'admin@mipage.cl',
+    password: 'password123',
+    user: {
+      id: 'admin-001',
+      name: 'Administradora Demo',
+      role: 'ADMIN',
+      email: 'admin@mipage.cl',
+      isVerified: true,
+    },
+  },
+  PUBLISHER: {
+    email: 'maria@example.com',
+    password: 'password123',
+    user: {
+      id: 'publisher-001',
+      name: 'María Campos',
+      role: 'PUBLISHER',
+      email: 'maria@example.com',
+      isVerified: false,
+    },
+  },
+  CLIENT: {
+    email: 'juan@example.com',
+    password: 'password123',
+    user: {
+      id: 'client-001',
+      name: 'Juan Pérez',
+      role: 'USER',
+      email: 'juan@example.com',
+      isVerified: true,
+    },
+  },
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
@@ -38,32 +82,33 @@ export default function LoginPage() {
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
     setIsLoading(true);
 
-    try {
-      const { data } = await authAPI.login(formData);
-      setAuth(data.user, data.token);
-      toast.success('¡Bienvenido de vuelta!');
+    const credentials = DEMO_CREDENTIALS[selectedRole];
+    const isValidEmail = formData.email.trim().toLowerCase() === credentials.email;
+    const isValidPassword = formData.password === credentials.password;
 
-      if (data.user.role === 'ADMIN') {
-        router.push('/admin');
-      } else if (data.user.role === 'PUBLISHER') {
-        router.push('/oferentes');
-      } else {
-        router.push('/clientes');
-      }
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
+    if (!isValidEmail || !isValidPassword) {
+      const errorMessage = 'Credenciales incorrectas. Verifica tu correo y contraseña.';
       toast.error(errorMessage);
       setErrors({ general: errorMessage });
-    } finally {
       setIsLoading(false);
+      return;
     }
+
+    const redirectPath = roleLabels[selectedRole].href || '/';
+    const token = `${selectedRole.toLowerCase()}-demo-token`;
+
+    setAuth(credentials.user, token);
+    toast.success('¡Bienvenido de vuelta!');
+
+    router.push(redirectPath);
+    setIsLoading(false);
   };
 
   return (

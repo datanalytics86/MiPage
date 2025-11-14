@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { useAuthStore } from '@/lib/auth';
 
 type AccountStatus = 'Activo' | 'Inactivo';
 
@@ -72,6 +75,8 @@ const ADMIN_CREDENTIALS = {
 };
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
   const [professionals, setProfessionals] = useState<Professional[]>(initialProfessionals);
   const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>(initialProfessionals[0]?.id ?? '');
   const [formValues, setFormValues] = useState<EditableFields>(() => ({
@@ -83,6 +88,21 @@ export default function AdminDashboard() {
     measurements: initialProfessionals[0]?.measurements ?? '',
   }));
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [canRender, setCanRender] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/auth/login?redirect=/admin');
+      return;
+    }
+
+    if (user?.role !== 'ADMIN') {
+      router.replace('/auth/login?redirect=/admin');
+      return;
+    }
+
+    setCanRender(true);
+  }, [isAuthenticated, router, user]);
 
   const selectedProfessional = useMemo(
     () => professionals.find((professional) => professional.id === selectedProfessionalId),
@@ -152,6 +172,14 @@ export default function AdminDashboard() {
     return () => window.clearTimeout(timeout);
   }, [feedback]);
 
+  if (!canRender) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f6f4] text-sm text-neutral-500">
+        Verificando acceso seguro...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f7f6f4] text-neutral-900">
       <header className="border-b border-neutral-200 bg-white/90">
@@ -166,21 +194,21 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-5xl gap-8 px-6 py-10 lg:grid-cols-[0.58fr,0.42fr]">
-        <section className="space-y-5">
-          <article className="rounded-3xl border border-neutral-200 bg-white px-6 py-5 shadow-sm">
-            <h2 className="text-sm font-semibold text-neutral-900">Credenciales demo</h2>
-            <p className="mt-2 text-sm text-neutral-600">
-              Email <span className="font-medium text-neutral-900">{ADMIN_CREDENTIALS.email}</span> · Contraseña{' '}
-              <span className="font-medium text-neutral-900">{ADMIN_CREDENTIALS.password}</span>
-            </p>
-          </article>
+      <main className="mx-auto max-w-5xl space-y-8 px-6 py-10">
+        <section className="rounded-3xl border border-neutral-200 bg-white px-6 py-5 shadow-sm">
+          <h2 className="text-sm font-semibold text-neutral-900">Acceso de demostración</h2>
+          <p className="mt-2 text-sm text-neutral-600">
+            Email <span className="font-medium text-neutral-900">{ADMIN_CREDENTIALS.email}</span> · Contraseña{' '}
+            <span className="font-medium text-neutral-900">{ADMIN_CREDENTIALS.password}</span>
+          </p>
+        </section>
 
+        <div className="grid gap-8 lg:grid-cols-[0.55fr,0.45fr]">
           <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
             <header className="mb-4 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-neutral-900">Profesionales publicados</h2>
-                <p className="text-sm text-neutral-500">Selecciona uno para editar o pausa el anuncio al instante.</p>
+                <h2 className="text-lg font-semibold text-neutral-900">Listado de anuncios</h2>
+                <p className="text-sm text-neutral-500">Selecciona un profesional para actualizar datos o estado.</p>
               </div>
               <span className="text-xs uppercase tracking-[0.2em] text-neutral-400">{activeProfessionals} activos</span>
             </header>
@@ -189,11 +217,13 @@ export default function AdminDashboard() {
               {professionals.map((professional) => {
                 const isSelected = professional.id === selectedProfessionalId;
                 return (
-                  <li key={professional.id} className="rounded-2xl border border-neutral-200 bg-neutral-50 transition hover:bg-white">
+                  <li key={professional.id}>
                     <button
                       type="button"
-                      className={`flex w-full flex-col gap-3 rounded-2xl px-4 py-4 text-left transition ${
-                        isSelected ? 'border border-neutral-900 bg-white shadow-sm' : ''
+                      className={`flex w-full flex-col gap-3 rounded-2xl border px-4 py-4 text-left transition ${
+                        isSelected
+                          ? 'border-neutral-900 bg-white shadow-sm'
+                          : 'border-neutral-200 bg-neutral-50 hover:border-neutral-900 hover:bg-white'
                       }`}
                       onClick={() => setSelectedProfessionalId(professional.id)}
                     >
@@ -231,19 +261,18 @@ export default function AdminDashboard() {
               })}
             </ul>
           </section>
-        </section>
 
-        <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
-          <header className="mb-5 space-y-1">
-            <p className="text-xs uppercase tracking-[0.28em] text-neutral-400">Ficha seleccionada</p>
-            <h2 className="text-xl font-semibold text-neutral-900">{selectedProfessional?.name ?? 'Selecciona un perfil'}</h2>
-            {selectedProfessional && (
-              <p className="text-xs text-neutral-500">ID {selectedProfessional.id} · Estado {selectedProfessional.status}</p>
-            )}
-          </header>
+          <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+            <header className="mb-5 space-y-1">
+              <p className="text-xs uppercase tracking-[0.28em] text-neutral-400">Ficha seleccionada</p>
+              <h2 className="text-xl font-semibold text-neutral-900">{selectedProfessional?.name ?? 'Selecciona un perfil'}</h2>
+              {selectedProfessional && (
+                <p className="text-xs text-neutral-500">ID {selectedProfessional.id} · Estado {selectedProfessional.status}</p>
+              )}
+            </header>
 
-          {selectedProfessional ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
+            {selectedProfessional ? (
+              <form onSubmit={handleSubmit} className="space-y-5">
               <fieldset className="grid gap-4">
                 <label className="text-sm text-neutral-600">
                   Nombre profesional
@@ -337,7 +366,8 @@ export default function AdminDashboard() {
           ) : (
             <p className="text-sm text-neutral-500">Selecciona un profesional para editar su anuncio.</p>
           )}
-        </section>
+          </section>
+        </div>
       </main>
     </div>
   );
