@@ -7,6 +7,10 @@ const {
   updateProfile,
   changePassword,
   registerWithToken,
+  confirmEmail,
+  resendConfirmationEmail,
+  requestPasswordReset,
+  resetPassword,
 } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth');
 const { authLimiter } = require('../middleware/rateLimiter');
@@ -27,7 +31,11 @@ router.post(
       .isLength({ min: 6 })
       .withMessage('La contraseña debe tener al menos 6 caracteres'),
     body('name').notEmpty().withMessage('El nombre es requerido'),
-    body('role').optional().isIn(['USER', 'PUBLISHER']).withMessage('Rol inválido'),
+    body('role').isIn(['USER', 'PUBLISHER']).withMessage('Rol inválido'),
+    body('phone').notEmpty().withMessage('El teléfono es requerido'),
+    body('acceptTerms')
+      .custom((value) => value === true || value === 'true')
+      .withMessage('Debes aceptar los términos y condiciones'),
   ],
   register
 );
@@ -43,6 +51,7 @@ router.post(
   [
     body('email').isEmail().withMessage('Email inválido'),
     body('password').notEmpty().withMessage('La contraseña es requerida'),
+    body('role').optional().isIn(['ADMIN', 'USER', 'PUBLISHER']).withMessage('Rol inválido'),
   ],
   login
 );
@@ -104,6 +113,39 @@ router.post(
     body('name').notEmpty().withMessage('El nombre es requerido'),
   ],
   registerWithToken
+);
+
+router.post(
+  '/confirm-email',
+  authLimiter,
+  [body('token').notEmpty().withMessage('Token requerido')],
+  confirmEmail
+);
+
+router.post(
+  '/resend-confirmation',
+  authLimiter,
+  [body('email').isEmail().withMessage('Email inválido')],
+  resendConfirmationEmail
+);
+
+router.post(
+  '/forgot-password',
+  authLimiter,
+  [body('email').isEmail().withMessage('Email inválido')],
+  requestPasswordReset
+);
+
+router.post(
+  '/reset-password',
+  authLimiter,
+  [
+    body('token').notEmpty().withMessage('Token requerido'),
+    body('password')
+      .isLength({ min: 6 })
+      .withMessage('La contraseña debe tener al menos 6 caracteres'),
+  ],
+  resetPassword
 );
 
 module.exports = router;

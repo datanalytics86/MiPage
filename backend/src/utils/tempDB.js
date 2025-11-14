@@ -8,10 +8,23 @@ const dbPath = path.join(__dirname, '../../temp-db.json');
 const readDB = () => {
   try {
     const data = fs.readFileSync(dbPath, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    if (!parsed.emailLogs) {
+      parsed.emailLogs = [];
+    }
+    return parsed;
   } catch (error) {
     console.error('Error leyendo DB temporal:', error);
-    return { users: [], services: [], reviews: [], posts: [], favorites: [], notifications: [], serviceTypes: [] };
+    return {
+      users: [],
+      services: [],
+      reviews: [],
+      posts: [],
+      favorites: [],
+      notifications: [],
+      serviceTypes: [],
+      emailLogs: [],
+    };
   }
 };
 
@@ -36,6 +49,16 @@ class TempPrismaClient {
         if (where.id) {
           return db.users.find(u => u.id === where.id) || null;
         }
+        if (where.emailConfirmationToken) {
+          return db.users.find(
+            (u) => u.emailConfirmationToken && u.emailConfirmationToken === where.emailConfirmationToken
+          ) || null;
+        }
+        if (where.passwordResetToken) {
+          return db.users.find(
+            (u) => u.passwordResetToken && u.passwordResetToken === where.passwordResetToken
+          ) || null;
+        }
         return null;
       },
       findMany: async ({ where, orderBy, take, skip }) => {
@@ -44,7 +67,22 @@ class TempPrismaClient {
 
         if (where) {
           if (where.role) users = users.filter(u => u.role === where.role);
+          if (where.roles && Array.isArray(where.roles)) {
+            users = users.filter((u) => where.roles.includes(u.role));
+          }
           if (where.isActive !== undefined) users = users.filter(u => u.isActive === where.isActive);
+          if (where.emailConfirmed !== undefined) {
+            users = users.filter((u) => Boolean(u.emailConfirmed) === Boolean(where.emailConfirmed));
+          }
+          if (where.search) {
+            const term = where.search.toLowerCase();
+            users = users.filter(
+              (u) =>
+                u.email.toLowerCase().includes(term) ||
+                (u.name && u.name.toLowerCase().includes(term)) ||
+                (u.phone && u.phone.toLowerCase().includes(term))
+            );
+          }
         }
 
         if (orderBy && orderBy.createdAt) {
@@ -68,6 +106,13 @@ class TempPrismaClient {
           ...data,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
+          isVerified: data.isVerified ?? false,
+          emailConfirmed: data.emailConfirmed ?? false,
+          isActive: data.isActive ?? false,
+          emailConfirmationToken: data.emailConfirmationToken ?? null,
+          emailConfirmationTokenExpiresAt: data.emailConfirmationTokenExpiresAt ?? null,
+          passwordResetToken: data.passwordResetToken ?? null,
+          passwordResetTokenExpiresAt: data.passwordResetTokenExpiresAt ?? null,
         };
         db.users.push(newUser);
         writeDB(db);
@@ -85,7 +130,13 @@ class TempPrismaClient {
       },
       update: async ({ where, data }) => {
         const db = readDB();
-        const index = db.users.findIndex(u => u.id === where.id || u.email === where.email);
+        const index = db.users.findIndex((u) => {
+          if (where.id && u.id === where.id) return true;
+          if (where.email && u.email === where.email) return true;
+          if (where.emailConfirmationToken && u.emailConfirmationToken === where.emailConfirmationToken) return true;
+          if (where.passwordResetToken && u.passwordResetToken === where.passwordResetToken) return true;
+          return false;
+        });
         if (index === -1) throw new Error('Usuario no encontrado');
 
         db.users[index] = {
@@ -106,14 +157,66 @@ class TempPrismaClient {
         return deleted;
       },
       count: async ({ where }) => {
+        const users = await this.user.findMany({ where });
+        return users.length;
+      },
+    };
+
+    this.emailLog = {
+      findMany: async ({ where, orderBy, take, skip }) => {
         const db = readDB();
-        let users = db.users;
+        let logs = db.emailLogs;
 
         if (where) {
-          if (where.role) users = users.filter(u => u.role === where.role);
+          if (where.userId) logs = logs.filter((log) => log.userId === where.userId);
+          if (where.emailType) logs = logs.filter((log) => log.emailType === where.emailType);
+          if (where.status) logs = logs.filter((log) => log.status === where.status);
         }
 
-        return users.length;
+        if (orderBy && orderBy.sentAt) {
+          logs = logs.sort((a, b) => {
+            if (orderBy.sentAt === 'desc') {
+              return new Date(b.sentAt) - new Date(a.sentAt);
+            }
+            return new Date(a.sentAt) - new Date(b.sentAt);
+          });
+        }
+
+        if (skip) logs = logs.slice(skip);
+        if (take) logs = logs.slice(0, take);
+
+        return logs;
+      },
+      findUnique: async ({ where }) => {
+        const db = readDB();
+        if (where.id) {
+          return db.emailLogs.find((log) => log.id === where.id) || null;
+        }
+        return null;
+      },
+      create: async ({ data }) => {
+        const db = readDB();
+        const newLog = {
+          id: `email-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          ...data,
+          sentAt: data.sentAt || new Date().toISOString(),
+          status: data.status || 'pending',
+        };
+        db.emailLogs.push(newLog);
+        writeDB(db);
+        return newLog;
+      },
+      update: async ({ where, data }) => {
+        const db = readDB();
+        const index = db.emailLogs.findIndex((log) => log.id === where.id);
+        if (index === -1) throw new Error('Email log no encontrado');
+
+        db.emailLogs[index] = {
+          ...db.emailLogs[index],
+          ...data,
+        };
+        writeDB(db);
+        return db.emailLogs[index];
       },
     };
 

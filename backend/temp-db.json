@@ -5,41 +5,61 @@
       "email": "admin@mipage.cl",
       "password": "$2a$10$9mfq4Vp2AopX3L8fDVnZ/uu5FoYXXv7B9dU7IKQ9zd/G1nerhsRfC",
       "name": "Administrador",
+      "phone": "+56911111111",
       "role": "ADMIN",
-      "isVerified": true,
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
       "isActive": true,
+      "isVerified": true,
+      "emailConfirmed": true,
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
       "approvalStatus": "ACTIVE",
       "createdAt": "2025-11-12T17:34:36.069Z",
-      "updatedAt": "2025-11-12T17:34:36.070Z"
+      "updatedAt": "2025-11-12T17:34:36.070Z",
+      "lastLogin": null,
+      "emailConfirmationToken": null,
+      "emailConfirmationTokenExpiresAt": null,
+      "passwordResetToken": null,
+      "passwordResetTokenExpiresAt": null
     },
     {
       "id": "publisher-001",
       "email": "maria@example.com",
       "password": "$2a$10$9mfq4Vp2AopX3L8fDVnZ/uu5FoYXXv7B9dU7IKQ9zd/G1nerhsRfC",
       "name": "María González",
-      "role": "PUBLISHER",
-      "isVerified": true,
-      "bio": "Modelo profesional con 5 años de experiencia",
       "phone": "+56912345678",
+      "role": "PUBLISHER",
+      "bio": "Modelo profesional con 5 años de experiencia",
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=maria",
       "isActive": true,
+      "isVerified": true,
+      "emailConfirmed": true,
       "approvalStatus": "ACTIVE",
       "createdAt": "2025-11-12T17:34:36.070Z",
-      "updatedAt": "2025-11-12T17:34:36.070Z"
+      "updatedAt": "2025-11-12T17:34:36.070Z",
+      "lastLogin": null,
+      "emailConfirmationToken": null,
+      "emailConfirmationTokenExpiresAt": null,
+      "passwordResetToken": null,
+      "passwordResetTokenExpiresAt": null
     },
     {
       "id": "user-001",
       "email": "juan@example.com",
       "password": "$2a$10$9mfq4Vp2AopX3L8fDVnZ/uu5FoYXXv7B9dU7IKQ9zd/G1nerhsRfC",
       "name": "Juan Pérez",
+      "phone": "+56987654321",
       "role": "USER",
-      "isVerified": true,
       "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=juan",
       "isActive": true,
+      "isVerified": true,
+      "emailConfirmed": true,
       "approvalStatus": "ACTIVE",
       "createdAt": "2025-11-12T17:34:36.070Z",
-      "updatedAt": "2025-11-12T17:34:36.070Z"
+      "updatedAt": "2025-11-12T17:34:36.070Z",
+      "lastLogin": null,
+      "emailConfirmationToken": null,
+      "emailConfirmationTokenExpiresAt": null,
+      "passwordResetToken": null,
+      "passwordResetTokenExpiresAt": null
     }
   ],
   "services": [],
@@ -72,5 +92,6 @@
       "createdAt": "2025-11-12T17:34:36.071Z",
       "updatedAt": "2025-11-12T17:34:36.071Z"
     }
-  ]
+  ],
+  "emailLogs": []
 }

@@ -8,8 +8,11 @@ interface User {
   role: 'USER' | 'PUBLISHER' | 'ADMIN';
   avatar?: string;
   isVerified: boolean;
+  emailConfirmed?: boolean;
+  isActive?: boolean;
   phone?: string;
   bio?: string;
+  lastLogin?: string | null;
   metadata?: {
     businessName?: string;
     address?: string;

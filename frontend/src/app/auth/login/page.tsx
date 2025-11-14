@@ -1,167 +1,430 @@
 'use client';
 
-import { useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuthStore } from '@/lib/auth';
 
-type RoleOption = 'ADMIN' | 'PUBLISHER' | 'CLIENT';
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+type RoleOption = 'ADMIN' | 'PUBLISHER' | 'USER';
+
+type Mode = 'login' | 'register' | 'forgot';
 
 const roleLabels: Record<RoleOption, string> = {
   ADMIN: 'Admin',
   PUBLISHER: 'Oferente',
-  CLIENT: 'Usuario',
+  USER: 'Usuario',
 };
 
-const DEMO_CREDENTIALS: Record<
-  RoleOption,
-  {
-    email: string;
-    password: string;
-    user: { id: string; name: string; role: 'ADMIN' | 'PUBLISHER' | 'USER'; email: string; isVerified: boolean };
-  }
-> = {
-  ADMIN: {
-    email: 'admin@mipage.cl',
-    password: 'password123',
-    user: {
-      id: 'admin-001',
-      name: 'Administradora Demo',
-      role: 'ADMIN',
-      email: 'admin@mipage.cl',
-      isVerified: true,
-    },
-  },
-  PUBLISHER: {
-    email: 'maria@example.com',
-    password: 'password123',
-    user: {
-      id: 'publisher-001',
-      name: 'María Campos',
-      role: 'PUBLISHER',
-      email: 'maria@example.com',
-      isVerified: false,
-    },
-  },
-  CLIENT: {
-    email: 'juan@example.com',
-    password: 'password123',
-    user: {
-      id: 'client-001',
-      name: 'Juan Pérez',
-      role: 'USER',
-      email: 'juan@example.com',
-      isVerified: true,
-    },
-  },
+const loginDestinations: Record<RoleOption, string> = {
+  ADMIN: '/admin',
+  PUBLISHER: '/oferentes',
+  USER: '/clientes',
 };
 
-export default function LoginPage() {
+const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get('redirect');
   const reason = searchParams?.get('reason');
+
   const { setAuth } = useAuthStore();
 
+  const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<RoleOption | null>(null);
-  const [error, setError] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<RoleOption>('USER');
+  const [registerRole, setRegisterRole] = useState<RoleOption>('USER');
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<string | null>(null);
 
-  const handleLogin = async (role: RoleOption) => {
-    setSelectedRole(role);
-    setError('');
+  useEffect(() => {
+    if (mode !== 'login') {
+      setSelectedRole(mode === 'register' ? registerRole : 'USER');
+    }
+  }, [mode, registerRole]);
+
+  const resetMessages = () => {
+    setError(null);
+    setFeedback(null);
+    setPendingConfirmationEmail(null);
+  };
+
+  const handleLogin = async (event: FormEvent) => {
+    event.preventDefault();
+    resetMessages();
 
     if (!email || !password) {
-      setError('Completa email y contraseña.');
+      setError('Ingresa tu email y contraseña.');
+      return;
+    }
+
+    if (!selectedRole) {
+      setError('Selecciona el tipo de sesión.');
       return;
     }
 
     setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role: selectedRole }),
+      });
 
-    const credentials = DEMO_CREDENTIALS[role];
-    const emailMatch = email.trim().toLowerCase() === credentials.email;
-    const passwordMatch = password === credentials.password;
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data?.requiresConfirmation) {
+          setPendingConfirmationEmail(email.trim());
+        }
+        throw new Error(data?.error || 'No fue posible iniciar sesión.');
+      }
 
-    if (!emailMatch || !passwordMatch) {
-      setError('Credenciales incorrectas.');
+      const data = await response.json();
+      setAuth(data.user, data.token, { expiresInMs: data.expiresInMs });
+
+      const destination = redirect ?? loginDestinations[selectedRole];
+      router.push(destination);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado al iniciar sesión.');
+    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (event: FormEvent) => {
+    event.preventDefault();
+    resetMessages();
+
+    if (!email || !password || !confirmPassword || !name || !phone) {
+      setError('Completa todos los campos requeridos.');
       return;
     }
 
-    const token = `${role.toLowerCase()}-demo-token`;
-    setAuth(credentials.user, token, { expiresInMs: 1000 * 60 * 60 * 12 });
+    if (password !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
 
-    const fallback = role === 'ADMIN' ? '/admin' : role === 'PUBLISHER' ? '/oferentes' : '/clientes';
-    router.push(redirect ?? fallback);
-    setIsLoading(false);
+    if (!acceptTerms) {
+      setError('Debes aceptar los términos y condiciones.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          phone,
+          role: registerRole,
+          acceptTerms,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'No fue posible registrar tu cuenta.');
+      }
+
+      setFeedback('Registro exitoso. Revisa tu correo para confirmar la cuenta.');
+      setMode('login');
+      setPassword('');
+      setConfirmPassword('');
+      setAcceptTerms(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado al registrar la cuenta.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleForgotPassword = async (event: FormEvent) => {
+    event.preventDefault();
+    resetMessages();
+
+    if (!email) {
+      setError('Ingresa tu email para continuar.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'No fue posible solicitar la recuperación.');
+      }
+
+      setFeedback('Si tu correo existe, recibirás instrucciones para restablecer la contraseña.');
+      setMode('login');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado al solicitar recuperación.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!pendingConfirmationEmail) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/resend-confirmation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingConfirmationEmail }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.error || 'No fue posible reenviar el correo.');
+      }
+
+      setFeedback('Hemos reenviado el correo de activación. Revisa tu bandeja de entrada.');
+      setPendingConfirmationEmail(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error inesperado al reenviar la confirmación.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const roleButtons = useMemo(() => {
+    const roles: RoleOption[] = mode === 'register' ? ['USER', 'PUBLISHER'] : ['ADMIN', 'USER', 'PUBLISHER'];
+    return roles.map((role) => {
+      const isActive = (mode === 'register' ? registerRole : selectedRole) === role;
+      return (
+        <button
+          key={role}
+          type="button"
+          disabled={isLoading}
+          onClick={() => {
+            if (mode === 'register') {
+              setRegisterRole(role);
+            } else {
+              setSelectedRole(role);
+            }
+          }}
+          className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+            isActive
+              ? 'bg-white text-neutral-900 shadow'
+              : 'border border-white/20 bg-white/5 text-neutral-200 hover:border-white hover:text-white'
+          }`}
+        >
+          {roleLabels[role]}
+        </button>
+      );
+    });
+  }, [mode, registerRole, selectedRole, isLoading]);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-6 py-16 text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_55%)]" />
-      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-8 backdrop-blur">
-        <form className="space-y-6" autoComplete="off">
+      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/40 px-8 py-10 backdrop-blur">
+        <div className="mb-8 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400">
+          {(['login', 'register'] as Mode[]).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => {
+                resetMessages();
+                setMode(option);
+              }}
+              className={`transition ${mode === option ? 'text-white' : 'text-neutral-500 hover:text-white'}`}
+            >
+              {option === 'login' ? 'Ingresar' : 'Registrarse'}
+            </button>
+          ))}
+        </div>
+
+        <form
+          onSubmit={mode === 'login' ? handleLogin : mode === 'register' ? handleRegister : handleForgotPassword}
+          className="space-y-5"
+          autoComplete="off"
+        >
           <div className="space-y-4">
-            <label className="sr-only" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-white/30 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
-              autoComplete="email"
-              required
-            />
-            <label className="sr-only" htmlFor="password">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="Contraseña"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-white/30 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
-              autoComplete="current-password"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            {(Object.keys(roleLabels) as RoleOption[]).map((role) => {
-              const isActive = selectedRole === role;
-              return (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => handleLogin(role)}
-                  disabled={isLoading}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
-                    isActive
-                      ? 'bg-white text-neutral-900 shadow'
-                      : 'border border-white/20 bg-white/10 text-neutral-200 hover:border-white hover:text-white'
-                  } ${isLoading ? 'opacity-70' : ''}`}
-                >
-                  {roleLabels[role]}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="min-h-[1.5rem] text-center text-xs">
-            {error && <p className="text-red-300">{error}</p>}
-            {!error && reason === 'expired' && <p className="text-neutral-300">La sesión expiró, vuelve a iniciar sesión.</p>}
-            {!error && !reason && selectedRole && email && password && (
-              <p className="text-neutral-400">Listo para acceder como {roleLabels[selectedRole]}.</p>
+            <div>
+              <label className="sr-only" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="w-full rounded-xl border border-white/25 bg-white/85 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
+                autoComplete="email"
+                required
+              />
+            </div>
+            {(mode === 'login' || mode === 'register') && (
+              <div>
+                <label className="sr-only" htmlFor="password">
+                  Contraseña
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  placeholder="Contraseña"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="w-full rounded-xl border border-white/25 bg-white/85 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  required
+                />
+              </div>
+            )}
+            {mode === 'register' && (
+              <>
+                <input
+                  type="password"
+                  placeholder="Confirmar contraseña"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  className="w-full rounded-xl border border-white/25 bg-white/85 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
+                  autoComplete="new-password"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Nombre completo"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  className="w-full rounded-xl border border-white/25 bg-white/85 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
+                  required
+                />
+                <input
+                  type="tel"
+                  placeholder="Teléfono"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  className="w-full rounded-xl border border-white/25 bg-white/85 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
+                  required
+                />
+              </>
             )}
           </div>
+
+          <div className="space-y-4">
+            {mode !== 'forgot' && (
+              <div
+                className={`grid gap-3 text-xs uppercase tracking-wide ${
+                  mode === 'register' ? 'grid-cols-2' : 'grid-cols-3'
+                }`}
+              >
+                {roleButtons}
+              </div>
+            )}
+            {mode === 'register' && (
+              <label className="flex items-center gap-3 text-xs text-neutral-300">
+                <input
+                  type="checkbox"
+                  checked={acceptTerms}
+                  onChange={(event) => setAcceptTerms(event.target.checked)}
+                  className="h-4 w-4 rounded border border-white/30 bg-white/10 text-neutral-900 focus:ring-white"
+                />
+                <span>
+                  Acepto los{' '}
+                  <Link href="#" className="underline hover:text-white">
+                    términos y condiciones
+                  </Link>
+                  .
+                </span>
+              </label>
+            )}
+          </div>
+
+          <div className="min-h-[1.75rem] text-center text-xs leading-relaxed">
+            {error && <p className="text-red-300">{error}</p>}
+            {!error && feedback && <p className="text-emerald-300">{feedback}</p>}
+            {!error && !feedback && reason === 'expired' && (
+              <p className="text-neutral-300">La sesión expiró, vuelve a iniciar sesión.</p>
+            )}
+            {!error && !feedback && pendingConfirmationEmail && (
+              <p className="text-amber-300">
+                Debes confirmar tu correo antes de ingresar.
+                <button
+                  type="button"
+                  className="ml-2 underline hover:text-white"
+                  onClick={handleResendConfirmation}
+                  disabled={isLoading}
+                >
+                  Reenviar confirmación
+                </button>
+              </p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full rounded-full bg-white px-6 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-200 disabled:opacity-60"
+          >
+            {mode === 'login'
+              ? isLoading
+                ? 'Ingresando...'
+                : 'Ingresar'
+              : mode === 'register'
+              ? isLoading
+                ? 'Registrando...'
+                : 'Crear cuenta'
+              : isLoading
+              ? 'Enviando...'
+              : 'Enviar instrucciones'}
+          </button>
         </form>
+
+        {mode === 'login' && (
+          <div className="mt-6 text-center text-xs text-neutral-400">
+            <button
+              type="button"
+              onClick={() => {
+                resetMessages();
+                setMode('forgot');
+              }}
+              className="underline hover:text-white"
+            >
+              ¿Olvidaste contraseña?
+            </button>
+          </div>
+        )}
+
+        {mode === 'forgot' && (
+          <div className="mt-6 text-center text-xs text-neutral-400">
+            <button
+              type="button"
+              onClick={() => {
+                resetMessages();
+                setMode('login');
+              }}
+              className="underline hover:text-white"
+            >
+              Volver a iniciar sesión
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default LoginPage;

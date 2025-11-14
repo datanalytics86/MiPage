@@ -483,7 +483,7 @@ export default function HomePage() {
             <span aria-hidden="true" className="text-neutral-300">
               /
             </span>
-            <Link href="/auth/login?role=CLIENT" className="transition hover:text-neutral-900">
+            <Link href="/auth/login?role=USER" className="transition hover:text-neutral-900">
               Cliente
             </Link>
           </nav>
@@ -550,7 +550,7 @@ export default function HomePage() {
             <Link href="/auth/login?role=PUBLISHER" className="transition hover:text-neutral-900">
               Oferente
             </Link>
-            <Link href="/auth/login?role=CLIENT" className="transition hover:text-neutral-900">
+            <Link href="/auth/login?role=USER" className="transition hover:text-neutral-900">
               Cliente
             </Link>
           </nav>

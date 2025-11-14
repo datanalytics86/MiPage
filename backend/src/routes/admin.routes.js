@@ -5,6 +5,7 @@ const { authenticateToken, requireRole } = require('../middleware/auth');
 const metadataFieldsController = require('../controllers/metadataFields.controller');
 const userManagementController = require('../controllers/userManagement.controller');
 const serviceTypesController = require('../controllers/serviceTypes.controller');
+const adminUsersController = require('../controllers/adminUsers.controller');
 
 const router = express.Router();
 const prisma = new TempPrismaClient();
@@ -12,6 +13,17 @@ const prisma = new TempPrismaClient();
 // Proteger todas las rutas admin
 router.use(authenticateToken);
 router.use(requireRole('ADMIN'));
+
+// Gestión centralizada de usuarios
+router.get('/users', adminUsersController.listUsers);
+router.get('/users/:id', adminUsersController.getUser);
+router.patch('/users/:id', adminUsersController.updateUser);
+router.delete('/users/:id', adminUsersController.deleteUser);
+router.post('/users/:id/reset-password', adminUsersController.triggerPasswordReset);
+
+// Historial de emails
+router.get('/email-logs', adminUsersController.listEmailLogs);
+router.post('/email-logs/:id/resend', adminUsersController.resendEmail);
 
 /**
  * @route   GET /api/admin/stats

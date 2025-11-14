@@ -171,7 +171,7 @@ export default function ClientesInicio() {
               <p className="text-sm text-neutral-500">Cada entrada conserva fecha, calificación y estado visible en tu panel.</p>
             </div>
             <Link
-              href="/auth/login?role=CLIENT"
+              href="/auth/login?role=USER"
               className="text-xs uppercase tracking-[0.28em] text-neutral-500 transition hover:text-neutral-900"
             >
               Ver mi actividad
