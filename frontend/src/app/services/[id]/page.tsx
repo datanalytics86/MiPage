@@ -1,307 +1,319 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
-import { servicesAPI } from '@/lib/api';
-import { formatPrice, getCategoryLabel, formatDate } from '@/lib/utils';
-import { MapPinIcon, StarIcon, ClockIcon, TagIcon } from '@heroicons/react/24/outline';
-import Spinner from '@/components/ui/Spinner';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import toast from 'react-hot-toast';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+
+import {
+  getProfessionalById,
+  type ProfessionalService,
+} from '@/data/professionals';
+
+const formatPriceCLP = (value: number) =>
+  new Intl.NumberFormat('es-CL', {
+    style: 'currency',
+    currency: 'CLP',
+    maximumFractionDigits: 0,
+  }).format(value);
+
+const whatsappUrl = (number: string) =>
+  `https://wa.me/${number.replace(/[^0-9]/g, '')}`;
+
+const telUrl = (number: string) => `tel:${number.replace(/[^0-9+]/g, '')}`;
+
+function Stars({ rating }: { rating: number }) {
+  return (
+    <div className="flex items-center gap-1" aria-label={`Calificación promedio ${rating.toFixed(1)} de 5`}>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <span
+          key={index}
+          className={index < Math.round(rating) ? 'text-yellow-500' : 'text-neutral-300'}
+        >
+          ★
+        </span>
+      ))}
+      <span className="text-sm font-medium text-neutral-600">{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  subtitle,
+  children,
+  id,
+}: {
+  title: string;
+  subtitle?: string;
+  children: ReactNode;
+  id?: string;
+}) {
+  return (
+    <section id={id} className="space-y-4 rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-[0_14px_28px_rgba(15,15,15,0.06)]">
+      <header className="space-y-1">
+        <h2 className="text-lg font-semibold tracking-tight text-neutral-900">{title}</h2>
+        {subtitle ? <p className="text-sm text-neutral-500">{subtitle}</p> : null}
+      </header>
+      <div className="space-y-4 text-neutral-700">{children}</div>
+    </section>
+  );
+}
 
 export default function ServiceDetailPage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const router = useRouter();
-  const [service, setService] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [activePhoto, setActivePhoto] = useState(0);
 
+  const professionalId = useMemo(() => {
+    const id = params?.id;
+    if (!id || Array.isArray(id)) {
+      return '';
+    }
+    return id;
+  }, [params]);
+
+  const professional: ProfessionalService | null = useMemo(() => {
+    if (!professionalId) return null;
+    return getProfessionalById(professionalId);
+  }, [professionalId]);
+
   useEffect(() => {
-    if (params.id) {
-      fetchService();
+    if (!professionalId) {
+      router.replace('/');
     }
-  }, [params.id]);
+  }, [professionalId, router]);
 
-  const fetchService = async () => {
-    try {
-      setLoading(true);
-      const { data } = await servicesAPI.getById(params.id as string);
-      setService(data);
-    } catch (error: any) {
-      console.error('Error al cargar servicio:', error);
-      toast.error('Servicio no encontrado');
-      router.push('/services');
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (professionalId && !professional) {
+      router.replace('/');
     }
-  };
+  }, [professionalId, professional, router]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  if (!service) {
+  if (!professional) {
     return null;
   }
 
-  const photos = service.photos || [];
+  const hasReviews = professional.reviews.length > 0;
+  const averageRating = professional.rating ?? 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-primary-600">
-              MiPage
-            </Link>
-            <Link href="/services" className="text-gray-600 hover:text-gray-900">
-              ← Volver a servicios
-            </Link>
-          </div>
+    <div className="min-h-screen bg-neutral-50 text-neutral-900">
+      <header className="border-b border-neutral-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link href="/" className="text-sm font-medium text-neutral-600 transition hover:text-neutral-900">
+            ← Volver al catálogo
+          </Link>
+          <span className="text-xs uppercase tracking-[0.28em] text-neutral-400">MiWeb · Servicios destacados</span>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Gallery */}
-          <div className="lg:col-span-2">
-            {/* Main Photo */}
-            <div className="relative aspect-[16/10] bg-gray-200 rounded-2xl overflow-hidden mb-4">
-              {photos.length > 0 ? (
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
+          <div className="space-y-10">
+            <section className="space-y-4 rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-[0_18px_36px_rgba(15,15,15,0.08)]">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-neutral-200">
                 <Image
-                  src={photos[activePhoto]}
-                  alt={service.title}
+                  src={professional.gallery[activePhoto] ?? professional.image}
+                  alt={`${professional.name} - imagen ${activePhoto + 1}`}
                   fill
                   className="object-cover"
+                  sizes="(min-width: 1024px) 640px, 100vw"
                 />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-gray-400 text-6xl">📷</span>
-                </div>
-              )}
-
-              {service.isPremium && (
-                <div className="absolute top-4 left-4">
-                  <Badge variant="warning" size="lg">⭐ Premium</Badge>
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {photos.length > 1 && (
-              <div className="grid grid-cols-4 gap-4">
-                {photos.map((photo: string, index: number) => (
-                  <button
-                    key={index}
-                    onClick={() => setActivePhoto(index)}
-                    className={`relative aspect-square rounded-lg overflow-hidden ${
-                      activePhoto === index ? 'ring-4 ring-primary-600' : ''
-                    }`}
-                  >
-                    <Image src={photo} alt={`Foto ${index + 1}`} fill className="object-cover" />
-                  </button>
-                ))}
               </div>
-            )}
-
-            {/* Description */}
-            <div className="mt-8 bg-white rounded-2xl p-6">
-              <h2 className="text-2xl font-bold mb-4">Descripción</h2>
-              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {service.description}
-              </p>
-
-              {service.availability && (
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-semibold mb-2 flex items-center gap-2">
-                    <ClockIcon className="h-5 w-5" />
-                    Disponibilidad
-                  </h3>
-                  <p className="text-gray-700">
-                    {service.availability.days?.join(', ')}
-                  </p>
-                  <p className="text-gray-600 text-sm mt-1">
-                    {service.availability.hours}
-                  </p>
+              {professional.gallery.length > 1 && (
+                <div className="grid gap-3 sm:grid-cols-4">
+                  {professional.gallery.map((photo, index) => (
+                    <button
+                      key={photo}
+                      type="button"
+                      onClick={() => setActivePhoto(index)}
+                      className={`relative aspect-square overflow-hidden rounded-xl border transition ${
+                        activePhoto === index
+                          ? 'border-neutral-900 shadow-[0_8px_16px_rgba(15,15,15,0.12)]'
+                          : 'border-transparent'
+                      }`}
+                      aria-label={`Ver imagen ${index + 1}`}
+                    >
+                      <Image src={photo} alt={`${professional.name} miniatura ${index + 1}`} fill className="object-cover" />
+                    </button>
+                  ))}
                 </div>
               )}
-            </div>
+            </section>
 
-            {/* Reviews */}
-            <div className="mt-8 bg-white rounded-2xl p-6">
-              <h2 className="text-2xl font-bold mb-4">
-                Reseñas ({service.totalReviews || 0})
-              </h2>
+            <SectionCard
+              title="Descripción del servicio"
+              subtitle={`${professional.service} · ${professional.nationality}`}
+            >
+              <p className="text-base leading-relaxed text-neutral-700">{professional.description}</p>
+            </SectionCard>
 
-              {service.reviews && service.reviews.length > 0 ? (
-                <div className="space-y-6">
-                  {service.reviews.map((review: any) => (
-                    <div key={review.id} className="border-b pb-6 last:border-b-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                          {review.user.avatar ? (
-                            <Image
-                              src={review.user.avatar}
-                              alt={review.user.name}
-                              width={40}
-                              height={40}
-                              className="rounded-full"
-                            />
-                          ) : (
-                            <span className="text-xl">👤</span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold">{review.user.name}</p>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <StarIcon
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating
-                                    ? 'text-yellow-500 fill-yellow-500'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <span className="text-sm text-gray-500">
-                          {formatDate(review.createdAt)}
+            <SectionCard
+              title="Comentarios del servicio"
+              subtitle="Foro trazable entre oferente, moderación y clientes verificados"
+            >
+              <div className="space-y-3">
+                <textarea
+                  placeholder="Escribe un comentario..."
+                  className="w-full rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-700 transition focus:border-neutral-900 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+                  rows={3}
+                  disabled
+                />
+                <p className="text-xs text-neutral-400">
+                  Inicia sesión para participar. Este canal registra cada intercambio por fecha y hora.
+                </p>
+              </div>
+
+              <ul className="space-y-4">
+                {professional.thread.map((entry) => (
+                  <li key={entry.id} className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-neutral-800">
+                        <span>{entry.author}</span>
+                        <span className="rounded-full bg-neutral-900/10 px-2 py-0.5 text-xs uppercase tracking-[0.18em] text-neutral-600">
+                          {entry.role}
                         </span>
                       </div>
-                      <p className="text-gray-700">{review.comment}</p>
-
-                      {review.response && (
-                        <div className="mt-3 ml-12 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm font-semibold text-gray-900 mb-1">
-                            Respuesta del publicador:
-                          </p>
-                          <p className="text-sm text-gray-700">{review.response}</p>
-                        </div>
-                      )}
+                      <span className="text-xs text-neutral-500">{entry.timestamp}</span>
                     </div>
+                    <p className="mt-2 text-sm leading-relaxed text-neutral-700">{entry.message}</p>
+                  </li>
+                ))}
+              </ul>
+            </SectionCard>
+
+            <SectionCard
+              id="bitacora"
+              title="Bitácora del oferente"
+              subtitle="Registro horario de publicaciones, promociones y ajustes"
+            >
+              <ol className="space-y-3">
+                {professional.activity.map((item) => (
+                  <li key={item.id} className="rounded-2xl border border-neutral-200 bg-white px-4 py-3">
+                    <p className="text-xs font-medium uppercase tracking-[0.24em] text-neutral-500">
+                      {item.timestamp}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-neutral-800">{item.headline}</p>
+                    <p className="text-sm text-neutral-600">{item.detail}</p>
+                  </li>
+                ))}
+              </ol>
+            </SectionCard>
+
+            <SectionCard id="resenas" title="Reseñas de usuarios" subtitle="Experiencias verificadas">
+              {hasReviews ? (
+                <div className="space-y-4">
+                  {professional.reviews.map((review) => (
+                    <article key={review.id} className="rounded-2xl border border-neutral-200 bg-white p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-neutral-800">{review.author}</p>
+                          {review.verified ? (
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                              ✓ Verificado
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="text-xs text-neutral-500">{review.date}</span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-1">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <span
+                            key={index}
+                            className={index < review.rating ? 'text-yellow-500' : 'text-neutral-300'}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-3 text-sm text-neutral-700">{review.comment}</p>
+                    </article>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-8">
-                  Aún no hay reseñas para este servicio
+                <p className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-4 py-5 text-sm text-neutral-500">
+                  Aún no hay reseñas para este servicio.
                 </p>
               )}
-            </div>
+            </SectionCard>
           </div>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl p-6 sticky top-24">
-              <div className="mb-6">
-                <Badge variant="info" className="mb-2">
-                  {getCategoryLabel(service.category)}
-                </Badge>
-                <h1 className="text-3xl font-bold text-gray-900">{service.title}</h1>
+          <aside className="space-y-6">
+            <div className="space-y-6 rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-[0_18px_36px_rgba(15,15,15,0.08)]">
+              <div className="space-y-1">
+                <p className="text-xs uppercase tracking-[0.28em] text-neutral-400">Servicio</p>
+                <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">{professional.name}</h1>
+                <p className="text-sm text-neutral-500">{professional.service}</p>
               </div>
 
-              {/* Price */}
-              <div className="mb-6 pb-6 border-b">
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-primary-600">
-                    {formatPrice(service.price)}
-                  </span>
-                  <span className="text-gray-600">/ {service.priceType}</span>
-                </div>
+              <div className="space-y-2 rounded-2xl bg-neutral-900 px-5 py-4 text-white">
+                <p className="text-sm uppercase tracking-[0.28em] text-white/60">Tarifa desde</p>
+                <p className="text-3xl font-semibold">{formatPriceCLP(professional.price)}</p>
               </div>
 
-              {/* Location */}
-              <div className="mb-6 pb-6 border-b">
-                <div className="flex items-start gap-3">
-                  <MapPinIcon className="h-6 w-6 text-gray-400 mt-1" />
-                  <div>
-                    <p className="font-semibold">{service.city}</p>
-                    <p className="text-sm text-gray-600">{service.location}</p>
-                    {service.region && (
-                      <p className="text-sm text-gray-600">{service.region}</p>
-                    )}
+              {professional.rating ? (
+                <div className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                  <p className="text-xs uppercase tracking-[0.24em] text-neutral-500">Calificación promedio</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <Stars rating={averageRating} />
+                    <span className="text-sm text-neutral-500">{professional.ratingCount} reseñas</span>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
-              {/* Rating */}
-              {service.averageRating > 0 && (
-                <div className="mb-6 pb-6 border-b">
-                  <div className="flex items-center gap-2">
-                    <StarIcon className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                    <span className="text-2xl font-bold">{service.averageRating.toFixed(1)}</span>
-                    <span className="text-gray-600">({service.totalReviews} reseñas)</span>
-                  </div>
+              <div className="space-y-2 text-sm text-neutral-600">
+                <div className="flex items-center gap-2">
+                  <span aria-hidden="true">📍</span>
+                  {professional.location}
                 </div>
-              )}
-
-              {/* Provider */}
-              <div className="mb-6 pb-6 border-b">
-                <p className="text-sm text-gray-600 mb-2">Publicado por</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                    {service.user.avatar ? (
-                      <Image
-                        src={service.user.avatar}
-                        alt={service.user.name}
-                        width={48}
-                        height={48}
-                        className="rounded-full"
-                      />
-                    ) : (
-                      <span className="text-2xl">👤</span>
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-semibold flex items-center gap-1">
-                      {service.user.name}
-                      {service.user.isVerified && (
-                        <span className="text-blue-500">✓</span>
-                      )}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Miembro desde {formatDate(service.user.createdAt)}
-                    </p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span aria-hidden="true">📞</span>
+                  <a
+                    href={telUrl(professional.phone)}
+                    className="text-neutral-700 underline decoration-neutral-300 decoration-2 underline-offset-4 transition hover:decoration-neutral-900"
+                  >
+                    {professional.phone}
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span aria-hidden="true">💬</span>
+                  <a
+                    href={whatsappUrl(professional.whatsapp)}
+                    className="text-neutral-700 underline decoration-neutral-300 decoration-2 underline-offset-4 transition hover:decoration-neutral-900"
+                  >
+                    {professional.whatsapp} (WhatsApp)
+                  </a>
                 </div>
               </div>
 
-              {/* CTA Buttons */}
-              <div className="space-y-3">
-                <Button variant="primary" size="lg" fullWidth>
-                  Contactar
-                </Button>
-                <Button variant="outline" size="lg" fullWidth>
-                  Compartir
-                </Button>
-              </div>
+              <a
+                href="#resenas"
+                className="block rounded-full bg-emerald-500 px-6 py-3 text-center text-sm font-semibold uppercase tracking-[0.24em] text-white transition hover:bg-emerald-600"
+              >
+                Leer reseñas de usuarios
+              </a>
 
-              {/* Stats */}
-              <div className="mt-6 pt-6 border-t grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-primary-600">{service.views}</p>
-                  <p className="text-sm text-gray-600">Visualizaciones</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-primary-600">
-                    {service._count?.favorites || 0}
-                  </p>
-                  <p className="text-sm text-gray-600">Favoritos</p>
-                </div>
-              </div>
+              <a
+                href="#bitacora"
+                className="block rounded-full border border-neutral-200 px-6 py-3 text-center text-sm font-semibold uppercase tracking-[0.24em] text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+              >
+                Ver bitácora completa
+              </a>
             </div>
-          </div>
+
+            <div className="rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-[0_12px_24px_rgba(15,15,15,0.06)]">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.28em] text-neutral-500">Pautas rápidas</h2>
+              <ul className="mt-4 space-y-3 text-sm text-neutral-600">
+                <li>Reservas confirmadas tras validación de admin.</li>
+                <li>La agenda se actualiza cada hora hábil.</li>
+                <li>Los comentarios se moderan antes de publicarse.</li>
+              </ul>
+            </div>
+          </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
