@@ -103,7 +103,7 @@ export default function HomePage() {
               href={`/services/${professional.id}`}
               className="group overflow-hidden rounded-[28px] border border-neutral-200/60 bg-white shadow-[0_18px_40px_rgba(15,15,15,0.08)] transition hover:-translate-y-1 hover:shadow-[0_28px_60px_rgba(15,15,15,0.12)]"
             >
-              <div className="relative h-72 w-full overflow-hidden">
+              <div className="relative h-64 w-full overflow-hidden">
                 <Image
                   src={professional.image}
                   alt={professional.name}

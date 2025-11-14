@@ -87,6 +87,20 @@ export const professionals: ProfessionalService[] = [
         timestamp: '03/11/2024 · 18:42',
         message: 'Cargué clips cortos para fashion film con licencias de audio liberadas. Espero feedback.',
       },
+      {
+        id: 'aurora-thread-04',
+        author: 'Moderación',
+        role: 'moderacion',
+        timestamp: '01/11/2024 · 09:20',
+        message: 'Confirmamos recepción de los contratos de cesión de imagen. Se adjuntaron al repositorio del cliente.',
+      },
+      {
+        id: 'aurora-thread-05',
+        author: 'Daniela P. (Cliente)',
+        role: 'cliente',
+        timestamp: '31/10/2024 · 21:05',
+        message: 'Gracias por la entrega anticipada del material detrás de cámaras. Lo compartimos con la marca.',
+      },
     ],
     activity: [
       {
@@ -164,10 +178,24 @@ export const professionals: ProfessionalService[] = [
       },
       {
         id: 'isabela-thread-03',
-        author: 'Cliente Verificado',
+        author: 'Isabela Mena',
+        role: 'oferente',
+        timestamp: '02/11/2024 · 12:05',
+        message: 'Subí nuevas referencias de aromaterapia con mezcla cítrica y relajante.',
+      },
+      {
+        id: 'isabela-thread-04',
+        author: 'Moderación',
+        role: 'moderacion',
+        timestamp: '01/11/2024 · 17:18',
+        message: 'Se aprobó el banner promocional para fines de semana. Actualizamos la tarifa destacada.',
+      },
+      {
+        id: 'isabela-thread-05',
+        author: 'Cliente verificado',
         role: 'cliente',
-        timestamp: '02/11/2024 · 17:10',
-        message: 'Gracias por la atención personalizada. Reservé dos sesiones más para noviembre.',
+        timestamp: '31/10/2024 · 14:46',
+        message: 'Confirmo asistencia a la sesión de mantenimiento. Gracias por acomodar el horario.',
       },
     ],
     activity: [

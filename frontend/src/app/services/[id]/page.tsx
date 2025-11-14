@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -79,20 +79,49 @@ export default function ServiceDetailPage() {
     return getProfessionalById(professionalId);
   }, [professionalId]);
 
-  useEffect(() => {
-    if (!professionalId) {
-      router.replace('/');
-    }
-  }, [professionalId, router]);
-
-  useEffect(() => {
-    if (professionalId && !professional) {
-      router.replace('/');
-    }
-  }, [professionalId, professional, router]);
+  if (!professionalId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
+        <div className="max-w-md space-y-4 text-center text-neutral-700">
+          <p className="text-sm uppercase tracking-[0.32em] text-neutral-400">MiWeb · Servicios</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+            Cargando información del servicio
+          </h1>
+          <p className="text-sm text-neutral-500">
+            Estamos preparando los detalles completos de este anuncio. Si la página no se actualiza, vuelve al catálogo.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.replace('/')}
+            className="rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.24em] text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+          >
+            Volver al catálogo
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!professional) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-4">
+        <div className="max-w-md space-y-4 text-center text-neutral-700">
+          <p className="text-sm uppercase tracking-[0.32em] text-neutral-400">MiWeb · Servicios</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Servicio no encontrado</h1>
+          <p className="text-sm text-neutral-500">
+            El enlace que intentas abrir no está disponible o fue retirado por el administrador. Selecciona otra opción en el
+            catálogo para continuar explorando.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.replace('/')}
+            className="rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-semibold uppercase tracking-[0.24em] text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+          >
+            Volver al catálogo
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const hasReviews = professional.reviews.length > 0;
@@ -162,26 +191,41 @@ export default function ServiceDetailPage() {
                   disabled
                 />
                 <p className="text-xs text-neutral-400">
-                  Inicia sesión para participar. Este canal registra cada intercambio por fecha y hora.
+                  Inicia sesión con tu cuenta verificada para sumar comentarios. Cada aporte queda registrado con fecha, hora y rol
+                  participante.
                 </p>
               </div>
 
-              <ul className="space-y-4">
-                {professional.thread.map((entry) => (
-                  <li key={entry.id} className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-neutral-800">
-                        <span>{entry.author}</span>
-                        <span className="rounded-full bg-neutral-900/10 px-2 py-0.5 text-xs uppercase tracking-[0.18em] text-neutral-600">
-                          {entry.role}
-                        </span>
-                      </div>
-                      <span className="text-xs text-neutral-500">{entry.timestamp}</span>
-                    </div>
-                    <p className="mt-2 text-sm leading-relaxed text-neutral-700">{entry.message}</p>
-                  </li>
-                ))}
-              </ul>
+              <ol className="space-y-4">
+                {professional.thread.map((entry, index) => {
+                  const previous = professional.thread[index - 1];
+                  const showDivider = previous && previous.timestamp.split(' · ')[0] !== entry.timestamp.split(' · ')[0];
+
+                  return (
+                    <Fragment key={entry.id}>
+                      {showDivider ? (
+                        <div className="flex items-center gap-3 text-xs uppercase tracking-[0.28em] text-neutral-400">
+                          <span className="h-px flex-1 bg-neutral-200" aria-hidden="true" />
+                          {entry.timestamp.split(' · ')[0]}
+                          <span className="h-px flex-1 bg-neutral-200" aria-hidden="true" />
+                        </div>
+                      ) : null}
+                      <li className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-neutral-800">
+                            <span>{entry.author}</span>
+                            <span className="rounded-full bg-neutral-900/10 px-2 py-0.5 text-[11px] uppercase tracking-[0.2em] text-neutral-600">
+                              {entry.role}
+                            </span>
+                          </div>
+                          <span className="text-xs text-neutral-500">{entry.timestamp}</span>
+                        </div>
+                        <p className="mt-2 text-sm leading-relaxed text-neutral-700">{entry.message}</p>
+                      </li>
+                    </Fragment>
+                  );
+                })}
+              </ol>
             </SectionCard>
 
             <SectionCard
@@ -290,9 +334,9 @@ export default function ServiceDetailPage() {
 
               <a
                 href="#resenas"
-                className="block rounded-full bg-emerald-500 px-6 py-3 text-center text-sm font-semibold uppercase tracking-[0.24em] text-white transition hover:bg-emerald-600"
+                className="block rounded-full bg-emerald-500 px-6 py-3 text-center text-sm font-bold uppercase tracking-[0.24em] text-white transition hover:bg-emerald-600"
               >
-                Leer reseñas de usuarios
+                Leer reviews usuarios
               </a>
 
               <a
