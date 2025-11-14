@@ -11,6 +11,30 @@ const API_URL = configuredApiUrl && configuredApiUrl !== '' ? configuredApiUrl.r
 
 const buildApiUrl = (path: string) => `${API_URL}${path}`;
 
+const requestWithFallback = async (path: string, initFactory: () => RequestInit) => {
+  const endpoints = API_URL ? [buildApiUrl(path), path] : [path];
+  let lastError: unknown = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const init = initFactory();
+      const response = await fetch(endpoint, init);
+      return response;
+    } catch (error) {
+      lastError = error;
+
+      const isNetworkError = error instanceof TypeError && error.message === 'Failed to fetch';
+      const attemptedFallback = endpoint === path;
+
+      if (!isNetworkError || attemptedFallback) {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError ?? new Error('Error de red desconocido');
+};
+
 type RoleOption = 'ADMIN' | 'PUBLISHER' | 'USER';
 
 type Mode = 'login' | 'register' | 'forgot';
@@ -83,11 +107,11 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(buildApiUrl('/api/auth/login'), {
+      const response = await requestWithFallback('/api/auth/login', () => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, role: selectedRole }),
-      });
+      }));
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
@@ -134,7 +158,7 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(buildApiUrl('/api/auth/register'), {
+      const response = await requestWithFallback('/api/auth/register', () => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -145,7 +169,7 @@ const LoginPage = () => {
           role: registerRole,
           acceptTerms,
         }),
-      });
+      }));
 
       const data = await response.json().catch(() => ({}));
 
@@ -176,11 +200,11 @@ const LoginPage = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(buildApiUrl('/api/auth/forgot-password'), {
+      const response = await requestWithFallback('/api/auth/forgot-password', () => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
-      });
+      }));
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
@@ -200,11 +224,11 @@ const LoginPage = () => {
     if (!pendingConfirmationEmail) return;
     setIsLoading(true);
     try {
-      const response = await fetch(buildApiUrl('/api/auth/resend-confirmation'), {
+      const response = await requestWithFallback('/api/auth/resend-confirmation', () => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingConfirmationEmail }),
-      });
+      }));
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
