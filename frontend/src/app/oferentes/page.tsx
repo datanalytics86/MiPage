@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 const activationSteps = [
@@ -27,6 +28,60 @@ const supportNotes = [
   'Tutorial de fotografía premium y guía de estilo minimalista.',
   'Plantilla editable para armar promociones estacionales.',
   'Soporte directo en horario extendido via chat editorial.',
+];
+
+const storyTimeline = [
+  {
+    id: 'story-001',
+    publishedAt: '05 Nov 2024 · 09:12',
+    image:
+      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=640&q=80',
+    caption: 'Serie “Golden hour” lista para revisión editorial.',
+    comments: [
+      {
+        id: 'c-01',
+        author: 'Equipo Admin',
+        timestamp: '05 Nov · 09:24',
+        text: 'Calidad aprobada. Se agenda publicación para las 12:00.',
+      },
+    ],
+  },
+  {
+    id: 'story-002',
+    publishedAt: '02 Nov 2024 · 17:40',
+    image:
+      'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=640&q=80',
+    caption: 'Nuevo set sensorial “Raíces” con aromaterapia y luz cálida.',
+    comments: [
+      {
+        id: 'c-02',
+        author: 'Moderación',
+        timestamp: '02 Nov · 17:55',
+        text: 'Solicitada descripción de aceites utilizados para ficha pública.',
+      },
+      {
+        id: 'c-03',
+        author: 'Publicante',
+        timestamp: '02 Nov · 18:10',
+        text: 'Ficha actualizada con lista completa de productos.',
+      },
+    ],
+  },
+  {
+    id: 'story-003',
+    publishedAt: '29 Oct 2024 · 11:05',
+    image:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=640&q=80',
+    caption: 'Making-of de campaña cápsula “Líneas puras”.',
+    comments: [
+      {
+        id: 'c-04',
+        author: 'Editor Visual',
+        timestamp: '29 Oct · 11:20',
+        text: 'Recortaremos clip 03 para mantener ritmo del carrusel.',
+      },
+    ],
+  },
 ];
 
 export default function OferentesInicio() {
@@ -125,6 +180,55 @@ export default function OferentesInicio() {
           <p className="mt-4">
             Si necesitas acelerar una campaña o pausar temporalmente un anuncio, escribe al equipo editorial; ellos gestionan la petición dentro del dashboard sin que tengas que salir de este portal.
           </p>
+        </section>
+
+        <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900">Historias en construcción</h2>
+              <p className="text-sm text-neutral-500">Cada subida queda trazada con comentarios del equipo antes de publicarse.</p>
+            </div>
+            <Link
+              href="/auth/login?role=PUBLISHER"
+              className="text-xs uppercase tracking-[0.28em] text-neutral-500 transition hover:text-neutral-900"
+            >
+              Acceder al panel
+            </Link>
+          </div>
+
+          <ul className="mt-6 space-y-4">
+            {storyTimeline.map((story) => (
+              <li key={story.id} className="rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-neutral-200 sm:w-44">
+                    <Image
+                      src={story.image}
+                      alt={story.caption}
+                      fill
+                      sizes="(min-width: 640px) 176px, 100vw"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-neutral-900">{story.caption}</p>
+                      <span className="text-xs uppercase tracking-[0.26em] text-neutral-500">{story.publishedAt}</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-neutral-600">
+                      {story.comments.map((comment) => (
+                        <li key={comment.id} className="rounded-2xl border border-neutral-200 bg-white px-4 py-3">
+                          <p className="text-xs uppercase tracking-[0.24em] text-neutral-400">
+                            {comment.author} · {comment.timestamp}
+                          </p>
+                          <p className="mt-1 text-neutral-600">{comment.text}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       </main>
     </div>

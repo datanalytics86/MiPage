@@ -29,6 +29,42 @@ const benefits = [
   'Panel personal para seguir respuestas de oferentes y estado de moderación.',
 ];
 
+const reviewLedger = [
+  {
+    id: 'review-001',
+    client: 'María Contreras',
+    professional: 'Aurora Ramírez',
+    service: 'Editorial & Fashion Film',
+    rating: 5,
+    submittedAt: '04 Nov 2024 · 21:18',
+    status: 'Publicada',
+    comment:
+      'Dirección impecable y tiempos perfectos. La coordinación previa facilitó todo el rodaje.',
+  },
+  {
+    id: 'review-002',
+    client: 'Diego Vargas',
+    professional: 'Ignacio Verdugo',
+    service: 'Masajes deportivos',
+    rating: 4,
+    submittedAt: '03 Nov 2024 · 12:42',
+    status: 'En moderación',
+    comment:
+      'Excelente técnica, solicité ajuste de presión y respondió de inmediato. Esperando aprobación para actualizar foto.',
+  },
+  {
+    id: 'review-003',
+    client: 'Claudia Reyes',
+    professional: 'Emilia Sofía',
+    service: 'Masajes sensoriales',
+    rating: 5,
+    submittedAt: '29 Oct 2024 · 19:05',
+    status: 'Publicada',
+    comment:
+      'Ambiente cuidadosamente diseñado, aromaterapia y playlists alineados con la sesión. Repetiré.',
+  },
+];
+
 export default function ClientesInicio() {
   return (
     <div className="min-h-screen bg-[#f7f6f4] text-neutral-900">
@@ -126,6 +162,44 @@ export default function ClientesInicio() {
           <p className="mt-4">
             Si detectas información inexacta, puedes reportarla desde tu panel; el equipo editorial responderá dentro de las siguientes 12 horas hábiles.
           </p>
+        </section>
+
+        <section className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900">Historial de reseñas</h2>
+              <p className="text-sm text-neutral-500">Cada entrada conserva fecha, calificación y estado visible en tu panel.</p>
+            </div>
+            <Link
+              href="/auth/login?role=CLIENT"
+              className="text-xs uppercase tracking-[0.28em] text-neutral-500 transition hover:text-neutral-900"
+            >
+              Ver mi actividad
+            </Link>
+          </div>
+
+          <ul className="mt-6 space-y-4">
+            {reviewLedger.map((review) => (
+              <li key={review.id} className="rounded-3xl border border-neutral-200 bg-neutral-50 p-5">
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-neutral-900">{review.client}</p>
+                    <span className="text-xs uppercase tracking-[0.26em] text-neutral-500">{review.submittedAt}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs uppercase tracking-[0.28em] text-neutral-400">
+                    <span>{'⭐'.repeat(review.rating)}{review.rating < 5 ? '☆'.repeat(5 - review.rating) : ''}</span>
+                    <span className="h-3 w-px bg-neutral-300" aria-hidden />
+                    <span>{review.professional}</span>
+                    <span className="h-3 w-px bg-neutral-300" aria-hidden />
+                    <span>{review.service}</span>
+                    <span className="h-3 w-px bg-neutral-300" aria-hidden />
+                    <span className={review.status === 'Publicada' ? 'text-emerald-500' : 'text-neutral-500'}>{review.status}</span>
+                  </div>
+                  <p className="text-sm text-neutral-600">{review.comment}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
       </main>
     </div>
