@@ -18,6 +18,12 @@ const roleLabels: Record<RoleOption, string> = {
   USER: 'Usuario',
 };
 
+const demoCredentials: Array<{ role: string; email: string; password: string }> = [
+  { role: 'Admin', email: 'admin@mipage.cl', password: 'password123' },
+  { role: 'Oferente', email: 'maria@example.com', password: 'password123' },
+  { role: 'Usuario', email: 'juan@example.com', password: 'password123' },
+];
+
 const loginDestinations: Record<RoleOption, string> = {
   ADMIN: '/admin',
   PUBLISHER: '/oferentes',
@@ -94,6 +100,10 @@ const LoginPage = () => {
       const destination = redirect ?? loginDestinations[selectedRole];
       router.push(destination);
     } catch (err) {
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError('No fue posible conectar con el servidor. Intenta nuevamente en unos momentos.');
+        return;
+      }
       setError(err instanceof Error ? err.message : 'Error inesperado al iniciar sesión.');
     } finally {
       setIsLoading(false);
@@ -239,6 +249,16 @@ const LoginPage = () => {
     <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-6 py-16 text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_55%)]" />
       <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/40 px-8 py-10 backdrop-blur">
+        <div className="mb-6 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400">
+          <button
+            type="button"
+            onClick={() => router.push('/')}
+            className="rounded-full border border-white/20 px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white hover:bg-white/10"
+          >
+            Regresar
+          </button>
+          <span className="text-neutral-500">Acceso</span>
+        </div>
         <div className="mb-8 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400">
           {(['login', 'register'] as Mode[]).map((option) => (
             <button
@@ -422,6 +442,19 @@ const LoginPage = () => {
             </button>
           </div>
         )}
+        <div className="mt-8 space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-[11px] leading-5 text-neutral-200">
+          <p className="font-semibold uppercase tracking-[0.3em] text-white/80">Credenciales de prueba</p>
+          <ul className="space-y-2">
+            {demoCredentials.map((credential) => (
+              <li key={credential.role} className="flex items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2 text-[11px] text-neutral-100">
+                <span className="font-medium uppercase tracking-[0.25em] text-white/70">{credential.role}</span>
+                <span className="text-[11px] text-neutral-200">
+                  {credential.email} · <span className="font-mono text-white/90">{credential.password}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
