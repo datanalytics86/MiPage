@@ -25,9 +25,11 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  expiresAt: number | null;
   isAuthenticated: boolean;
   hasHydrated: boolean;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token: string, options?: { expiresInMs?: number }) => void;
+  refreshSession: (expiresInMs?: number) => void;
   setUser: (user: User) => void;
   setHasHydrated: (value: boolean) => void;
   logout: () => void;
@@ -35,14 +37,33 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
+      expiresAt: null,
       isAuthenticated: false,
       hasHydrated: false,
-      setAuth: (user, token) => {
-        localStorage.setItem('token', token);
-        set({ user, token, isAuthenticated: true });
+      setAuth: (user, token, options) => {
+        const expiresInMs = options?.expiresInMs ?? 1000 * 60 * 60 * 12; // 12 horas
+        const expiresAt = Date.now() + expiresInMs;
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', token);
+          localStorage.setItem('tokenExpiry', String(expiresAt));
+        }
+
+        set({ user, token, expiresAt, isAuthenticated: true });
+      },
+      refreshSession: (expiresInMs = 1000 * 60 * 60 * 12) => {
+        const { token, user } = get();
+        if (!token || !user) return;
+
+        const expiresAt = Date.now() + expiresInMs;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('tokenExpiry', String(expiresAt));
+        }
+
+        set({ expiresAt });
       },
       setUser: (user) => {
         set({ user });
@@ -51,35 +72,50 @@ export const useAuthStore = create<AuthState>()(
         set({ hasHydrated: value });
       },
       logout: () => {
-        localStorage.removeItem('token');
-        set({ user: null, token: null, isAuthenticated: false });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('token');
+          localStorage.removeItem('tokenExpiry');
+        }
+
+        set({ user: null, token: null, expiresAt: null, isAuthenticated: false });
       },
     }),
     {
       name: 'auth-storage',
-      onRehydrateStorage: () => (state, error) => {
-        if (error) {
-          console.error('Error rehidratando autenticación', error);
-          return;
-        }
-
-        if (state) {
-          state.setHasHydrated(true);
-        }
-      },
     }
   )
 );
 
 export const getToken = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    const expiryRaw = localStorage.getItem('tokenExpiry');
+
+    if (!token) return null;
+
+    if (expiryRaw) {
+      const expiresAt = Number.parseInt(expiryRaw, 10);
+      if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) {
+        useAuthStore.getState().logout();
+        return null;
+      }
+    }
+
+    return token;
   }
   return null;
 };
 
 export const isAuthenticated = () => {
-  return !!getToken();
+  const { isAuthenticated, expiresAt } = useAuthStore.getState();
+  if (!isAuthenticated) return false;
+
+  if (expiresAt && expiresAt <= Date.now()) {
+    useAuthStore.getState().logout();
+    return false;
+  }
+
+  return true;
 };
 
 export const hasRole = (role: string | string[]) => {
@@ -91,3 +127,41 @@ export const hasRole = (role: string | string[]) => {
   }
   return user.role === role;
 };
+
+const finalizeHydration = (state?: AuthState | Partial<AuthState> | null) => {
+  const expiresAt = state?.expiresAt ?? null;
+  const hasValidSession = !!state?.token && !!state?.user && (!expiresAt || expiresAt > Date.now());
+
+  if (!hasValidSession) {
+    useAuthStore.setState({
+      user: null,
+      token: null,
+      expiresAt: null,
+      isAuthenticated: false,
+      hasHydrated: true,
+    });
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('tokenExpiry');
+    }
+    return;
+  }
+
+  useAuthStore.setState((current) => ({
+    ...current,
+    user: state?.user ?? null,
+    token: state?.token ?? null,
+    expiresAt,
+    isAuthenticated: true,
+    hasHydrated: true,
+  }));
+};
+
+if (typeof window !== 'undefined') {
+  useAuthStore.persist.onFinishHydration((state) => {
+    finalizeHydration(state as AuthState);
+  });
+} else {
+  useAuthStore.setState({ hasHydrated: true });
+}

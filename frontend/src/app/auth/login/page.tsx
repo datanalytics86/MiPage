@@ -60,6 +60,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams?.get('redirect');
+  const reason = searchParams?.get('reason');
   const { setAuth } = useAuthStore();
 
   const [email, setEmail] = useState('');
@@ -90,7 +91,7 @@ export default function LoginPage() {
     }
 
     const token = `${role.toLowerCase()}-demo-token`;
-    setAuth(credentials.user, token);
+    setAuth(credentials.user, token, { expiresInMs: 1000 * 60 * 60 * 12 });
 
     const fallback = role === 'ADMIN' ? '/admin' : role === 'PUBLISHER' ? '/oferentes' : '/clientes';
     router.push(redirect ?? fallback);
@@ -98,74 +99,68 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-neutral-950 text-white">
+    <div className="relative flex min-h-screen items-center justify-center bg-neutral-950 px-6 py-16 text-white">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_55%)]" />
-      <div className="relative mx-auto flex min-h-screen max-w-5xl items-center justify-center px-6 py-16">
-        <div className="w-full max-w-md space-y-10 rounded-3xl border border-white/10 bg-white/8 px-8 py-10 backdrop-blur">
-          <header className="space-y-3 text-center">
-            <p className="text-xs uppercase tracking-[0.4em] text-neutral-300">MiPage</p>
-            <h1 className="text-2xl font-semibold text-white">Acceso seguro</h1>
-          </header>
+      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-black/40 p-8 backdrop-blur">
+        <form className="space-y-6" autoComplete="off">
+          <div className="space-y-4">
+            <label className="sr-only" htmlFor="email">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="w-full rounded-xl border border-white/30 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
+              autoComplete="email"
+              required
+            />
+            <label className="sr-only" htmlFor="password">
+              Contraseña
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="w-full rounded-xl border border-white/30 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 outline-none transition focus:border-white"
+              autoComplete="current-password"
+              required
+            />
+          </div>
 
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <label className="sr-only" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-xl border border-white/30 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 focus:border-white focus:outline-none"
-                autoComplete="email"
-                required
-              />
-              <label className="sr-only" htmlFor="password">
-                Contraseña
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="Contraseña"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-xl border border-white/30 bg-white/80 px-4 py-3 text-sm text-neutral-900 placeholder-neutral-500 focus:border-white focus:outline-none"
-                autoComplete="current-password"
-                required
-              />
-            </div>
+          <div className="grid grid-cols-3 gap-3">
+            {(Object.keys(roleLabels) as RoleOption[]).map((role) => {
+              const isActive = selectedRole === role;
+              return (
+                <button
+                  key={role}
+                  type="button"
+                  onClick={() => handleLogin(role)}
+                  disabled={isLoading}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                    isActive
+                      ? 'bg-white text-neutral-900 shadow'
+                      : 'border border-white/20 bg-white/10 text-neutral-200 hover:border-white hover:text-white'
+                  } ${isLoading ? 'opacity-70' : ''}`}
+                >
+                  {roleLabels[role]}
+                </button>
+              );
+            })}
+          </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {(Object.keys(roleLabels) as RoleOption[]).map((role) => {
-                const isActive = selectedRole === role;
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    onClick={() => handleLogin(role)}
-                    disabled={isLoading}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                      isActive
-                        ? 'bg-white text-neutral-900 shadow'
-                        : 'border border-white/20 bg-white/10 text-neutral-200 hover:border-white hover:text-white'
-                    } ${isLoading ? 'opacity-70' : ''}`}
-                  >
-                    {roleLabels[role]}
-                  </button>
-                );
-              })}
-            </div>
-
-            {error && <p className="text-center text-xs text-red-300">{error}</p>}
-            {!error && selectedRole && email && password && (
-              <p className="text-center text-xs text-neutral-400">
-                Accediendo como {roleLabels[selectedRole]} · {DEMO_CREDENTIALS[selectedRole].email}
-              </p>
+          <div className="min-h-[1.5rem] text-center text-xs">
+            {error && <p className="text-red-300">{error}</p>}
+            {!error && reason === 'expired' && <p className="text-neutral-300">La sesión expiró, vuelve a iniciar sesión.</p>}
+            {!error && !reason && selectedRole && email && password && (
+              <p className="text-neutral-400">Listo para acceder como {roleLabels[selectedRole]}.</p>
             )}
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

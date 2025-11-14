@@ -230,7 +230,7 @@ const formatAdminTimestamp = () =>
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user, isAuthenticated, hasHydrated } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, expiresAt, logout } = useAuthStore();
 
   const [canRender, setCanRender] = useState(false);
   const [activeSection, setActiveSection] = useState<AdminSection>('ANUNCIOS');
@@ -258,8 +258,14 @@ export default function AdminDashboard() {
       return;
     }
 
+    if (expiresAt && expiresAt <= Date.now()) {
+      logout();
+      router.replace('/auth/login?redirect=/admin&reason=expired');
+      return;
+    }
+
     setCanRender(true);
-  }, [hasHydrated, isAuthenticated, router, user]);
+  }, [expiresAt, hasHydrated, isAuthenticated, logout, router, user]);
 
   const measurementTemplate = useMemo(() => {
     return attributeConfig.measurements.reduce<Record<string, string>>((acc, field) => {
