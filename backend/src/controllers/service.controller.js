@@ -14,6 +14,7 @@ const getServices = async (req, res) => {
       city,
       minPrice,
       maxPrice,
+      minRating,
       search,
       status = 'APPROVED',
       page = 1,
@@ -21,6 +22,9 @@ const getServices = async (req, res) => {
       sortBy = 'createdAt',
       order = 'desc',
     } = req.query;
+
+    const pageNumber = parseInt(page, 10) || 1;
+    const limitNumber = parseInt(limit, 10) || 12;
 
     // Construir filtros
     const where = {
@@ -38,36 +42,32 @@ const getServices = async (req, res) => {
       }),
     };
 
-    // Calcular paginación
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    const take = parseInt(limit);
-
-    // Obtener servicios y total
-    const [services, total] = await Promise.all([
-      prisma.service.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { [sortBy]: order },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-              isVerified: true,
-            },
-          },
-          _count: {
-            select: {
-              reviews: true,
-              favorites: true,
-            },
+    const prismaQuery = {
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            isVerified: true,
           },
         },
-      }),
-      prisma.service.count({ where }),
-    ]);
+        _count: {
+          select: {
+            reviews: true,
+            favorites: true,
+          },
+        },
+      },
+    };
+
+    // Cuando no ordenamos por rating, delegamos el sort a la BD para eficiencia
+    if (sortBy !== 'rating') {
+      prismaQuery.orderBy = { [sortBy]: order };
+    }
+
+    const services = await prisma.service.findMany(prismaQuery);
 
     // Calcular rating promedio para cada servicio
     const servicesWithRating = await Promise.all(
@@ -84,13 +84,34 @@ const getServices = async (req, res) => {
       })
     );
 
+    // Aplicar filtro de rating mínimo
+    const ratingThreshold = parseFloat(minRating);
+    let filteredServices =
+      minRating && !Number.isNaN(ratingThreshold)
+        ? servicesWithRating.filter((service) => service.averageRating >= ratingThreshold)
+        : servicesWithRating;
+
+    // Ordenar por rating si se solicita
+    if (sortBy === 'rating') {
+      filteredServices = filteredServices.sort((a, b) =>
+        order === 'asc'
+          ? a.averageRating - b.averageRating
+          : b.averageRating - a.averageRating
+      );
+    }
+
+    // Paginación manual (importante tras aplicar filtros locales)
+    const total = filteredServices.length;
+    const startIndex = (pageNumber - 1) * limitNumber;
+    const paginatedServices = filteredServices.slice(startIndex, startIndex + limitNumber);
+
     res.json({
-      services: servicesWithRating,
+      services: paginatedServices,
       pagination: {
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / parseInt(limit)),
+        page: pageNumber,
+        limit: limitNumber,
+        pages: Math.ceil(total / limitNumber) || 1,
       },
     });
   } catch (error) {

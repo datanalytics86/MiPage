@@ -2,7 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPinIcon, StarIcon, HeartIcon } from '@heroicons/react/24/outline';
+import {
+  MapPinIcon,
+  StarIcon,
+  HeartIcon,
+  PencilSquareIcon,
+} from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 import { formatPrice, getCategoryLabel, truncate } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
@@ -23,11 +28,19 @@ interface ServiceCardProps {
     totalReviews?: number;
     isPremium?: boolean;
     isFavorite?: boolean;
+    status?: string;
   };
   onFavoriteToggle?: (serviceId: string) => void;
+  onAdminEdit?: (service: ServiceCardProps['service']) => void;
+  highlight?: boolean;
 }
 
-const ServiceCard = ({ service, onFavoriteToggle }: ServiceCardProps) => {
+const ServiceCard = ({
+  service,
+  onFavoriteToggle,
+  onAdminEdit,
+  highlight = false,
+}: ServiceCardProps) => {
   const [isFavorite, setIsFavorite] = useState(service.isFavorite || false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -58,7 +71,9 @@ const ServiceCard = ({ service, onFavoriteToggle }: ServiceCardProps) => {
         variant="bordered"
         padding="none"
         hoverable
-        className="overflow-hidden h-full"
+        className={`overflow-hidden h-full relative group ${
+          highlight ? 'ring-2 ring-primary-200 shadow-xl shadow-primary-100/40' : ''
+        }`}
       >
         {/* Imagen */}
         <div className="relative aspect-[4/3] bg-gray-200">
@@ -77,10 +92,20 @@ const ServiceCard = ({ service, onFavoriteToggle }: ServiceCardProps) => {
           )}
 
           {/* Badges superiores */}
-          <div className="absolute top-2 left-2 right-2 flex justify-between items-start">
+          <div className="absolute top-2 left-2 right-2 flex justify-between items-start gap-2">
             {service.isPremium && (
               <Badge variant="warning" size="sm" className="shadow-md">
                 ⭐ Premium
+              </Badge>
+            )}
+
+            {service.status && (
+              <Badge
+                variant={service.status === 'APPROVED' ? 'success' : 'info'}
+                size="sm"
+                className="shadow-md"
+              >
+                {service.status === 'APPROVED' ? 'Publicado' : 'En revisión'}
               </Badge>
             )}
 
@@ -98,6 +123,20 @@ const ServiceCard = ({ service, onFavoriteToggle }: ServiceCardProps) => {
               )}
             </button>
           </div>
+
+          {onAdminEdit && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onAdminEdit(service);
+              }}
+              className="absolute bottom-2 left-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-full bg-white/90 text-gray-700 shadow transition hover:scale-105"
+            >
+              <PencilSquareIcon className="h-4 w-4" />
+              Editar
+            </button>
+          )}
         </div>
 
         {/* Contenido */}
