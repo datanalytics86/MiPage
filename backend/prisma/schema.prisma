@@ -18,7 +18,9 @@ enum Role {
 
 enum Category {
   MODELAJE              // Servicios de modelaje
+  FOTOGRAFIA            // Servicios de fotografía
   MASAJES_PROFESIONALES // Servicios de masajes profesionales
+  EVENTOS               // Servicios para eventos
 }
 
 enum ServiceStatus {

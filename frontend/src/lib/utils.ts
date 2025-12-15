@@ -35,7 +35,9 @@ export function formatRelativeTime(date: string | Date): string {
 export function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
     MODELAJE: 'Modelaje',
+    FOTOGRAFIA: 'Fotografía',
     MASAJES_PROFESIONALES: 'Masajes Profesionales',
+    EVENTOS: 'Eventos',
   };
   return labels[category] || category;
 }
