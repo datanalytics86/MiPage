@@ -60,3 +60,4 @@ Thumbs.db
 .frontend.pid
 backend.log
 frontend.log
+backend/prisma/dev.db
