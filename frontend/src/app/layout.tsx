@@ -1,26 +1,22 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Toaster } from 'react-hot-toast';
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'MiPage - Marketplace de Servicios Profesionales',
-  description: 'Plataforma para servicios de modelaje y masajes profesionales en Chile',
-  manifest: '/manifest.json',
-  themeColor: '#0ea5e9',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
-};
+  title: 'LuxeServices - Servicios Profesionales Premium',
+  description: 'Descubre servicios profesionales de masajes terapéuticos y modelaje en Chile. Plataforma premium con perfiles verificados.',
+  keywords: 'masajes, modelaje, servicios profesionales, Chile, Santiago',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <html lang="es">
-      <body className="font-sans antialiased">
+      <body className="min-h-screen bg-background font-body antialiased">
         {children}
-        <Toaster position="top-right" />
       </body>
     </html>
-  );
+  )
 }
