@@ -9,11 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function RegisterPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const isProvider = searchParams.get('type') === 'provider'
+  const { signUp } = useAuth()
+  const isProvider = searchParams.get('type') === 'provider' || searchParams.get('role') === 'provider'
 
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -66,8 +68,23 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual registration with Supabase
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const { error: authError } = await signUp(
+        formData.email,
+        formData.password,
+        {
+          name: formData.fullName,
+          role: formData.isProvider ? 'provider' : 'user',
+        }
+      )
+
+      if (authError) {
+        if (authError.message.includes('already registered')) {
+          setErrors({ email: 'Este correo ya está registrado' })
+        } else {
+          setErrors({ general: 'Error al crear la cuenta. Por favor intenta de nuevo.' })
+        }
+        return
+      }
 
       // Redirect based on user type
       if (formData.isProvider) {
@@ -75,6 +92,7 @@ export default function RegisterPage() {
       } else {
         router.push('/')
       }
+      router.refresh()
     } catch (err) {
       setErrors({ general: 'Error al crear la cuenta. Por favor intenta de nuevo.' })
     } finally {

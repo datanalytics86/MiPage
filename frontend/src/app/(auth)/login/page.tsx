@@ -2,15 +2,18 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { signIn } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -25,13 +28,19 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      // TODO: Implement actual login with Supabase
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const { error: authError } = await signIn(formData.email, formData.password)
 
-      // Mock successful login
-      router.push('/')
+      if (authError) {
+        setError('Credenciales incorrectas. Por favor intenta de nuevo.')
+        return
+      }
+
+      // Redirect to intended page or home
+      const redirect = searchParams.get('redirect') || '/'
+      router.push(redirect)
+      router.refresh()
     } catch (err) {
-      setError('Credenciales incorrectas. Por favor intenta de nuevo.')
+      setError('Ocurrió un error. Por favor intenta de nuevo.')
     } finally {
       setIsLoading(false)
     }

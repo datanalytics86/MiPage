@@ -2,20 +2,31 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, User, Heart, LogOut } from 'lucide-react'
+import { Menu, X, User, Heart, LogOut, LayoutDashboard, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 
-// Mock auth state - replace with actual auth
-const useAuth = () => ({
-  user: null as { name: string; role: string } | null,
-  isAuthenticated: false,
-})
-
 export function Header() {
+  const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, isAuthenticated } = useAuth()
+  const { profile, isAuthenticated, isLoading, signOut } = useAuth()
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+    router.refresh()
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50">
@@ -52,18 +63,62 @@ export function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            {isAuthenticated && user ? (
+            {isLoading ? (
+              <div className="h-10 w-24 bg-muted animate-pulse rounded-lg" />
+            ) : isAuthenticated && profile ? (
               <>
                 <Link href="/favoritos">
                   <Button variant="ghost" size="icon">
                     <Heart className="h-5 w-5" />
                   </Button>
                 </Link>
-                <Link href={user.role === 'provider' ? '/dashboard' : '/perfil'}>
-                  <Button variant="ghost" size="icon">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {profile.name?.[0] || profile.email[0].toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="hidden lg:inline">{profile.name?.split(' ')[0] || 'Usuario'}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-3 py-2">
+                      <p className="text-sm font-medium">{profile.name || 'Usuario'}</p>
+                      <p className="text-xs text-foreground-muted">{profile.email}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                    {profile.role === 'provider' && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard">
+                          <LayoutDashboard className="h-4 w-4 mr-2" />
+                          Mi Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {profile.role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin">
+                          <Shield className="h-4 w-4 mr-2" />
+                          Panel Admin
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem asChild>
+                      <Link href="/favoritos">
+                        <Heart className="h-4 w-4 mr-2" />
+                        Favoritos
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-error">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Cerrar sesión
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>
@@ -123,7 +178,7 @@ export function Header() {
                   Modelaje
                 </Link>
                 <div className="border-t border-border pt-3 mt-3 space-y-2 px-4">
-                  {isAuthenticated ? (
+                  {isAuthenticated && profile ? (
                     <>
                       <Link href="/favoritos" onClick={() => setIsMenuOpen(false)}>
                         <Button variant="ghost" className="w-full justify-start">
@@ -131,12 +186,33 @@ export function Header() {
                           Favoritos
                         </Button>
                       </Link>
-                      <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-start">
-                          <User className="h-5 w-5 mr-2" />
-                          Mi cuenta
-                        </Button>
-                      </Link>
+                      {profile.role === 'provider' && (
+                        <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start">
+                            <LayoutDashboard className="h-5 w-5 mr-2" />
+                            Mi Dashboard
+                          </Button>
+                        </Link>
+                      )}
+                      {profile.role === 'admin' && (
+                        <Link href="/admin" onClick={() => setIsMenuOpen(false)}>
+                          <Button variant="ghost" className="w-full justify-start">
+                            <Shield className="h-5 w-5 mr-2" />
+                            Panel Admin
+                          </Button>
+                        </Link>
+                      )}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-error"
+                        onClick={() => {
+                          handleSignOut()
+                          setIsMenuOpen(false)
+                        }}
+                      >
+                        <LogOut className="h-5 w-5 mr-2" />
+                        Cerrar sesión
+                      </Button>
                     </>
                   ) : (
                     <>
