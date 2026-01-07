@@ -1,214 +1,224 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuthStore } from '@/lib/auth';
-import Button from '@/components/ui/Button';
-import DashboardOverview from '@/components/dashboard/DashboardOverview';
-import ServicesList from '@/components/dashboard/ServicesList';
-import ServiceUpdates from '@/components/dashboard/ServiceUpdates';
-import PublisherProfile from '@/components/dashboard/PublisherProfile';
+import React from 'react'
+import Link from 'next/link'
+import { motion } from 'framer-motion'
 import {
-  HomeIcon,
-  ChartBarIcon,
-  ListBulletIcon,
-  MegaphoneIcon,
-  UserIcon,
-  ArrowLeftOnRectangleIcon,
-} from '@heroicons/react/24/outline';
+  Eye,
+  Star,
+  MessageSquare,
+  TrendingUp,
+  AlertCircle,
+  ArrowRight,
+  Calendar,
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { formatDate } from '@/lib/utils'
 
-type TabType = 'overview' | 'services' | 'updates' | 'profile';
+// Mock data
+const stats = [
+  { name: 'Visitas totales', value: '1,250', icon: Eye, change: '+12%', trend: 'up' },
+  { name: 'Rating promedio', value: '4.9', icon: Star, change: '+0.1', trend: 'up' },
+  { name: 'Total reseñas', value: '47', icon: MessageSquare, change: '+3', trend: 'up' },
+  { name: 'Este mes', value: '156', icon: TrendingUp, change: '+24%', trend: 'up' },
+]
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const { user, logout } = useAuthStore();
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+const recentReviews = [
+  {
+    id: '1',
+    user: 'Carlos M.',
+    rating: 5,
+    content: 'Excelente profesional, muy recomendada...',
+    date: '2024-12-08',
+    responded: true,
+  },
+  {
+    id: '2',
+    user: 'Andrea P.',
+    rating: 5,
+    content: 'Ambiente muy agradable y profesional...',
+    date: '2024-12-05',
+    responded: false,
+  },
+  {
+    id: '3',
+    user: 'Miguel T.',
+    rating: 4,
+    content: 'Muy buen servicio, puntual...',
+    date: '2024-11-28',
+    responded: false,
+  },
+]
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/auth/login');
-      return;
-    }
+const alerts = [
+  { type: 'warning', message: '2 reseñas pendientes de respuesta' },
+]
 
-    if (user.role !== 'PUBLISHER') {
-      router.push('/');
-      return;
-    }
-  }, [user, router]);
-
-  const handleLogout = () => {
-    logout();
-    router.push('/');
-  };
-
-  const tabs = [
-    {
-      id: 'overview' as TabType,
-      label: 'Dashboard',
-      icon: ChartBarIcon,
-      emoji: '📊',
-    },
-    {
-      id: 'services' as TabType,
-      label: 'Mis Servicios',
-      icon: ListBulletIcon,
-      emoji: '📦',
-    },
-    {
-      id: 'updates' as TabType,
-      label: 'Actualizaciones',
-      icon: MegaphoneIcon,
-      emoji: '📢',
-    },
-    {
-      id: 'profile' as TabType,
-      label: 'Mi Perfil',
-      icon: UserIcon,
-      emoji: '👤',
-    },
-  ];
-
-  if (!user || user.role !== 'PUBLISHER') {
-    return (
-      <div className="min-h-screen bg-gradient-dark flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <h1 className="text-2xl font-bold text-warm-50 mb-2">Acceso Restringido</h1>
-          <p className="text-warm-400 mb-6">
-            Debes ser un publicador para acceder al dashboard
-          </p>
-          <Link href="/">
-            <Button variant="fire">Volver al inicio</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
+export default function DashboardOverviewPage() {
   return (
-    <div className="min-h-screen bg-gradient-dark">
-      {/* Top Navigation */}
-      <header className="bg-dark-900/95 backdrop-blur-sm shadow-dark border-b border-dark-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-fire-500 to-lust-500 bg-clip-text text-transparent">
-                MiPage
-              </h1>
-              <span className="hidden md:inline text-warm-500 text-sm">
-                / Publisher Dashboard
-              </span>
-            </Link>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-3">
-              <Link href="/">
-                <Button variant="dark" size="md">
-                  <HomeIcon className="h-5 w-5 mr-2" />
-                  <span className="hidden md:inline">Inicio</span>
+    <div className="space-y-8">
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <div className="space-y-3">
+          {alerts.map((alert, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-3 p-4 rounded-xl bg-warning/10 text-warning"
+            >
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <span className="text-sm font-medium">{alert.message}</span>
+              <Link href="/dashboard/resenas" className="ml-auto">
+                <Button variant="ghost" size="sm" className="text-warning hover:text-warning">
+                  Ver reseñas
+                  <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
               </Link>
-              <Button
-                variant="dark"
-                size="md"
-                onClick={handleLogout}
-              >
-                <ArrowLeftOnRectangleIcon className="h-5 w-5 md:mr-2" />
-                <span className="hidden md:inline">Salir</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <aside className="lg:w-64 flex-shrink-0">
-            <div className="card-dark p-6 sticky top-24">
-              {/* User Info */}
-              <div className="mb-6 pb-6 border-b border-dark-700">
-                <div className="flex items-center gap-3 mb-3">
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-12 h-12 rounded-full object-cover border-2 border-fire-500"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-fire-500/10 border-2 border-fire-500 flex items-center justify-center">
-                      <UserIcon className="h-6 w-6 text-fire-500" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-warm-50 truncate">
-                      {user.name}
-                    </div>
-                    <div className="text-xs text-warm-500 truncate">
-                      {user.email}
-                    </div>
-                  </div>
-                </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-fire-500/10 border border-fire-500/30 rounded-full text-sm font-medium text-fire-400">
-                  <span>⭐</span>
-                  <span>Publisher</span>
-                </div>
-              </div>
-
-              {/* Navigation Tabs */}
-              <nav className="space-y-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                      activeTab === tab.id
-                        ? 'bg-gradient-to-r from-fire-500 to-fire-600 text-white shadow-fire'
-                        : 'text-warm-300 hover:bg-dark-850 hover:text-fire-400'
-                    }`}
-                  >
-                    <span className="text-xl">{tab.emoji}</span>
-                    <span>{tab.label}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1 min-w-0">
-            {activeTab === 'overview' && <DashboardOverview />}
-            {activeTab === 'services' && <ServicesList />}
-            {activeTab === 'updates' && <ServiceUpdates />}
-            {activeTab === 'profile' && <PublisherProfile />}
-          </main>
-        </div>
-      </div>
-
-      {/* Mobile Tab Bar (Bottom Navigation) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-dark-900 border-t border-dark-800 z-40">
-        <div className="grid grid-cols-4 gap-1 p-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center gap-1 py-3 px-2 rounded-lg transition-all ${
-                activeTab === tab.id
-                  ? 'bg-fire-500/10 text-fire-400'
-                  : 'text-warm-500 hover:text-fire-400'
-              }`}
-            >
-              <span className="text-2xl">{tab.emoji}</span>
-              <span className="text-xs font-medium truncate w-full text-center">
-                {tab.label}
-              </span>
-            </button>
+            </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => (
+          <motion.div
+            key={stat.name}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="p-2 rounded-lg bg-gold/10">
+                    <stat.icon className="h-5 w-5 text-gold" />
+                  </div>
+                  <Badge variant={stat.trend === 'up' ? 'success' : 'destructive'}>
+                    {stat.change}
+                  </Badge>
+                </div>
+                <div className="mt-4">
+                  <p className="text-3xl font-semibold text-foreground">{stat.value}</p>
+                  <p className="text-sm text-foreground-muted mt-1">{stat.name}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Recent Reviews */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="font-display text-xl">Reseñas recientes</CardTitle>
+          <Link href="/dashboard/resenas">
+            <Button variant="ghost" size="sm">
+              Ver todas
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentReviews.map((review) => (
+              <div
+                key={review.id}
+                className="flex items-start gap-4 p-4 rounded-xl bg-muted/50"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-foreground">{review.user}</span>
+                    <div className="flex">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${
+                            i < review.rating
+                              ? 'fill-gold text-gold'
+                              : 'fill-muted text-muted'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    {!review.responded && (
+                      <Badge variant="warning" className="ml-2">Sin responder</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-foreground-secondary line-clamp-1">
+                    {review.content}
+                  </p>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    {formatDate(review.date)}
+                  </p>
+                </div>
+                <Link href="/dashboard/resenas">
+                  <Button variant="outline" size="sm">
+                    {review.responded ? 'Ver' : 'Responder'}
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Link href="/dashboard/perfil">
+          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer group">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gold/10 group-hover:bg-gold/20 transition-colors">
+                  <Calendar className="h-6 w-6 text-gold" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Actualizar disponibilidad</h3>
+                  <p className="text-sm text-foreground-muted">Configura tus horarios</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-foreground-muted ml-auto group-hover:text-gold transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/galeria">
+          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer group">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-rose/10 group-hover:bg-rose/20 transition-colors">
+                  <TrendingUp className="h-6 w-6 text-rose" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Subir nuevas fotos</h3>
+                  <p className="text-sm text-foreground-muted">Actualiza tu galería</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-foreground-muted ml-auto group-hover:text-rose transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/dashboard/servicios">
+          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer group">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-sage/10 group-hover:bg-sage/20 transition-colors">
+                  <MessageSquare className="h-6 w-6 text-sage" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Gestionar servicios</h3>
+                  <p className="text-sm text-foreground-muted">Edita precios y duración</p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-foreground-muted ml-auto group-hover:text-sage transition-colors" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
-  );
+  )
 }

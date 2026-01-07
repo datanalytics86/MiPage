@@ -419,6 +419,7 @@ async function main() {
       userId: user1.id,
       rating: 5,
       comment: 'Excelente profesional, muy puntual y con gran actitud. Las fotos quedaron increíbles. Totalmente recomendada.',
+      photos: [],
     },
   });
 
@@ -428,6 +429,7 @@ async function main() {
       userId: user1.id,
       rating: 5,
       comment: 'El mejor masaje que he recibido. Carlos es muy profesional y realmente sabe lo que hace. Mi espalda quedó como nueva.',
+      photos: [],
       response: 'Muchas gracias Juan! Me alegra mucho que hayas tenido una buena experiencia. Espero verte pronto.',
       respondedAt: new Date(),
     },
@@ -452,6 +454,7 @@ async function main() {
       content: 'Recordatorio: Esta semana tengo horarios disponibles de lunes a viernes. ¡Reserva tu sesión de masaje relajante! 💆‍♂️',
       type: 'update',
       likes: 8,
+      photos: [],
     },
   });
 

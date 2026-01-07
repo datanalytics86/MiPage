@@ -82,6 +82,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Health check en /api/health también
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    version: '1.0.0',
+  });
+});
+
 // Rutas API
 app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);

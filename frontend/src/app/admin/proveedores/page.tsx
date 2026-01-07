@@ -1,0 +1,440 @@
+'use client'
+
+import React, { useState } from 'react'
+import { motion } from 'framer-motion'
+import {
+  Search,
+  MoreHorizontal,
+  User,
+  Mail,
+  MapPin,
+  Star,
+  Eye,
+  CheckCircle,
+  XCircle,
+  Ban,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink
+} from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { cn, formatDate, formatPrice } from '@/lib/utils'
+
+interface Provider {
+  id: string
+  name: string
+  email: string
+  category: string
+  city: string
+  status: 'pending' | 'approved' | 'rejected' | 'suspended'
+  is_verified: boolean
+  photo?: string
+  rating: number
+  review_count: number
+  services_count: number
+  price_min: number
+  created_at: string
+}
+
+// Mock providers data
+const mockProviders: Provider[] = [
+  {
+    id: '1',
+    name: 'Valentina Rossi',
+    email: 'valentina@email.com',
+    category: 'Masajes',
+    city: 'Santiago',
+    status: 'approved',
+    is_verified: true,
+    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
+    rating: 4.9,
+    review_count: 127,
+    services_count: 5,
+    price_min: 45000,
+    created_at: '2024-03-10T00:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'Isabella Montenegro',
+    email: 'isabella@email.com',
+    category: 'Modelaje',
+    city: 'Viña del Mar',
+    status: 'pending',
+    is_verified: false,
+    photo: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100',
+    rating: 0,
+    review_count: 0,
+    services_count: 3,
+    price_min: 60000,
+    created_at: '2024-12-20T00:00:00Z',
+  },
+  {
+    id: '3',
+    name: 'Camila Delgado',
+    email: 'camila@email.com',
+    category: 'Fotografía',
+    city: 'Providencia',
+    status: 'approved',
+    is_verified: false,
+    photo: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100',
+    rating: 5.0,
+    review_count: 45,
+    services_count: 4,
+    price_min: 55000,
+    created_at: '2024-06-15T00:00:00Z',
+  },
+  {
+    id: '4',
+    name: 'Sofía Martínez',
+    email: 'sofia@email.com',
+    category: 'Masajes',
+    city: 'Las Condes',
+    status: 'pending',
+    is_verified: false,
+    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
+    rating: 0,
+    review_count: 0,
+    services_count: 2,
+    price_min: 40000,
+    created_at: '2024-12-25T00:00:00Z',
+  },
+  {
+    id: '5',
+    name: 'Ana Fernández',
+    email: 'ana@email.com',
+    category: 'Modelaje',
+    city: 'Ñuñoa',
+    status: 'suspended',
+    is_verified: true,
+    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+    rating: 4.2,
+    review_count: 38,
+    services_count: 3,
+    price_min: 50000,
+    created_at: '2024-02-20T00:00:00Z',
+  },
+]
+
+const statusColors: Record<string, string> = {
+  pending: 'bg-warning/10 text-warning',
+  approved: 'bg-success/10 text-success',
+  rejected: 'bg-error/10 text-error',
+  suspended: 'bg-muted text-foreground-muted',
+}
+
+const statusLabels: Record<string, string> = {
+  pending: 'Pendiente',
+  approved: 'Aprobado',
+  rejected: 'Rechazado',
+  suspended: 'Suspendido',
+}
+
+export default function AdminProveedoresPage() {
+  const [providers, setProviders] = useState(mockProviders)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+
+  const filteredProviders = providers.filter(provider => {
+    const matchesSearch = provider.name.toLowerCase().includes(search.toLowerCase()) ||
+      provider.email.toLowerCase().includes(search.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || provider.status === statusFilter
+    const matchesCategory = categoryFilter === 'all' || provider.category === categoryFilter
+    return matchesSearch && matchesStatus && matchesCategory
+  })
+
+  const handleApprove = (id: string) => {
+    setProviders(providers.map(p =>
+      p.id === id ? { ...p, status: 'approved' as const } : p
+    ))
+  }
+
+  const handleReject = (id: string) => {
+    setProviders(providers.map(p =>
+      p.id === id ? { ...p, status: 'rejected' as const } : p
+    ))
+  }
+
+  const handleToggleVerified = (id: string) => {
+    setProviders(providers.map(p =>
+      p.id === id ? { ...p, is_verified: !p.is_verified } : p
+    ))
+  }
+
+  const categories = [...new Set(mockProviders.map(p => p.category))]
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="font-display text-2xl font-semibold text-foreground">
+          Gestión de Proveedores
+        </h2>
+        <p className="text-foreground-muted mt-1">
+          Aprueba, verifica y administra los proveedores de la plataforma
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-semibold text-foreground">{providers.length}</p>
+            <p className="text-sm text-foreground-muted">Total</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-semibold text-warning">
+              {providers.filter(p => p.status === 'pending').length}
+            </p>
+            <p className="text-sm text-foreground-muted">Pendientes</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-semibold text-success">
+              {providers.filter(p => p.status === 'approved').length}
+            </p>
+            <p className="text-sm text-foreground-muted">Aprobados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-semibold text-gold">
+              {providers.filter(p => p.is_verified).length}
+            </p>
+            <p className="text-sm text-foreground-muted">Verificados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-semibold text-error">
+              {providers.filter(p => p.status === 'suspended').length}
+            </p>
+            <p className="text-sm text-foreground-muted">Suspendidos</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
+              <Input
+                placeholder="Buscar por nombre o email..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-[150px]">
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pending">Pendiente</SelectItem>
+                <SelectItem value="approved">Aprobado</SelectItem>
+                <SelectItem value="rejected">Rechazado</SelectItem>
+                <SelectItem value="suspended">Suspendido</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full md:w-[150px]">
+                <SelectValue placeholder="Categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Providers List */}
+      <div className="space-y-4">
+        {filteredProviders.map((provider, index) => (
+          <motion.div
+            key={provider.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+          >
+            <Card className={cn(
+              provider.status === 'pending' && 'border-warning/50'
+            )}>
+              <CardContent className="p-4">
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                  {/* Provider Info */}
+                  <div className="flex items-center gap-4 flex-1">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={provider.photo} />
+                      <AvatarFallback>
+                        <User className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-foreground">{provider.name}</h3>
+                        {provider.is_verified && (
+                          <Badge className="bg-gold/10 text-gold">Verificado</Badge>
+                        )}
+                        <Badge className={statusColors[provider.status]}>
+                          {statusLabels[provider.status]}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-foreground-muted">{provider.email}</p>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-foreground-secondary">
+                        <span>{provider.category}</span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {provider.city}
+                        </span>
+                        {provider.rating > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Star className="h-3 w-3 text-gold fill-gold" />
+                            {provider.rating} ({provider.review_count})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-6 text-center">
+                    <div>
+                      <p className="text-lg font-semibold text-foreground">{provider.services_count}</p>
+                      <p className="text-xs text-foreground-muted">Servicios</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-semibold text-foreground">{formatPrice(provider.price_min)}</p>
+                      <p className="text-xs text-foreground-muted">Desde</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-foreground-secondary">{formatDate(provider.created_at)}</p>
+                      <p className="text-xs text-foreground-muted">Registro</p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    {provider.status === 'pending' && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => handleApprove(provider.id)}
+                          className="bg-success hover:bg-success/90"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Aprobar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleReject(provider.id)}
+                        >
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Rechazar
+                        </Button>
+                      </>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="h-4 w-4 mr-2" />
+                          Ver perfil público
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Mail className="h-4 w-4 mr-2" />
+                          Enviar email
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleToggleVerified(provider.id)}>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          {provider.is_verified ? 'Quitar verificación' : 'Verificar'}
+                        </DropdownMenuItem>
+                        {provider.status !== 'suspended' ? (
+                          <DropdownMenuItem className="text-error">
+                            <Ban className="h-4 w-4 mr-2" />
+                            Suspender
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem className="text-success">
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Reactivar
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {filteredProviders.length === 0 && (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <User className="h-12 w-12 mx-auto text-foreground-muted mb-4" />
+            <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+              Sin resultados
+            </h3>
+            <p className="text-foreground-secondary">
+              No se encontraron proveedores con los filtros seleccionados
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pagination */}
+      {filteredProviders.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-foreground-muted">
+            Mostrando {filteredProviders.length} de {providers.length} proveedores
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" disabled>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm">1</Button>
+            <Button variant="outline" size="icon">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
