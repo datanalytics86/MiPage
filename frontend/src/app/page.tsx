@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { servicesAPI } from '@/lib/api';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import HeroSection from '@/components/home/HeroSection';
 import ServiceCard from '@/components/services/ServiceCard';
-import Spinner from '@/components/ui/Spinner';
+import { ServiceGridSkeleton } from '@/components/ui/Skeleton';
 import { ArrowRightIcon, CameraIcon, SparklesIcon, UserGroupIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
 
 const categories = [
@@ -143,9 +144,7 @@ export default function HomePage() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-20">
-              <Spinner size="lg" />
-            </div>
+            <ServiceGridSkeleton count={8} />
           ) : services.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {services.slice(0, 8).map((service) => (
@@ -226,32 +225,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold bg-gradient-to-r from-fire-400 to-secondary-400 bg-clip-text text-transparent">
-                MiPage
-              </span>
-              <span className="text-warm-500 text-sm">
-                © {new Date().getFullYear()}
-              </span>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-warm-500">
-              <Link href="/services" className="hover:text-warm-300 transition-colors">
-                Servicios
-              </Link>
-              <Link href="/auth/register" className="hover:text-warm-300 transition-colors">
-                Registrarse
-              </Link>
-              <Link href="/auth/login" className="hover:text-warm-300 transition-colors">
-                Iniciar sesión
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
