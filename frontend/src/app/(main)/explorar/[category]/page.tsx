@@ -1,8 +1,5 @@
-'use client'
-
-import React from 'react'
 import { redirect } from 'next/navigation'
-import ExplorarPage from '../page'
+import { ExplorarContent } from '@/components/explorar/ExplorarContent'
 import type { ProviderCategory } from '@/types'
 
 interface CategoryPageProps {
@@ -16,6 +13,5 @@ export default function CategoryPage({ params }: CategoryPageProps) {
     redirect('/explorar')
   }
 
-  // Pass the category as initial filter to ExplorarPage
-  return <ExplorarPage initialCategory={params.category as ProviderCategory} />
+  return <ExplorarContent initialCategory={params.category as ProviderCategory} />
 }

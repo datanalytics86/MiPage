@@ -154,15 +154,19 @@ export default function ProviderPage({ params }: ProviderPageProps) {
   const { data: apiProvider, isLoading, error } = useProvider(params.slug)
 
   // Use API data if available, otherwise fall back to mock data for development
-  const provider = apiProvider || mockProvider
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const provider: any = apiProvider || mockProvider
 
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
 
-  const primaryImage = provider.media.find((m) => m.is_primary) || provider.media[0]
-  const otherImages = provider.media.filter((m) => m.id !== primaryImage?.id).slice(0, 4)
-  const minPrice = Math.min(...provider.services.map((s) => s.price))
+  // Handle both 'media' (mock) and 'gallery' (API) for images
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mediaItems: any[] = 'media' in provider ? provider.media : ('gallery' in provider ? (provider as any).gallery : [])
+  const primaryImage = mediaItems.find((m) => m.is_primary || m.is_cover) || mediaItems[0]
+  const otherImages = mediaItems.filter((m) => m.id !== primaryImage?.id).slice(0, 4)
+  const minPrice = Math.min(...provider.services.map((s: Service) => s.price))
 
   const whatsappLink = `https://wa.me/${provider.whatsapp}?text=${encodeURIComponent(
     `Hola ${provider.display_name}, vi tu perfil en LuxeServices y me gustaría agendar una cita.`
@@ -244,10 +248,10 @@ export default function ProviderPage({ params }: ProviderPageProps) {
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                {index === 3 && provider.media.length > 5 && (
+                {index === 3 && mediaItems.length > 5 && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                     <span className="text-white font-medium text-lg">
-                      +{provider.media.length - 5} más
+                      +{mediaItems.length - 5} más
                     </span>
                   </div>
                 )}
@@ -278,7 +282,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
               className="absolute bottom-4 right-4 bg-white text-foreground px-4 py-2 rounded-lg font-medium shadow-lg flex items-center gap-2"
             >
               <Grid3X3 className="h-4 w-4" />
-              {provider.media.length} fotos
+              {mediaItems.length} fotos
             </button>
           </div>
         </div>
@@ -352,7 +356,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
                 Servicios
               </h2>
               <div className="space-y-4">
-                {provider.services.map((service) => (
+                {provider.services.map((service: Service) => (
                   <Card key={service.id} className="hover:shadow-soft-lg transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start">
@@ -430,7 +434,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
               </div>
 
               <div className="space-y-4">
-                {provider.reviews.slice(0, 3).map((review) => (
+                {provider.reviews.slice(0, 3).map((review: Review) => (
                   <Card key={review.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
@@ -585,13 +589,13 @@ export default function ProviderPage({ params }: ProviderPageProps) {
 
             {/* Image Counter */}
             <div className="absolute top-4 left-4 z-10 text-white font-medium">
-              {currentImageIndex + 1} / {provider.media.length}
+              {currentImageIndex + 1} / {mediaItems.length}
             </div>
 
             {/* Main Image */}
             <div className="h-full flex items-center justify-center p-16">
               <Image
-                src={provider.media[currentImageIndex].url}
+                src={mediaItems[currentImageIndex]?.url}
                 alt={`${provider.display_name} - ${currentImageIndex + 1}`}
                 width={1200}
                 height={800}
@@ -608,7 +612,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
                 <ChevronLeft className="h-10 w-10" />
               </button>
             )}
-            {currentImageIndex < provider.media.length - 1 && (
+            {currentImageIndex < mediaItems.length - 1 && (
               <button
                 onClick={() => setCurrentImageIndex(currentImageIndex + 1)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:bg-white/10 rounded-full transition-colors"
@@ -619,7 +623,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
 
             {/* Thumbnails */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto max-w-full px-4">
-              {provider.media.map((media, index) => (
+              {mediaItems.map((media, index) => (
                 <button
                   key={media.id}
                   onClick={() => setCurrentImageIndex(index)}

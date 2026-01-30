@@ -109,9 +109,10 @@ interface DropdownMenuItemProps {
   onClick?: () => void
   className?: string
   disabled?: boolean
+  asChild?: boolean
 }
 
-export function DropdownMenuItem({ children, onClick, className, disabled }: DropdownMenuItemProps) {
+export function DropdownMenuItem({ children, onClick, className, disabled, asChild }: DropdownMenuItemProps) {
   const { setOpen } = useDropdownMenu()
 
   const handleClick = () => {
@@ -120,16 +121,25 @@ export function DropdownMenuItem({ children, onClick, className, disabled }: Dro
     setOpen(false)
   }
 
+  const itemClassName = cn(
+    'relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none',
+    'text-foreground hover:bg-surface-hover focus:bg-surface-hover',
+    'transition-colors duration-150',
+    disabled && 'pointer-events-none opacity-50',
+    className
+  )
+
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children as React.ReactElement<{ className?: string; onClick?: () => void }>, {
+      className: cn((children as React.ReactElement<{ className?: string }>).props.className, itemClassName),
+      onClick: handleClick,
+    })
+  }
+
   return (
     <button
       type="button"
-      className={cn(
-        'relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none',
-        'text-foreground hover:bg-surface-hover focus:bg-surface-hover',
-        'transition-colors duration-150',
-        disabled && 'pointer-events-none opacity-50',
-        className
-      )}
+      className={itemClassName}
       onClick={handleClick}
       disabled={disabled}
     >
