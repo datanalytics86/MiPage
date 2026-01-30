@@ -2,6 +2,7 @@
 const { TempPrismaClient } = require('../utils/tempDB');
 const ExcelJS = require('exceljs');
 const crypto = require('crypto');
+const { emailService } = require('../services/email.service');
 
 const prisma = new TempPrismaClient();
 
@@ -334,16 +335,28 @@ exports.inviteUser = async (req, res) => {
     // Construir link de registro
     const registrationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/register/${token}`;
 
+    // Enviar email con el link de registro
+    try {
+      await emailService.sendInvitation({
+        to: email,
+        name: name || null,
+        registrationLink,
+        invitedBy: req.user?.name || 'Administrador',
+      });
+      console.log(`📧 Email de invitación enviado a: ${email}`);
+    } catch (emailError) {
+      console.error('Error enviando email de invitación:', emailError);
+      // No fallar la operación si el email falla, solo registrar
+    }
+
     res.status(201).json({
       success: true,
       data: {
         user,
         registrationLink,
       },
-      message: 'Invitación creada exitosamente',
+      message: 'Invitación creada y email enviado exitosamente',
     });
-
-    // TODO: Enviar email con el link de registro
   } catch (error) {
     console.error('Error inviting user:', error);
     res.status(500).json({

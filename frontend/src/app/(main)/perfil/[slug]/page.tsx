@@ -19,12 +19,14 @@ import {
   MessageCircle,
   Share2,
   Grid3X3,
+  Loader2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn, formatPrice, formatDate, getInitials } from '@/lib/utils'
+import { useProvider } from '@/hooks/useProviders'
 import type { Provider, Service, Review, Media } from '@/types'
 
 // Mock data for a provider
@@ -148,7 +150,12 @@ interface ProviderPageProps {
 }
 
 export default function ProviderPage({ params }: ProviderPageProps) {
-  const provider = mockProvider // TODO: Fetch from API
+  // Fetch provider data from API
+  const { data: apiProvider, isLoading, error } = useProvider(params.slug)
+
+  // Use API data if available, otherwise fall back to mock data for development
+  const provider = apiProvider || mockProvider
+
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
@@ -160,6 +167,40 @@ export default function ProviderPage({ params }: ProviderPageProps) {
   const whatsappLink = `https://wa.me/${provider.whatsapp}?text=${encodeURIComponent(
     `Hola ${provider.display_name}, vi tu perfil en LuxeServices y me gustaría agendar una cita.`
   )}`
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-gold mx-auto mb-4" />
+          <p className="text-foreground-secondary">Cargando perfil...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error && !apiProvider) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error/10 flex items-center justify-center">
+            <X className="h-8 w-8 text-error" />
+          </div>
+          <h1 className="font-display text-2xl font-semibold text-foreground mb-2">
+            Perfil no encontrado
+          </h1>
+          <p className="text-foreground-secondary mb-6">
+            El perfil que buscas no existe o no está disponible.
+          </p>
+          <Link href="/explorar">
+            <Button>Explorar profesionales</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">

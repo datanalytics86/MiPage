@@ -112,9 +112,13 @@ const sortOptions = [
   { value: 'newest', label: 'Más recientes' },
 ]
 
-export default function ExplorarPage() {
+interface ExplorarPageProps {
+  initialCategory?: ProviderCategory | 'all'
+}
+
+export default function ExplorarPage({ initialCategory = 'all' }: ExplorarPageProps) {
   const [filters, setFilters] = useState<FilterOptions>({
-    category: 'all',
+    category: initialCategory,
     city: undefined,
     verified_only: false,
     sort_by: 'relevance',
