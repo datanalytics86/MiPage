@@ -226,6 +226,23 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="tu-anon-key"
 npm run dev
 ```
 
+
+### 🧪 Modo Demo Admin (datos ficticios)
+
+Para revisar cómo se vería el panel con datos ficticios sin autenticarte en Supabase, activa el modo demo:
+
+```bash
+cd frontend
+NEXT_PUBLIC_ADMIN_DEMO=true npm run dev
+```
+
+Esto habilita acceso visual a `/admin` en desarrollo y usa datos de ejemplo centralizados en:
+
+- `frontend/src/lib/admin/demo-data.ts`
+
+Puedes editar ese archivo para adaptar proveedores, usuarios y reportes al estilo de tu negocio antes de conectar datos reales.
+
+
 ### 5. Acceder a la Aplicación
 
 - **Frontend**: http://localhost:3000

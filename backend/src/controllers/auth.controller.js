@@ -1,10 +1,7 @@
-// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
-const { TempPrismaClient } = require('../utils/tempDB');
+const prisma = require('../lib/prisma');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
-
-const prisma = new TempPrismaClient();
 
 /**
  * Generar JWT token

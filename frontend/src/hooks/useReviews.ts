@@ -66,13 +66,14 @@ export function useCreateReview() {
         .select('rating')
         .eq('provider_id', data.provider_id)
 
-      if (reviews) {
-        const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
+      if (reviews && reviews.length > 0) {
+        const ratingRows = reviews as Array<{ rating: number }>
+        const avgRating = ratingRows.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / ratingRows.length
         await supabase
           .from('providers')
           .update({
             rating: Math.round(avgRating * 10) / 10,
-            review_count: reviews.length,
+            review_count: ratingRows.length,
           })
           .eq('id', data.provider_id)
       }
@@ -110,7 +111,7 @@ export function useRespondToReview() {
       if (error) throw error
       return { ...data, providerId }
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { providerId: string }) => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.provider(data.providerId) })
     },
   })
@@ -139,7 +140,7 @@ export function useMarkHelpful() {
       if (error) throw error
       return { reviewId, providerId }
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { providerId: string }) => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.provider(data.providerId) })
     },
   })

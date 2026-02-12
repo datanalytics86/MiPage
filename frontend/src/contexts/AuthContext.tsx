@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User, Session } from '@supabase/supabase-js'
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import type { Profile, Provider } from '@/types/database'
 
@@ -39,21 +39,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserData = async (userId: string) => {
     try {
       // Fetch profile
-      const { data: profile } = await supabase
+      const profileResult = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
+      const profile = profileResult.data as Profile | null
 
       // Fetch provider if user is a provider
-      let provider = null
+      let provider: Provider | null = null
       if (profile?.role === 'provider') {
-        const { data: providerData } = await supabase
+        const providerResult = await supabase
           .from('providers')
           .select('*')
           .eq('user_id', userId)
           .single()
-        provider = providerData
+        provider = providerResult.data as Provider | null
       }
 
       return { profile, provider }
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         if (event === 'SIGNED_IN' && session?.user) {
           const { profile, provider } = await fetchUserData(session.user.id)
           setState({
@@ -156,7 +157,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create profile after signup
       if (authData.user) {
-        await supabase.from('profiles').insert({
+        const supabaseDb = supabase as any
+
+        await supabaseDb.from('profiles').insert({
           id: authData.user.id,
           email,
           name: data?.name || null,
@@ -170,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .replace(/\s+/g, '-')
             .replace(/[^a-z0-9-]/g, '')
 
-          await supabase.from('providers').insert({
+          await supabaseDb.from('providers').insert({
             user_id: authData.user.id,
             slug: `${slug}-${Date.now()}`,
             display_name: data.name || 'Nuevo Proveedor',

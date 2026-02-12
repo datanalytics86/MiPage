@@ -1,20 +1,18 @@
-'use client'
-
-import React from 'react'
 import { redirect } from 'next/navigation'
-import ExplorarPage from '../page'
+import type { ProviderCategory } from '@/types'
 
 interface CategoryPageProps {
   params: { category: string }
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const validCategories = ['masajes', 'modelaje']
+function isProviderCategory(category: string): category is ProviderCategory {
+  return category === 'masajes' || category === 'modelaje'
+}
 
-  if (!validCategories.includes(params.category)) {
+export default function CategoryPage({ params }: CategoryPageProps) {
+  if (!isProviderCategory(params.category)) {
     redirect('/explorar')
   }
 
-  // TODO: Pass category filter to ExplorarPage
-  return <ExplorarPage />
+  redirect(`/explorar?category=${params.category}`)
 }

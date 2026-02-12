@@ -15,7 +15,8 @@ import {
   X,
   Shield,
   Bell,
-  ChevronDown
+  ChevronDown,
+  FlaskConical
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -58,6 +59,7 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const isDemoAdminMode = process.env.NEXT_PUBLIC_ADMIN_DEMO === 'true'
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -182,6 +184,12 @@ export default function AdminLayout({
             </div>
 
             <div className="flex items-center gap-2">
+              {isDemoAdminMode && (
+                <Badge variant="secondary" className="gap-1">
+                  <FlaskConical className="h-3 w-3" />
+                  Modo demo
+                </Badge>
+              )}
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />

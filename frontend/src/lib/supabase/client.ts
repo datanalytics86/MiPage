@@ -1,17 +1,20 @@
 import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
+import { getSupabaseEnv } from '@/lib/supabase/env'
 
 export function createClient() {
+  const { url, anonKey } = getSupabaseEnv()
   return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    url,
+    anonKey
   )
 }
 
-// Singleton instance for client-side usage
-let client: ReturnType<typeof createClient> | null = null
+// NOTE: temporary compatibility typing to avoid false `never` inference issues
+// across current Supabase query usage in the project.
+let client: any = null
 
-export function getSupabaseClient() {
+export function getSupabaseClient(): any {
   if (!client) {
     client = createClient()
   }

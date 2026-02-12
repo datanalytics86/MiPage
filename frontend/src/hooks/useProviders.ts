@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
-import type { Provider, ProviderFull, Service, GalleryItem } from '@/types/database'
+import type { Provider, ProviderFull } from '@/types/database'
 
 // Query keys
 export const providerKeys = {
@@ -111,13 +111,15 @@ export function useProvider(slug: string) {
     queryKey: providerKeys.detail(slug),
     queryFn: async () => {
       // Fetch provider
-      const { data: provider, error: providerError } = await supabase
+      const providerResult = await supabase
         .from('providers')
         .select('*')
         .eq('slug', slug)
         .single()
 
-      if (providerError) throw providerError
+      if (providerResult.error) throw providerResult.error
+
+      const provider = providerResult.data as Provider
 
       // Fetch services
       const { data: services } = await supabase
@@ -177,7 +179,8 @@ export function useCategories() {
       if (error) throw error
 
       // Get unique categories
-      const categories = [...new Set(data.map(p => p.category))]
+      const rows = (data || []) as Array<{ category: string }>
+      const categories = Array.from(new Set(rows.map((p) => p.category)))
       return categories
     },
   })
@@ -198,7 +201,8 @@ export function useCities() {
       if (error) throw error
 
       // Get unique cities
-      const cities = [...new Set(data.map(p => p.city))]
+      const rows = (data || []) as Array<{ city: string }>
+      const cities = Array.from(new Set(rows.map((p) => p.city)))
       return cities
     },
   })

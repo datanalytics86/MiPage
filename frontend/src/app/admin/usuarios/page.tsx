@@ -35,77 +35,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatDate } from '@/lib/utils'
-
-interface UserData {
-  id: string
-  name: string
-  email: string
-  role: 'user' | 'provider' | 'admin'
-  status: 'active' | 'suspended' | 'pending'
-  avatar?: string
-  created_at: string
-  last_login?: string
-}
-
-// Mock users data
-const mockUsers: UserData[] = [
-  {
-    id: '1',
-    name: 'María González',
-    email: 'maria@email.com',
-    role: 'user',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-    created_at: '2024-01-15T00:00:00Z',
-    last_login: '2024-12-28T10:30:00Z',
-  },
-  {
-    id: '2',
-    name: 'Carlos Rodríguez',
-    email: 'carlos@email.com',
-    role: 'user',
-    status: 'active',
-    created_at: '2024-02-20T00:00:00Z',
-    last_login: '2024-12-27T15:45:00Z',
-  },
-  {
-    id: '3',
-    name: 'Valentina Rossi',
-    email: 'valentina@email.com',
-    role: 'provider',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
-    created_at: '2024-03-10T00:00:00Z',
-    last_login: '2024-12-28T08:00:00Z',
-  },
-  {
-    id: '4',
-    name: 'Admin Principal',
-    email: 'admin@luxeservices.com',
-    role: 'admin',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
-    created_at: '2024-01-01T00:00:00Z',
-    last_login: '2024-12-28T12:00:00Z',
-  },
-  {
-    id: '5',
-    name: 'Pedro López',
-    email: 'pedro@email.com',
-    role: 'user',
-    status: 'suspended',
-    created_at: '2024-04-05T00:00:00Z',
-  },
-  {
-    id: '6',
-    name: 'Isabella Montenegro',
-    email: 'isabella@email.com',
-    role: 'provider',
-    status: 'pending',
-    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100',
-    created_at: '2024-12-20T00:00:00Z',
-  },
-]
+import { demoUsers, type AdminUser } from '@/lib/admin/demo-data'
 
 const roleColors: Record<string, string> = {
   user: 'bg-blue-500/10 text-blue-500',
@@ -132,7 +62,7 @@ const statusLabels: Record<string, string> = {
 }
 
 export default function AdminUsuariosPage() {
-  const [users] = useState(mockUsers)
+  const [users] = useState<AdminUser[]>(demoUsers)
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')

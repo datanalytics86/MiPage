@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession, protectedRoutes, adminRoutes, authRoutes } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
+import { getSupabaseEnv } from '@/lib/supabase/env'
 
 export async function middleware(request: NextRequest) {
+  const { url, anonKey } = getSupabaseEnv()
   // Update session first
   const response = await updateSession(request)
 
@@ -13,11 +15,20 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
+  const isDemoAdminMode =
+    process.env.NODE_ENV === 'development' &&
+    process.env.NEXT_PUBLIC_ADMIN_DEMO === 'true'
+
+  // Demo mode for admin visualization with fictional data (development only)
+  if (isDemoAdminMode && isAdminRoute) {
+    return response
+  }
+
   if (isProtectedRoute || isAdminRoute) {
     // Create Supabase client to check auth
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      url,
+      anonKey,
       {
         cookies: {
           get(name: string) {
@@ -68,8 +79,8 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (isAuthRoute) {
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      url,
+      anonKey,
       {
         cookies: {
           get(name: string) {

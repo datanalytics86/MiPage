@@ -39,24 +39,33 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// Configuración CORS más permisiva para Codespaces
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+// Configuración CORS estricta en producción
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
-  'https://upgraded-space-pancake-q7gvrgw947g6cwqx-3000.app.github.dev'
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir peticiones sin origin (como desde curl, Postman, etc)
-    if (!origin) return callback(null, true);
-
-    // Permitir si está en la lista o si es una URL de github.dev
-    if (allowedOrigins.includes(origin) || origin.includes('app.github.dev')) {
-      callback(null, true);
-    } else {
-      callback(null, true); // En desarrollo, permitir todo
+    // Permitir peticiones sin origin (como desde curl, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
     }
+
+    const isAllowed = allowedOrigins.includes(origin);
+    const isCodespaces = origin.includes('app.github.dev');
+
+    if (isAllowed || (isDevelopment && isCodespaces)) {
+      return callback(null, true);
+    }
+
+    if (isDevelopment) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS bloqueado para origen: ${origin}`));
   },
   credentials: true,
 }));

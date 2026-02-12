@@ -1,12 +1,10 @@
 const express = require('express');
 const { body } = require('express-validator');
-// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
-const { TempPrismaClient } = require('../utils/tempDB');
+const prisma = require('../lib/prisma');
 const { validationResult } = require('express-validator');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
-const prisma = new TempPrismaClient();
 
 /**
  * @route   POST /api/posts

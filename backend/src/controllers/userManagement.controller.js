@@ -1,9 +1,7 @@
-// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
-const { TempPrismaClient } = require('../utils/tempDB');
+const prisma = require('../lib/prisma');
 const ExcelJS = require('exceljs');
 const crypto = require('crypto');
 
-const prisma = new TempPrismaClient();
 
 /**
  * @desc    Obtener usuarios con metadata (tipo tabla Excel)

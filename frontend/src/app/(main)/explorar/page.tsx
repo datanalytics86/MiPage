@@ -1,12 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Search, SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ProviderCard } from '@/components/providers/ProviderCard'
+import { useSearchParams } from 'next/navigation'
 import type { ProviderCardData, FilterOptions, ProviderCategory } from '@/types'
 
 // Mock data
@@ -113,14 +114,27 @@ const sortOptions = [
 ]
 
 export default function ExplorarPage() {
+  const searchParams = useSearchParams()
+
+  const categoryParam = searchParams.get('category')
+
+  const normalizedInitialCategory = useMemo<ProviderCategory | 'all'>(
+    () => (categoryParam === 'masajes' || categoryParam === 'modelaje' ? categoryParam : 'all'),
+    [categoryParam],
+  )
+
   const [filters, setFilters] = useState<FilterOptions>({
-    category: 'all',
+    category: normalizedInitialCategory,
     city: undefined,
     verified_only: false,
     sort_by: 'relevance',
   })
   const [searchQuery, setSearchQuery] = useState('')
   const [showFilters, setShowFilters] = useState(false)
+
+  useEffect(() => {
+    setFilters((prev) => ({ ...prev, category: normalizedInitialCategory }))
+  }, [normalizedInitialCategory])
 
   // Filter providers
   const filteredProviders = allProviders.filter((provider) => {
@@ -361,3 +375,4 @@ export default function ExplorarPage() {
     </div>
   )
 }
+
