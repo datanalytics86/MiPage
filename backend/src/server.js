@@ -152,8 +152,9 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
-server.listen(PORT, HOST, () => {
-  console.log(`
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, HOST, () => {
+    console.log(`
 ╔════════════════════════════════════════╗
 ║     🚀 MiPage API Server              ║
 ╠════════════════════════════════════════╣
@@ -163,7 +164,8 @@ server.listen(PORT, HOST, () => {
 ║  Docs: http://localhost:${PORT}/api-docs  ║
 ╚════════════════════════════════════════╝
   `);
-});
+  });
+}
 
 // Manejo de errores no capturados
 process.on('unhandledRejection', (err) => {

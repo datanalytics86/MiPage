@@ -24,7 +24,9 @@ describe('Auth API', () => {
 
   afterAll(async () => {
     io.close();
-    await new Promise((resolve) => server.close(resolve));
+    if (server.listening) {
+      await new Promise((resolve) => server.close(resolve));
+    }
     await prisma.$disconnect();
   });
 
