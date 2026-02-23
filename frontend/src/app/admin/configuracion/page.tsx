@@ -54,7 +54,7 @@ export default function AdminConfiguracionPage() {
     maintenanceMode: false,
   })
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }))
     setHasChanges(true)
   }

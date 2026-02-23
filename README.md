@@ -176,7 +176,7 @@ npx prisma generate
 npx prisma db push
 
 # 🌱 IMPORTANTE: Ejecutar seed para crear datos de prueba
-npm run seed
+npm run db:seed
 ```
 
 **El seed creará:**

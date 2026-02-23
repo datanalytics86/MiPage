@@ -6,7 +6,7 @@ import type { Provider, ProviderFull } from '@/types/database'
 export const providerKeys = {
   all: ['providers'] as const,
   lists: () => [...providerKeys.all, 'list'] as const,
-  list: (filters: Record<string, any>) => [...providerKeys.lists(), filters] as const,
+  list: (filters: ProvidersFilters) => [...providerKeys.lists(), filters] as const,
   details: () => [...providerKeys.all, 'detail'] as const,
   detail: (slug: string) => [...providerKeys.details(), slug] as const,
   featured: () => [...providerKeys.all, 'featured'] as const,

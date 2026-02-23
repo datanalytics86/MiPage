@@ -157,7 +157,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create profile after signup
       if (authData.user) {
-        const supabaseDb = supabase as any
+        const supabaseDb = supabase as unknown as {
+          from: (table: 'profiles' | 'providers') => {
+            insert: (values: Record<string, unknown>) => Promise<unknown>
+          }
+        }
 
         await supabaseDb.from('profiles').insert({
           id: authData.user.id,
@@ -177,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             user_id: authData.user.id,
             slug: `${slug}-${Date.now()}`,
             display_name: data.name || 'Nuevo Proveedor',
-            category: 'Masajes',
+            category: 'masajes',
             city: 'Santiago',
             status: 'pending',
           })
