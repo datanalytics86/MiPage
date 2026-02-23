@@ -59,7 +59,9 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const isDemoAdminMode = process.env.NEXT_PUBLIC_ADMIN_DEMO === 'true'
+  const isDemoAdminMode =
+    process.env.NODE_ENV === 'development' &&
+    process.env.NEXT_PUBLIC_ADMIN_DEMO === 'true'
 
   return (
     <div className="min-h-screen bg-muted/30">

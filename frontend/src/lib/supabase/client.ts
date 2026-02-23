@@ -4,19 +4,16 @@ import { getSupabaseEnv } from '@/lib/supabase/env'
 
 export function createClient() {
   const { url, anonKey } = getSupabaseEnv()
-  return createBrowserClient<Database>(
-    url,
-    anonKey
-  )
+  return createBrowserClient<Database>(url, anonKey)
 }
 
-// NOTE: temporary compatibility typing to avoid false `never` inference issues
-// across current Supabase query usage in the project.
-let client: any = null
+type LooseSupabaseClient = ReturnType<typeof createBrowserClient<any>>
 
-export function getSupabaseClient(): any {
+let client: LooseSupabaseClient | null = null
+
+export function getSupabaseClient(): LooseSupabaseClient {
   if (!client) {
-    client = createClient()
+    client = createClient() as unknown as LooseSupabaseClient
   }
   return client
 }
