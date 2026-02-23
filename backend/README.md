@@ -167,6 +167,7 @@ Ver `.env.example` para todas las opciones.
 **Opcionales:**
 - `CLOUDINARY_*` - Para upload de imágenes
 - `SENDGRID_API_KEY` - Para envío de emails
+- `SENDGRID_FROM_EMAIL` - Remitente de invitaciones
 - `RATE_LIMIT_*` - Configuración de rate limiting
 
 ## 📚 Dependencias Principales

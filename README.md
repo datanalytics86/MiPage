@@ -159,7 +159,7 @@ CLOUDINARY_API_SECRET="tu-api-secret"
 
 # Email (opcional - SendGrid gratuito 100 emails/día)
 SENDGRID_API_KEY="tu-sendgrid-key"
-FROM_EMAIL="noreply@tudominio.com"
+SENDGRID_FROM_EMAIL="noreply@tudominio.com"
 
 # Configuración
 PORT=3001
