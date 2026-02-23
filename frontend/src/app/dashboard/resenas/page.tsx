@@ -106,9 +106,7 @@ export default function DashboardResenasPage() {
                   </div>
                 ) : (
                   <div className="mt-3">
-                    <Button variant="outline" size="sm" disabled>
-                      Responder (próximamente)
-                    </Button>
+                    <Badge variant="secondary">Sin respuesta del proveedor</Badge>
                   </div>
                 )}
               </div>

@@ -84,9 +84,11 @@ export default function ComentariosPage() {
                 </div>
               </div>
 
-              <Button className="w-full" disabled>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Escribir una reseña (próximamente)
+              <Button className="w-full" asChild>
+                <Link href={`/login?next=/perfil/${provider.slug}/comentarios`}>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Inicia sesión para dejar una reseña
+                </Link>
               </Button>
             </CardContent>
           </Card>
