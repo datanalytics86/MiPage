@@ -3,14 +3,12 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   User,
   Briefcase,
   Image,
   MessageSquare,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -19,7 +17,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { cn, getInitials } from '@/lib/utils'
+import { useAuth } from '@/contexts/AuthContext'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -29,14 +28,6 @@ const navigation = [
   { name: 'Reseñas', href: '/dashboard/resenas', icon: MessageSquare },
 ]
 
-// Mock user data
-const mockUser = {
-  name: 'Valentina Reyes',
-  email: 'valentina@email.com',
-  avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
-  status: 'active' as const,
-}
-
 export default function DashboardLayout({
   children,
 }: {
@@ -44,10 +35,17 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user, profile, provider, signOut } = useAuth()
+
+  const displayName =
+    profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuario'
+  const displayEmail = user?.email || 'Sin email'
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || undefined
+  const profileSlug = provider?.slug || 'mi-perfil'
+  const isActiveProfile = provider?.status === 'approved'
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 lg:hidden"
@@ -55,7 +53,6 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           'fixed top-0 left-0 z-50 h-full w-72 bg-white border-r border-border transform transition-transform duration-300 lg:translate-x-0',
@@ -63,7 +60,6 @@ export default function DashboardLayout({
         )}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-border">
             <Link href="/" className="flex items-center">
               <span className="font-display text-xl font-semibold text-foreground">
@@ -78,26 +74,24 @@ export default function DashboardLayout({
             </button>
           </div>
 
-          {/* User Info */}
           <div className="p-4 border-b border-border">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={mockUser.avatar} />
-                <AvatarFallback>VR</AvatarFallback>
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-foreground truncate">{mockUser.name}</p>
-                <p className="text-sm text-foreground-muted truncate">{mockUser.email}</p>
+                <p className="font-medium text-foreground truncate">{displayName}</p>
+                <p className="text-sm text-foreground-muted truncate">{displayEmail}</p>
               </div>
             </div>
             <div className="mt-3">
-              <Badge variant={mockUser.status === 'active' ? 'success' : 'warning'}>
-                {mockUser.status === 'active' ? 'Perfil activo' : 'Pendiente de aprobación'}
+              <Badge variant={isActiveProfile ? 'success' : 'warning'}>
+                {isActiveProfile ? 'Perfil activo' : 'Pendiente de aprobación'}
               </Badge>
             </div>
           </div>
 
-          {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href
@@ -115,24 +109,24 @@ export default function DashboardLayout({
                 >
                   <item.icon className="h-5 w-5" />
                   {item.name}
-                  {isActive && (
-                    <ChevronRight className="h-4 w-4 ml-auto" />
-                  )}
+                  {isActive && <ChevronRight className="h-4 w-4 ml-auto" />}
                 </Link>
               )
             })}
           </nav>
 
-          {/* Bottom Actions */}
           <div className="p-4 border-t border-border space-y-1">
             <Link
-              href="/perfil/valentina-reyes"
+              href={`/perfil/${profileSlug}`}
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground-secondary hover:bg-muted hover:text-foreground transition-all"
             >
               <User className="h-5 w-5" />
               Ver mi perfil público
             </Link>
-            <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-all w-full">
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-error hover:bg-error/10 transition-all w-full"
+            >
               <LogOut className="h-5 w-5" />
               Cerrar sesión
             </button>
@@ -140,9 +134,7 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Main Content */}
       <div className="lg:pl-72">
-        {/* Top Bar */}
         <header className="sticky top-0 z-30 flex items-center h-16 px-4 bg-white border-b border-border lg:px-8">
           <button
             className="lg:hidden p-2 hover:bg-muted rounded-lg mr-4"
@@ -162,8 +154,7 @@ export default function DashboardLayout({
           </Link>
         </header>
 
-        {/* Page Content */}
-        <main className="p-4 lg:p-8">{children}</main>
+        {children}
       </div>
     </div>
   )
