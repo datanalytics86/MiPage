@@ -3,33 +3,30 @@
  */
 
 const request = require('supertest');
-const { app } = require('../src/server');
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+const prisma = require('../src/lib/prisma');
+const { app, server, io } = require('../src/server');
 
-const prisma = new PrismaClient();
+const suffix = Date.now();
+const registerEmail = `test-${suffix}@example.com`;
+const loginEmail = `logintest-${suffix}@example.com`;
+const loginPassword = 'testpass123';
 
 describe('Auth API', () => {
-  // Setup: Limpiar base de datos antes de tests
   beforeAll(async () => {
     await prisma.user.deleteMany({
       where: {
         email: {
-          in: ['test@example.com', 'newuser@example.com'],
+          in: [registerEmail, loginEmail],
         },
       },
     });
   });
 
-  // Cleanup: Limpiar después de tests
   afterAll(async () => {
-    await prisma.user.deleteMany({
-      where: {
-        email: {
-          in: ['test@example.com', 'newuser@example.com'],
-        },
-      },
-    });
+    io.close();
+    if (server.listening) {
+      await new Promise((resolve) => server.close(resolve));
+    }
     await prisma.$disconnect();
   });
 
@@ -38,7 +35,7 @@ describe('Auth API', () => {
       const response = await request(app)
         .post('/api/auth/register')
         .send({
-          email: 'test@example.com',
+          email: registerEmail,
           password: 'password123',
           name: 'Test User',
         })
@@ -46,7 +43,7 @@ describe('Auth API', () => {
 
       expect(response.body).toHaveProperty('user');
       expect(response.body).toHaveProperty('token');
-      expect(response.body.user.email).toBe('test@example.com');
+      expect(response.body.user.email).toBe(registerEmail);
       expect(response.body.user.name).toBe('Test User');
     });
 
@@ -54,7 +51,7 @@ describe('Auth API', () => {
       await request(app)
         .post('/api/auth/register')
         .send({
-          email: 'test@example.com',
+          email: registerEmail,
           password: 'password123',
           name: 'Test User',
         })
@@ -77,41 +74,35 @@ describe('Auth API', () => {
   describe('POST /api/auth/login', () => {
     beforeAll(async () => {
       // Crear usuario para login tests
-      const hashedPassword = await bcrypt.hash('testpass123', 10);
-      await prisma.user.create({
-        data: {
-          email: 'logintest@example.com',
-          password: hashedPassword,
+      await request(app)
+        .post('/api/auth/register')
+        .send({
+          email: loginEmail,
+          password: loginPassword,
           name: 'Login Test',
-        },
-      });
-    });
-
-    afterAll(async () => {
-      await prisma.user.deleteMany({
-        where: { email: 'logintest@example.com' },
-      });
+        })
+        .expect(201);
     });
 
     it('debe hacer login con credenciales correctas', async () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'logintest@example.com',
-          password: 'testpass123',
+          email: loginEmail,
+          password: loginPassword,
         })
         .expect(200);
 
       expect(response.body).toHaveProperty('user');
       expect(response.body).toHaveProperty('token');
-      expect(response.body.user.email).toBe('logintest@example.com');
+      expect(response.body.user.email).toBe(loginEmail);
     });
 
     it('debe fallar con contraseña incorrecta', async () => {
       await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'logintest@example.com',
+          email: loginEmail,
           password: 'wrongpassword',
         })
         .expect(401);
@@ -121,7 +112,7 @@ describe('Auth API', () => {
       await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'noexiste@example.com',
+          email: `noexiste-${suffix}@example.com`,
           password: 'password123',
         })
         .expect(401);
@@ -136,8 +127,8 @@ describe('Auth API', () => {
       const response = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'logintest@example.com',
-          password: 'testpass123',
+          email: loginEmail,
+          password: loginPassword,
         });
 
       authToken = response.body.token;
@@ -150,7 +141,7 @@ describe('Auth API', () => {
         .expect(200);
 
       expect(response.body).toHaveProperty('email');
-      expect(response.body.email).toBe('logintest@example.com');
+      expect(response.body.email).toBe(loginEmail);
     });
 
     it('debe fallar sin token', async () => {

@@ -1,9 +1,8 @@
-// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
-const { TempPrismaClient } = require('../utils/tempDB');
+const prisma = require('../lib/prisma');
 const ExcelJS = require('exceljs');
 const crypto = require('crypto');
+const { sendInvitationEmail } = require('../utils/email');
 
-const prisma = new TempPrismaClient();
 
 /**
  * @desc    Obtener usuarios con metadata (tipo tabla Excel)
@@ -334,16 +333,24 @@ exports.inviteUser = async (req, res) => {
     // Construir link de registro
     const registrationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/register/${token}`;
 
+    const emailDelivery = await sendInvitationEmail({
+      to: email,
+      name,
+      registrationLink,
+    });
+
     res.status(201).json({
       success: true,
       data: {
         user,
         registrationLink,
+        emailDelivery,
       },
-      message: 'Invitación creada exitosamente',
+      message:
+        emailDelivery.status === 'sent'
+          ? 'Invitación creada y enviada exitosamente'
+          : 'Invitación creada. Email pendiente de configuración',
     });
-
-    // TODO: Enviar email con el link de registro
   } catch (error) {
     console.error('Error inviting user:', error);
     res.status(500).json({

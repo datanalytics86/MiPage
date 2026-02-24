@@ -37,101 +37,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatDate, formatPrice } from '@/lib/utils'
-
-interface Provider {
-  id: string
-  name: string
-  email: string
-  category: string
-  city: string
-  status: 'pending' | 'approved' | 'rejected' | 'suspended'
-  is_verified: boolean
-  photo?: string
-  rating: number
-  review_count: number
-  services_count: number
-  price_min: number
-  created_at: string
-}
-
-// Mock providers data
-const mockProviders: Provider[] = [
-  {
-    id: '1',
-    name: 'Valentina Rossi',
-    email: 'valentina@email.com',
-    category: 'Masajes',
-    city: 'Santiago',
-    status: 'approved',
-    is_verified: true,
-    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
-    rating: 4.9,
-    review_count: 127,
-    services_count: 5,
-    price_min: 45000,
-    created_at: '2024-03-10T00:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Isabella Montenegro',
-    email: 'isabella@email.com',
-    category: 'Modelaje',
-    city: 'Viña del Mar',
-    status: 'pending',
-    is_verified: false,
-    photo: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100',
-    rating: 0,
-    review_count: 0,
-    services_count: 3,
-    price_min: 60000,
-    created_at: '2024-12-20T00:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'Camila Delgado',
-    email: 'camila@email.com',
-    category: 'Fotografía',
-    city: 'Providencia',
-    status: 'approved',
-    is_verified: false,
-    photo: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100',
-    rating: 5.0,
-    review_count: 45,
-    services_count: 4,
-    price_min: 55000,
-    created_at: '2024-06-15T00:00:00Z',
-  },
-  {
-    id: '4',
-    name: 'Sofía Martínez',
-    email: 'sofia@email.com',
-    category: 'Masajes',
-    city: 'Las Condes',
-    status: 'pending',
-    is_verified: false,
-    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100',
-    rating: 0,
-    review_count: 0,
-    services_count: 2,
-    price_min: 40000,
-    created_at: '2024-12-25T00:00:00Z',
-  },
-  {
-    id: '5',
-    name: 'Ana Fernández',
-    email: 'ana@email.com',
-    category: 'Modelaje',
-    city: 'Ñuñoa',
-    status: 'suspended',
-    is_verified: true,
-    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-    rating: 4.2,
-    review_count: 38,
-    services_count: 3,
-    price_min: 50000,
-    created_at: '2024-02-20T00:00:00Z',
-  },
-]
+import { demoProviders, type AdminProvider } from '@/lib/admin/demo-data'
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning',
@@ -148,7 +54,7 @@ const statusLabels: Record<string, string> = {
 }
 
 export default function AdminProveedoresPage() {
-  const [providers, setProviders] = useState(mockProviders)
+  const [providers, setProviders] = useState<AdminProvider[]>(demoProviders)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
@@ -179,7 +85,7 @@ export default function AdminProveedoresPage() {
     ))
   }
 
-  const categories = [...new Set(mockProviders.map(p => p.category))]
+  const categories = Array.from(new Set(providers.map((p) => p.category)))
 
   return (
     <div className="space-y-6">

@@ -30,131 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatDate } from '@/lib/utils'
-
-interface Report {
-  id: string
-  type: 'profile' | 'review' | 'message' | 'photo'
-  reason: string
-  description: string
-  status: 'pending' | 'resolved' | 'dismissed'
-  priority: 'low' | 'medium' | 'high'
-  reporter: {
-    name: string
-    email: string
-    avatar?: string
-  }
-  reported: {
-    type: string
-    name: string
-    id: string
-  }
-  created_at: string
-  resolved_at?: string
-  resolved_by?: string
-  resolution_note?: string
-}
-
-// Mock reports data
-const mockReports: Report[] = [
-  {
-    id: 'r1',
-    type: 'profile',
-    reason: 'Contenido inapropiado',
-    description: 'El perfil contiene imágenes que violan los términos de servicio. Las fotos parecen ser explícitas.',
-    status: 'pending',
-    priority: 'high',
-    reporter: {
-      name: 'Usuario Anónimo',
-      email: 'user123@email.com',
-    },
-    reported: {
-      type: 'Proveedor',
-      name: 'Proveedor XYZ',
-      id: 'p123',
-    },
-    created_at: '2024-12-28T10:30:00Z',
-  },
-  {
-    id: 'r2',
-    type: 'review',
-    reason: 'Spam / Publicidad',
-    description: 'La reseña contiene enlaces de publicidad a otros sitios web.',
-    status: 'pending',
-    priority: 'medium',
-    reporter: {
-      name: 'Valentina Rossi',
-      email: 'valentina@email.com',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
-    },
-    reported: {
-      type: 'Reseña',
-      name: 'Reseña #1234',
-      id: 'rev123',
-    },
-    created_at: '2024-12-27T15:45:00Z',
-  },
-  {
-    id: 'r3',
-    type: 'message',
-    reason: 'Acoso',
-    description: 'El usuario está enviando mensajes intimidantes y acosadores repetidamente.',
-    status: 'pending',
-    priority: 'high',
-    reporter: {
-      name: 'Isabella Montenegro',
-      email: 'isabella@email.com',
-      avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100',
-    },
-    reported: {
-      type: 'Usuario',
-      name: 'usuario_anonimo',
-      id: 'u456',
-    },
-    created_at: '2024-12-26T09:00:00Z',
-  },
-  {
-    id: 'r4',
-    type: 'photo',
-    reason: 'Foto falsa',
-    description: 'Las fotos del perfil no corresponden a la persona real. Posible catfish.',
-    status: 'resolved',
-    priority: 'medium',
-    reporter: {
-      name: 'Carlos Rodríguez',
-      email: 'carlos@email.com',
-    },
-    reported: {
-      type: 'Proveedor',
-      name: 'Ana López',
-      id: 'p789',
-    },
-    created_at: '2024-12-20T14:00:00Z',
-    resolved_at: '2024-12-22T10:00:00Z',
-    resolved_by: 'Admin',
-    resolution_note: 'Se verificó la identidad del proveedor. Fotos son auténticas.',
-  },
-  {
-    id: 'r5',
-    type: 'profile',
-    reason: 'Información falsa',
-    description: 'El proveedor afirma tener certificaciones que no posee.',
-    status: 'dismissed',
-    priority: 'low',
-    reporter: {
-      name: 'Usuario Competidor',
-      email: 'comp@email.com',
-    },
-    reported: {
-      type: 'Proveedor',
-      name: 'Camila Delgado',
-      id: 'p101',
-    },
-    created_at: '2024-12-15T11:00:00Z',
-    resolved_at: '2024-12-16T09:00:00Z',
-    resolved_by: 'Admin',
-    resolution_note: 'Reporte sin fundamento. El proveedor tiene documentación válida.',
-  },
-]
+import { demoReports, type AdminReport } from '@/lib/admin/demo-data'
 
 const typeIcons: Record<string, React.ElementType> = {
   profile: User,
@@ -195,7 +71,7 @@ const priorityLabels: Record<string, string> = {
 }
 
 export default function AdminReportesPage() {
-  const [reports, setReports] = useState(mockReports)
+  const [reports, setReports] = useState<AdminReport[]>(demoReports)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [typeFilter, setTypeFilter] = useState<string>('all')

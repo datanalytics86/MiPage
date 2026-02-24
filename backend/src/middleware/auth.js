@@ -1,8 +1,5 @@
 const jwt = require('jsonwebtoken');
-// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
-const { TempPrismaClient } = require('../utils/tempDB');
-
-const prisma = new TempPrismaClient();
+const prisma = require('../lib/prisma');
 
 /**
  * Middleware para verificar token JWT

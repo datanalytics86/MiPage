@@ -1,9 +1,9 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User, Session } from '@supabase/supabase-js'
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js'
 import { getSupabaseClient } from '@/lib/supabase/client'
-import type { Profile, Provider } from '@/types/database'
+import type { Database, Profile, Provider } from '@/types/database'
 
 interface AuthState {
   user: User | null
@@ -39,21 +39,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserData = async (userId: string) => {
     try {
       // Fetch profile
-      const { data: profile } = await supabase
+      const profileResult = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
+      const profile = profileResult.data as Profile | null
 
       // Fetch provider if user is a provider
-      let provider = null
+      let provider: Provider | null = null
       if (profile?.role === 'provider') {
-        const { data: providerData } = await supabase
+        const providerResult = await supabase
           .from('providers')
           .select('*')
           .eq('user_id', userId)
           .single()
-        provider = providerData
+        provider = providerResult.data as Provider | null
       }
 
       return { profile, provider }
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         if (event === 'SIGNED_IN' && session?.user) {
           const { profile, provider } = await fetchUserData(session.user.id)
           setState({
@@ -156,12 +157,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create profile after signup
       if (authData.user) {
-        await supabase.from('profiles').insert({
+        const profileInsert: Database['public']['Tables']['profiles']['Insert'] = {
           id: authData.user.id,
           email,
           name: data?.name || null,
           role: data?.role || 'user',
-        })
+        }
+
+        await (supabase.from('profiles') as any).insert(profileInsert)
 
         // If registering as provider, create provider record
         if (data?.role === 'provider') {
@@ -170,14 +173,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .replace(/\s+/g, '-')
             .replace(/[^a-z0-9-]/g, '')
 
-          await supabase.from('providers').insert({
+          const providerInsert: Database['public']['Tables']['providers']['Insert'] = {
             user_id: authData.user.id,
             slug: `${slug}-${Date.now()}`,
             display_name: data.name || 'Nuevo Proveedor',
-            category: 'Masajes',
+            category: 'masajes',
             city: 'Santiago',
             status: 'pending',
-          })
+          }
+
+          await (supabase.from('providers') as any).insert(providerInsert)
         }
       }
 

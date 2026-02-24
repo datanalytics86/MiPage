@@ -1,6 +1,4 @@
-// Temporal: Usar JSON en lugar de Prisma por problemas de binarios
-const { TempPrismaClient } = require('../utils/tempDB');
-const prisma = new TempPrismaClient();
+const prisma = require('../lib/prisma');
 
 /**
  * @desc    Obtener todos los campos de metadata (para admin)

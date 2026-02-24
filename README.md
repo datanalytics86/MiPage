@@ -159,7 +159,7 @@ CLOUDINARY_API_SECRET="tu-api-secret"
 
 # Email (opcional - SendGrid gratuito 100 emails/día)
 SENDGRID_API_KEY="tu-sendgrid-key"
-FROM_EMAIL="noreply@tudominio.com"
+SENDGRID_FROM_EMAIL="noreply@tudominio.com"
 
 # Configuración
 PORT=3001
@@ -176,7 +176,7 @@ npx prisma generate
 npx prisma db push
 
 # 🌱 IMPORTANTE: Ejecutar seed para crear datos de prueba
-npm run seed
+npm run db:seed
 ```
 
 **El seed creará:**
@@ -225,6 +225,23 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="tu-anon-key"
 ```bash
 npm run dev
 ```
+
+
+### 🧪 Modo Demo Admin (datos ficticios)
+
+Para revisar cómo se vería el panel con datos ficticios sin autenticarte en Supabase, activa el modo demo:
+
+```bash
+cd frontend
+NEXT_PUBLIC_ADMIN_DEMO=true npm run dev
+```
+
+Esto habilita acceso visual a `/admin` en desarrollo y usa datos de ejemplo centralizados en:
+
+- `frontend/src/lib/admin/demo-data.ts`
+
+Puedes editar ese archivo para adaptar proveedores, usuarios y reportes al estilo de tu negocio antes de conectar datos reales.
+
 
 ### 5. Acceder a la Aplicación
 
@@ -492,3 +509,37 @@ MIT License - Ver [LICENSE](./LICENSE) para más detalles.
 ---
 
 **Hecho con ❤️ para emprendedores chilenos**
+
+
+## 🚀 Checklist de Deploy Producción
+
+Antes de desplegar, valida lo siguiente:
+
+1. Backend con variables productivas:
+   - `DATABASE_URL`
+   - `JWT_SECRET`
+   - `FRONTEND_URL`
+   - (Opcional email real) `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL`
+2. Frontend con variables públicas:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Confirmar que `NEXT_PUBLIC_ADMIN_DEMO` **no** esté activo en producción.
+4. Validar readiness/health de backend:
+   - `/health`
+   - `/api/health`
+   - `/readyz`
+   - `/api/readyz`
+
+### Comandos de validación pre-deploy
+
+```bash
+# Backend tests
+npm --prefix backend test -- --runInBand
+
+# Frontend build (exige env de Supabase)
+NEXT_PUBLIC_SUPABASE_URL=https://<tu-proyecto>.supabase.co \
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<tu-anon-key> \
+npm --prefix frontend run build
+```
+
+> Nota: `backend` valida variables críticas al usar `npm run start` en `NODE_ENV=production`.

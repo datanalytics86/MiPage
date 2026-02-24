@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const http = require('http');
 const { Server } = require('socket.io');
+const prisma = require('./lib/prisma');
 
 // Importar rutas
 const authRoutes = require('./routes/auth.routes');
@@ -39,24 +40,33 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// Configuración CORS más permisiva para Codespaces
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+// Configuración CORS estricta en producción
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
-  'https://upgraded-space-pancake-q7gvrgw947g6cwqx-3000.app.github.dev'
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Permitir peticiones sin origin (como desde curl, Postman, etc)
-    if (!origin) return callback(null, true);
-
-    // Permitir si está en la lista o si es una URL de github.dev
-    if (allowedOrigins.includes(origin) || origin.includes('app.github.dev')) {
-      callback(null, true);
-    } else {
-      callback(null, true); // En desarrollo, permitir todo
+    // Permitir peticiones sin origin (como desde curl, Postman, etc.)
+    if (!origin) {
+      return callback(null, true);
     }
+
+    const isAllowed = allowedOrigins.includes(origin);
+    const isCodespaces = origin.includes('app.github.dev');
+
+    if (isAllowed || (isDevelopment && isCodespaces)) {
+      return callback(null, true);
+    }
+
+    if (isDevelopment) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS bloqueado para origen: ${origin}`));
   },
   credentials: true,
 }));
@@ -90,6 +100,41 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV,
     version: '1.0.0',
   });
+});
+
+
+// Readiness check
+const buildReadinessPayload = async () => {
+  const checks = {
+    jwtSecret: Boolean(process.env.JWT_SECRET),
+    database: false,
+  };
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = true;
+  } catch (error) {
+    checks.database = false;
+  }
+
+  const ready = checks.jwtSecret && checks.database;
+
+  return {
+    status: ready ? 'ready' : 'not_ready',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    checks,
+  };
+};
+
+app.get('/readyz', async (req, res) => {
+  const readiness = await buildReadinessPayload();
+  return res.status(readiness.status === 'ready' ? 200 : 503).json(readiness);
+});
+
+app.get('/api/readyz', async (req, res) => {
+  const readiness = await buildReadinessPayload();
+  return res.status(readiness.status === 'ready' ? 200 : 503).json({ ...readiness, version: '1.0.0' });
 });
 
 // Rutas API
@@ -143,8 +188,9 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 
-server.listen(PORT, HOST, () => {
-  console.log(`
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, HOST, () => {
+    console.log(`
 ╔════════════════════════════════════════╗
 ║     🚀 MiPage API Server              ║
 ╠════════════════════════════════════════╣
@@ -154,7 +200,8 @@ server.listen(PORT, HOST, () => {
 ║  Docs: http://localhost:${PORT}/api-docs  ║
 ╚════════════════════════════════════════╝
   `);
-});
+  });
+}
 
 // Manejo de errores no capturados
 process.on('unhandledRejection', (err) => {

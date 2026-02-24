@@ -5,28 +5,14 @@ API REST construida con Node.js, Express y PostgreSQL.
 ## 🚀 Quick Start
 
 ```bash
-# Instalar dependencias
-npm install
+# Setup completo local (sin pedirte soporte externo)
+npm run setup:local
 
-# Configurar .env
-cp .env.example .env
-# Editar .env con tus credenciales
-
-# Generar Prisma Client
-npx prisma generate
-
-# Crear tablas en DB
-npx prisma db push
-
-# Seed con datos de ejemplo
-npx prisma db seed
-
-# Iniciar en desarrollo
+# Iniciar API
 npm run dev
-
-# Iniciar en producción
-npm start
 ```
+
+> `setup:local` crea `.env` (si no existe), instala dependencias, genera Prisma, sincroniza DB SQLite local y carga datos ficticios.
 
 ## 📁 Estructura
 
@@ -166,6 +152,7 @@ NODE_ENV=production
 - `npm run db:push` - Push schema a DB
 - `npm run db:seed` - Seed datos
 - `npm run db:studio` - Abrir Prisma Studio
+- `npm run setup:local` - Configura backend local completo
 
 ## 🔧 Configuración
 
@@ -174,12 +161,13 @@ NODE_ENV=production
 Ver `.env.example` para todas las opciones.
 
 **Requeridas:**
-- `DATABASE_URL` - PostgreSQL connection string
+- `DATABASE_URL` - En local: `file:./prisma/dev.db` (SQLite)
 - `JWT_SECRET` - Secret para JWT tokens
 
 **Opcionales:**
 - `CLOUDINARY_*` - Para upload de imágenes
 - `SENDGRID_API_KEY` - Para envío de emails
+- `SENDGRID_FROM_EMAIL` - Remitente de invitaciones
 - `RATE_LIMIT_*` - Configuración de rate limiting
 
 ## 📚 Dependencias Principales

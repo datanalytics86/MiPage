@@ -19,109 +19,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { cn, formatPrice } from '@/lib/utils'
-
-// Mock stats
-const stats = [
-  {
-    name: 'Total Usuarios',
-    value: '2,543',
-    change: '+12.5%',
-    trend: 'up',
-    icon: Users,
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-  },
-  {
-    name: 'Proveedores Activos',
-    value: '186',
-    change: '+8.2%',
-    trend: 'up',
-    icon: UserCheck,
-    color: 'text-gold',
-    bg: 'bg-gold/10',
-  },
-  {
-    name: 'Ingresos del Mes',
-    value: formatPrice(12450000),
-    change: '+23.1%',
-    trend: 'up',
-    icon: DollarSign,
-    color: 'text-success',
-    bg: 'bg-success/10',
-  },
-  {
-    name: 'Reportes Pendientes',
-    value: '3',
-    change: '-2',
-    trend: 'down',
-    icon: Flag,
-    color: 'text-error',
-    bg: 'bg-error/10',
-  },
-]
-
-// Mock recent providers
-const recentProviders = [
-  {
-    id: '1',
-    name: 'Valentina Rossi',
-    email: 'valentina@email.com',
-    category: 'Masajes',
-    status: 'pending',
-    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100',
-    created_at: '2024-12-28',
-  },
-  {
-    id: '2',
-    name: 'Isabella Montenegro',
-    email: 'isabella@email.com',
-    category: 'Modelaje',
-    status: 'approved',
-    photo: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100',
-    created_at: '2024-12-27',
-  },
-  {
-    id: '3',
-    name: 'Camila Delgado',
-    email: 'camila@email.com',
-    category: 'Fotografía',
-    status: 'pending',
-    photo: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100',
-    created_at: '2024-12-26',
-  },
-]
-
-// Mock recent reports
-const recentReports = [
-  {
-    id: 'r1',
-    type: 'perfil',
-    reason: 'Contenido inapropiado',
-    reporter: 'usuario123',
-    reported: 'Proveedor XYZ',
-    created_at: '2024-12-28',
-    status: 'pending',
-  },
-  {
-    id: 'r2',
-    type: 'reseña',
-    reason: 'Spam',
-    reporter: 'usuario456',
-    reported: 'Reseña #1234',
-    created_at: '2024-12-27',
-    status: 'pending',
-  },
-  {
-    id: 'r3',
-    type: 'mensaje',
-    reason: 'Acoso',
-    reporter: 'usuario789',
-    reported: 'usuario000',
-    created_at: '2024-12-26',
-    status: 'resolved',
-  },
-]
+import { cn } from '@/lib/utils'
+import {
+  adminDemoStats,
+  adminRecentProviders as recentProviders,
+  adminRecentReports as recentReports,
+} from '@/lib/admin/demo-data'
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning',
@@ -137,12 +40,20 @@ const statusLabels: Record<string, string> = {
   resolved: 'Resuelto',
 }
 
+
+const statIcons: Record<string, React.ElementType> = {
+  'Total Usuarios': Users,
+  'Proveedores Activos': UserCheck,
+  'Ingresos del Mes': DollarSign,
+  'Reportes Pendientes': Flag,
+}
+
 export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
+        {adminDemoStats.map((stat, index) => (
           <motion.div
             key={stat.name}
             initial={{ opacity: 0, y: 20 }}
@@ -171,7 +82,7 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
                   <div className={cn('p-3 rounded-xl', stat.bg)}>
-                    <stat.icon className={cn('h-6 w-6', stat.color)} />
+                    {(() => { const Icon = statIcons[stat.name] || Users; return <Icon className={cn('h-6 w-6', stat.color)} /> })()}
                   </div>
                 </div>
               </CardContent>
