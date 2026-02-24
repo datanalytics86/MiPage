@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   Settings,
   Globe,
@@ -60,6 +60,32 @@ const initialSettings = {
   density: 'comfortable' as DensityMode,
 }
 
+
+const SETTINGS_STORAGE_KEY = 'admin-settings-v1'
+
+type AdminSettings = typeof initialSettings
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function coerceStoredSettings(value: unknown): AdminSettings | null {
+  if (!isObject(value)) return null
+
+  const base = initialSettings
+  const candidate = { ...base } as Record<string, unknown>
+
+  for (const key of Object.keys(base) as Array<keyof AdminSettings>) {
+    const storedValue = value[key]
+    if (typeof base[key] === typeof storedValue) {
+      candidate[key] = storedValue
+    }
+  }
+
+  return candidate as AdminSettings
+}
+
+
 function ToggleRow({
   title,
   description,
@@ -101,6 +127,33 @@ export default function AdminConfiguracionPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle')
   const [settings, setSettings] = useState(initialSettings)
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
+      if (!raw) return
+
+      const parsed = JSON.parse(raw)
+      const storedSettings = coerceStoredSettings(parsed)
+      if (storedSettings) {
+        setSettings(storedSettings)
+      }
+    } catch (error) {
+      console.error('No se pudieron cargar settings admin guardados:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    try {
+      window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings))
+    } catch (error) {
+      console.error('No se pudieron persistir settings admin:', error)
+    }
+  }, [settings])
+
   const selectedSection = useMemo(
     () => sections.find((section) => section.id === activeSection),
     [activeSection]
@@ -121,6 +174,10 @@ export default function AdminConfiguracionPage() {
     setSettings(initialSettings)
     setHasChanges(false)
     setSaveStatus('idle')
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(SETTINGS_STORAGE_KEY)
+    }
   }
 
   return (
