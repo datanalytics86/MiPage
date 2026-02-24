@@ -30,6 +30,26 @@ type FavoriteRow = {
   provider: Provider | null
 }
 
+const normalizeFavoriteRow = (value: unknown): FavoriteRow | null => {
+  if (!value || typeof value !== 'object') return null
+
+  const row = value as Record<string, unknown>
+  if (
+    typeof row.id !== 'string' ||
+    typeof row.provider_id !== 'string' ||
+    typeof row.created_at !== 'string'
+  ) {
+    return null
+  }
+
+  return {
+    id: row.id,
+    provider_id: row.provider_id,
+    created_at: row.created_at,
+    provider: (row.provider as Provider | null) ?? null,
+  }
+}
+
 const mapFavoriteRow = (item: FavoriteRow): FavoriteItem => ({
   id: item.id,
   provider_id: item.provider_id,
@@ -61,7 +81,10 @@ export const useFavoritesStore = create<FavoritesState>()(
 
           if (error) throw error
 
-          const favorites = ((data || []) as unknown as FavoriteRow[]).map(mapFavoriteRow)
+          const favorites = (data || [])
+            .map(normalizeFavoriteRow)
+            .filter((item): item is FavoriteRow => item !== null)
+            .map(mapFavoriteRow)
 
           set({ favorites, isLoading: false, isSynced: true })
         } catch (error) {
@@ -97,7 +120,12 @@ export const useFavoritesStore = create<FavoritesState>()(
 
           if (error) throw error
 
-          const mappedFavorite = mapFavoriteRow(data as unknown as FavoriteRow)
+          const normalizedFavorite = normalizeFavoriteRow(data)
+          if (!normalizedFavorite) {
+            throw new Error('Invalid favorite payload returned by backend')
+          }
+
+          const mappedFavorite = mapFavoriteRow(normalizedFavorite)
 
           // Replace temp with real data
           set(state => ({

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthChangeEvent } from '@supabase/supabase-js'
 import { getSupabaseClient } from '@/lib/supabase/client'
-import type { Profile, Provider } from '@/types/database'
+import type { Database, Profile, Provider } from '@/types/database'
 
 interface AuthState {
   user: User | null
@@ -157,18 +157,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create profile after signup
       if (authData.user) {
-        const supabaseDb = supabase as unknown as {
-          from: (table: 'profiles' | 'providers') => {
-            insert: (values: Record<string, unknown>) => Promise<unknown>
-          }
-        }
-
-        await supabaseDb.from('profiles').insert({
+        const profileInsert: Database['public']['Tables']['profiles']['Insert'] = {
           id: authData.user.id,
           email,
           name: data?.name || null,
           role: data?.role || 'user',
-        })
+        }
+
+        await (supabase.from('profiles') as any).insert(profileInsert)
 
         // If registering as provider, create provider record
         if (data?.role === 'provider') {
@@ -177,14 +173,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .replace(/\s+/g, '-')
             .replace(/[^a-z0-9-]/g, '')
 
-          await supabaseDb.from('providers').insert({
+          const providerInsert: Database['public']['Tables']['providers']['Insert'] = {
             user_id: authData.user.id,
             slug: `${slug}-${Date.now()}`,
             display_name: data.name || 'Nuevo Proveedor',
             category: 'masajes',
             city: 'Santiago',
             status: 'pending',
-          })
+          }
+
+          await (supabase.from('providers') as any).insert(providerInsert)
         }
       }
 
