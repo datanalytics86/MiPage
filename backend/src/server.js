@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const http = require('http');
 const { Server } = require('socket.io');
+const prisma = require('./lib/prisma');
 
 // Importar rutas
 const authRoutes = require('./routes/auth.routes');
@@ -99,6 +100,41 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV,
     version: '1.0.0',
   });
+});
+
+
+// Readiness check
+const buildReadinessPayload = async () => {
+  const checks = {
+    jwtSecret: Boolean(process.env.JWT_SECRET),
+    database: false,
+  };
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    checks.database = true;
+  } catch (error) {
+    checks.database = false;
+  }
+
+  const ready = checks.jwtSecret && checks.database;
+
+  return {
+    status: ready ? 'ready' : 'not_ready',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    checks,
+  };
+};
+
+app.get('/readyz', async (req, res) => {
+  const readiness = await buildReadinessPayload();
+  return res.status(readiness.status === 'ready' ? 200 : 503).json(readiness);
+});
+
+app.get('/api/readyz', async (req, res) => {
+  const readiness = await buildReadinessPayload();
+  return res.status(readiness.status === 'ready' ? 200 : 503).json({ ...readiness, version: '1.0.0' });
 });
 
 // Rutas API
