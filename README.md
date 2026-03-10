@@ -490,6 +490,7 @@ npm run test:e2e
 
 ## 📚 Documentación Adicional
 
+- [Handoff de Iteración (estado implementado)](./docs/ITERATION-HANDOFF.md)
 - [Guía de API](./docs/API.md)
 - [Componentes Frontend](./docs/COMPONENTS.md)
 - [Despliegue Avanzado](./docs/DEPLOYMENT.md)
