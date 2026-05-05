@@ -227,4 +227,105 @@ router.put('/me/notifications/:id/read', authenticateToken, async (req, res) => 
   }
 });
 
+// Helpers
+function toSlug(name) {
+  return (name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '');
+}
+
+/**
+ * @route   GET /api/providers/:slug
+ * @desc    Obtener perfil público de un publisher por slug (nombre-apellido)
+ * @access  Public
+ */
+router.get('/providers/:slug', optionalAuth, async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const db = await prisma.user.findMany({
+      where: { role: 'PUBLISHER', isActive: true },
+    });
+
+    const user = (db || []).find((u) => toSlug(u.name) === slug);
+
+    if (!user) {
+      return res.status(404).json({ error: 'Perfil no encontrado' });
+    }
+
+    const services = await prisma.service.findMany({
+      where: { userId: user.id, status: 'APPROVED' },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const reviews = await prisma.review.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const avgRating =
+      reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
+
+    const metadata = await prisma.userMetadata?.findUnique?.({ where: { userId: user.id } }) || null;
+
+    res.json({
+      id: user.id,
+      slug,
+      display_name: user.name,
+      bio: user.bio || metadata?.biografia || null,
+      category: metadata?.tipoServicio || (services[0]?.category || null),
+      age: metadata?.edad || null,
+      city: metadata?.ciudad || services[0]?.city || null,
+      commune: metadata?.comuna || null,
+      address_hint: metadata?.direccion || null,
+      whatsapp: user.phone || null,
+      instagram: null,
+      height_cm: metadata?.altura || null,
+      weight_kg: metadata?.peso || null,
+      measurements: metadata?.medidas || null,
+      is_verified: user.isVerified || false,
+      is_featured: false,
+      views_count: 0,
+      average_rating: Math.round(avgRating * 10) / 10,
+      review_count: reviews.length,
+      media: services.flatMap((s) => {
+        const photos = Array.isArray(s.photos) ? s.photos : (s.photos ? JSON.parse(s.photos) : []);
+        return photos.map((url, i) => ({
+          id: `${s.id}-${i}`,
+          type: 'image',
+          url,
+          thumbnail_url: url,
+          is_primary: s.coverPhoto === url || i === 0,
+          is_approved: true,
+          sort_order: i,
+        }));
+      }),
+      services: services.map((s) => ({
+        id: s.id,
+        name: s.title,
+        description: s.description,
+        price: s.price,
+        duration: s.priceType,
+        is_active: true,
+        sort_order: 0,
+      })),
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        content: r.comment,
+        created_at: r.createdAt,
+        user: { id: r.userId, full_name: 'Usuario', avatar_url: null },
+      })),
+    });
+  } catch (error) {
+    console.error('Error al obtener perfil por slug:', error);
+    res.status(500).json({ error: 'Error al obtener perfil' });
+  }
+});
+
 module.exports = router;

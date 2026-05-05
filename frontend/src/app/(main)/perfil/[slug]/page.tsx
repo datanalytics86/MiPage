@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -147,18 +147,72 @@ interface ProviderPageProps {
   params: { slug: string }
 }
 
+type FullProvider = Provider & {
+  services: Service[]
+  media: Media[]
+  reviews: Review[]
+  average_rating: number
+  review_count: number
+}
+
 export default function ProviderPage({ params }: ProviderPageProps) {
-  const provider = mockProvider // TODO: Fetch from API
+  const [provider, setProvider] = useState<FullProvider | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [notFound, setNotFound] = useState(false)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
 
-  const primaryImage = provider.media.find((m) => m.is_primary) || provider.media[0]
-  const otherImages = provider.media.filter((m) => m.id !== primaryImage?.id).slice(0, 4)
-  const minPrice = Math.min(...provider.services.map((s) => s.price))
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+    fetch(`${apiUrl}/providers/${params.slug}`)
+      .then((res) => {
+        if (res.status === 404) { setNotFound(true); return null }
+        if (!res.ok) throw new Error('Error de red')
+        return res.json()
+      })
+      .then((data) => { if (data) setProvider(data) })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false))
+  }, [params.slug])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container-luxury py-8 animate-pulse">
+          <div className="h-[480px] bg-muted rounded-2xl mb-8" />
+          <div className="flex gap-8">
+            <div className="flex-1 space-y-4">
+              <div className="h-8 bg-muted rounded w-1/3" />
+              <div className="h-4 bg-muted rounded w-2/3" />
+              <div className="h-4 bg-muted rounded w-1/2" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (notFound || !provider) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4 px-6">
+          <h1 className="text-2xl font-semibold text-foreground">Perfil no encontrado</h1>
+          <p className="text-muted-foreground">El perfil que buscas no existe o ya no está disponible.</p>
+          <Link href="/explorar" className="inline-block mt-4">
+            <Button variant="outline">Ver todos los perfiles</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const primaryImage = provider.media?.find((m) => m.is_primary) || provider.media?.[0]
+  const otherImages = provider.media?.filter((m) => m.id !== primaryImage?.id).slice(0, 4) || []
+  const minPrice = provider.services?.length ? Math.min(...provider.services.map((s) => s.price)) : 0
 
   const whatsappLink = `https://wa.me/${provider.whatsapp}?text=${encodeURIComponent(
-    `Hola ${provider.display_name}, vi tu perfil en LuxeServices y me gustaría agendar una cita.`
+    `Hola ${provider.display_name}, vi tu perfil en MiPage y me gustaría agendar una cita.`
   )}`
 
   return (
@@ -203,10 +257,10 @@ export default function ProviderPage({ params }: ProviderPageProps) {
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                {index === 3 && provider.media.length > 5 && (
+                {index === 3 && (provider.media?.length ?? 0) > 5 && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                     <span className="text-white font-medium text-lg">
-                      +{provider.media.length - 5} más
+                      +{(provider.media?.length ?? 0) - 5} más
                     </span>
                   </div>
                 )}
@@ -237,7 +291,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
               className="absolute bottom-4 right-4 bg-white text-foreground px-4 py-2 rounded-lg font-medium shadow-lg flex items-center gap-2"
             >
               <Grid3X3 className="h-4 w-4" />
-              {provider.media.length} fotos
+              {provider.media?.length ?? 0} fotos
             </button>
           </div>
         </div>
@@ -311,7 +365,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
                 Servicios
               </h2>
               <div className="space-y-4">
-                {provider.services.map((service) => (
+                {(provider.services || []).map((service) => (
                   <Card key={service.id} className="hover:shadow-soft-lg transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start">
@@ -389,7 +443,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
               </div>
 
               <div className="space-y-4">
-                {provider.reviews.slice(0, 3).map((review) => (
+                {(provider.reviews || []).slice(0, 3).map((review) => (
                   <Card key={review.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
@@ -544,13 +598,13 @@ export default function ProviderPage({ params }: ProviderPageProps) {
 
             {/* Image Counter */}
             <div className="absolute top-4 left-4 z-10 text-white font-medium">
-              {currentImageIndex + 1} / {provider.media.length}
+              {currentImageIndex + 1} / {provider.media?.length ?? 0}
             </div>
 
             {/* Main Image */}
             <div className="h-full flex items-center justify-center p-16">
               <Image
-                src={provider.media[currentImageIndex].url}
+                src={provider.media?.[currentImageIndex]?.url || ''}
                 alt={`${provider.display_name} - ${currentImageIndex + 1}`}
                 width={1200}
                 height={800}
@@ -567,7 +621,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
                 <ChevronLeft className="h-10 w-10" />
               </button>
             )}
-            {currentImageIndex < provider.media.length - 1 && (
+            {currentImageIndex < (provider.media?.length ?? 0) - 1 && (
               <button
                 onClick={() => setCurrentImageIndex(currentImageIndex + 1)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white hover:bg-white/10 rounded-full transition-colors"

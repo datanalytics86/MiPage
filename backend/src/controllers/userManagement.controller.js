@@ -2,8 +2,57 @@
 const { TempPrismaClient } = require('../utils/tempDB');
 const ExcelJS = require('exceljs');
 const crypto = require('crypto');
+const sgMail = process.env.SENDGRID_API_KEY
+  ? (() => { const m = require('@sendgrid/mail'); m.setApiKey(process.env.SENDGRID_API_KEY); return m; })()
+  : null;
 
 const prisma = new TempPrismaClient();
+
+async function sendInvitationEmail(toEmail, toName, registrationLink) {
+  if (!sgMail) {
+    console.warn('[email] SENDGRID_API_KEY no configurada — email de invitación omitido (modo dev)');
+    console.info(`[email] Link de registro (dev): ${registrationLink}`);
+    return;
+  }
+  const name = toName || 'Hola';
+  const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <body style="margin:0;padding:0;background:#0d0d0d;font-family:Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0d0d;padding:40px 0;">
+        <tr><td align="center">
+          <table width="520" cellpadding="0" cellspacing="0" style="background:#1a1a1a;border-radius:12px;overflow:hidden;">
+            <tr><td style="background:#8b0000;padding:32px;text-align:center;">
+              <h1 style="margin:0;color:#fff;font-size:24px;letter-spacing:2px;">MiPage</h1>
+            </td></tr>
+            <tr><td style="padding:40px 36px;color:#e5e5e5;">
+              <h2 style="color:#fff;margin:0 0 16px;">¡Te invitamos a publicar!</h2>
+              <p style="color:#aaa;line-height:1.6;margin:0 0 28px;">
+                ${name}, un administrador te ha invitado a crear tu perfil de publicador en MiPage.
+                Haz clic en el botón para completar tu registro. El enlace expira en <strong style="color:#fff">7 días</strong>.
+              </p>
+              <div style="text-align:center;margin-bottom:28px;">
+                <a href="${registrationLink}"
+                   style="display:inline-block;background:#8b0000;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-size:16px;font-weight:bold;">
+                  Crear mi perfil
+                </a>
+              </div>
+              <p style="color:#555;font-size:12px;text-align:center;margin:0;">
+                Si no esperabas este correo, puedes ignorarlo.
+              </p>
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body>
+    </html>`;
+  await sgMail.send({
+    to: toEmail,
+    from: process.env.FROM_EMAIL || 'noreply@mipage.cl',
+    subject: 'Te invitamos a publicar en MiPage',
+    html,
+  });
+}
 
 /**
  * @desc    Obtener usuarios con metadata (tipo tabla Excel)
@@ -334,6 +383,11 @@ exports.inviteUser = async (req, res) => {
     // Construir link de registro
     const registrationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/register/${token}`;
 
+    // Enviar email (no bloqueante — la respuesta ya fue enviada si falla)
+    sendInvitationEmail(email, name, registrationLink).catch((err) => {
+      console.error('[email] Error al enviar invitación:', err?.response?.body || err.message);
+    });
+
     res.status(201).json({
       success: true,
       data: {
@@ -342,8 +396,6 @@ exports.inviteUser = async (req, res) => {
       },
       message: 'Invitación creada exitosamente',
     });
-
-    // TODO: Enviar email con el link de registro
   } catch (error) {
     console.error('Error inviting user:', error);
     res.status(500).json({

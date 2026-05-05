@@ -97,6 +97,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/providers', userRoutes); // Alias para /api/providers/:slug → user.routes
 app.use('/api/posts', postRoutes);
 app.use('/api/admin', adminRoutes);
 // Nuevas rutas - Sistema de Metadata

@@ -177,7 +177,7 @@ export function useCategories() {
       if (error) throw error
 
       // Get unique categories
-      const categories = [...new Set(data.map(p => p.category))]
+      const categories = Array.from(new Set(data.map(p => p.category)))
       return categories
     },
   })
@@ -198,7 +198,7 @@ export function useCities() {
       if (error) throw error
 
       // Get unique cities
-      const cities = [...new Set(data.map(p => p.city))]
+      const cities = Array.from(new Set(data.map(p => p.city)))
       return cities
     },
   })

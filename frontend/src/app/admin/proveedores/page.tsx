@@ -179,7 +179,7 @@ export default function AdminProveedoresPage() {
     ))
   }
 
-  const categories = [...new Set(mockProviders.map(p => p.category))]
+  const categories = Array.from(new Set(mockProviders.map(p => p.category)))
 
   return (
     <div className="space-y-6">
