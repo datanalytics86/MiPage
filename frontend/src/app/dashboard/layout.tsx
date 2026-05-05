@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -24,6 +25,7 @@ import { cn } from '@/lib/utils'
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Mi Perfil', href: '/dashboard/perfil', icon: User },
+  { name: 'Mis Avisos', href: '/dashboard/avisos', icon: FileText },
   { name: 'Mis Servicios', href: '/dashboard/servicios', icon: Briefcase },
   { name: 'Mi Galería', href: '/dashboard/galeria', icon: Image },
   { name: 'Reseñas', href: '/dashboard/resenas', icon: MessageSquare },
