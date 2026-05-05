@@ -2,6 +2,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession, protectedRoutes, adminRoutes, authRoutes } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key'
+
 export async function middleware(request: NextRequest) {
   // Update session first
   const response = await updateSession(request)
@@ -16,8 +19,8 @@ export async function middleware(request: NextRequest) {
   if (isProtectedRoute || isAdminRoute) {
     // Create Supabase client to check auth
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       {
         cookies: {
           get(name: string) {
@@ -68,8 +71,8 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (isAuthRoute) {
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       {
         cookies: {
           get(name: string) {
