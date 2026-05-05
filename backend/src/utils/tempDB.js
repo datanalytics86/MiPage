@@ -11,7 +11,7 @@ const readDB = () => {
     return JSON.parse(data);
   } catch (error) {
     console.error('Error leyendo DB temporal:', error);
-    return { users: [], services: [], reviews: [], posts: [], favorites: [], notifications: [], serviceTypes: [] };
+    return { users: [], services: [], reviews: [], posts: [], favorites: [], notifications: [], serviceTypes: [], auditLogs: [] };
   }
 };
 
@@ -543,6 +543,29 @@ class TempPrismaClient {
 
   async $disconnect() {
     // No-op para compatibilidad
+  }
+
+  // ─── AuditLog ────────────────────────────────────────────────
+  get auditLog() {
+    return {
+      create: async ({ data }) => {
+        const db = readDB();
+        if (!db.auditLogs) db.auditLogs = [];
+        const entry = { id: `audit-${Date.now()}`, ...data, createdAt: new Date().toISOString() };
+        db.auditLogs.push(entry);
+        writeDB(db);
+        return entry;
+      },
+      findMany: async ({ where, orderBy, take } = {}) => {
+        const db = readDB();
+        let logs = db.auditLogs || [];
+        if (where?.targetId) logs = logs.filter(l => l.targetId === where.targetId);
+        if (where?.adminId) logs = logs.filter(l => l.adminId === where.adminId);
+        if (orderBy?.createdAt === 'desc') logs = logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        if (take) logs = logs.slice(0, take);
+        return logs;
+      },
+    };
   }
 }
 

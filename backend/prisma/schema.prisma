@@ -22,10 +22,12 @@ enum Category {
 }
 
 enum ServiceStatus {
-  PENDING   // Pendiente de aprobación
-  APPROVED  // Aprobado y visible
-  REJECTED  // Rechazado por admin
-  ARCHIVED  // Archivado por el publisher
+  DRAFT         // Borrador, no enviado
+  PENDING       // Pendiente de aprobación
+  APPROVED      // Aprobado y visible
+  REJECTED      // Rechazado por admin (con motivo)
+  PAUSED        // Pausado — oculto pero recuperable por publisher o admin
+  ARCHIVED      // Archivado definitivamente
 }
 
 enum ApprovalStatus {
@@ -380,4 +382,22 @@ model ServiceType {
   @@index([name])
   @@index([order])
   @@map("service_types")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String
+  targetId  String                        // serviceId o userId afectado
+  targetType String                       // "service" | "user"
+  action    String                        // "approve" | "reject" | "pause" | "unpause" | "archive"
+  reason    String?
+  meta      Json?                         // datos extra (estado anterior, etc.)
+
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([targetId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

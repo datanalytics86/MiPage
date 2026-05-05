@@ -15,7 +15,8 @@ import {
   X,
   Shield,
   Bell,
-  ChevronDown
+  ChevronDown,
+  FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -37,6 +38,11 @@ const navigation = [
     name: 'Proveedores',
     href: '/admin/proveedores',
     icon: UserCheck,
+  },
+  {
+    name: 'Avisos',
+    href: '/admin/avisos',
+    icon: FileText,
   },
   {
     name: 'Reportes',
