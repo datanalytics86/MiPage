@@ -1,4 +1,6 @@
 require('dotenv').config();
+// Inicializar Sentry antes que todo (graceful si no hay DSN)
+require('./utils/sentry');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

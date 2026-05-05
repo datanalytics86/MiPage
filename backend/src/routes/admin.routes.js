@@ -1,4 +1,5 @@
 const express = require('express');
+const { z } = require('zod');
 // Temporal: Usar JSON en lugar de Prisma por problemas de binarios
 const { TempPrismaClient } = require('../utils/tempDB');
 const { authenticateToken, requireRole } = require('../middleware/auth');
@@ -8,6 +9,25 @@ const serviceTypesController = require('../controllers/serviceTypes.controller')
 
 const router = express.Router();
 const prisma = new TempPrismaClient();
+
+// Zod schemas
+const rejectSchema = z.object({
+  reason: z.string().min(3, 'El motivo es demasiado corto').max(500, 'El motivo es demasiado largo'),
+})
+
+function validate(schema) {
+  return (req, res, next) => {
+    const result = schema.safeParse(req.body)
+    if (!result.success) {
+      return res.status(400).json({
+        error: 'Datos inválidos',
+        details: result.error.errors.map(e => ({ field: e.path.join('.'), message: e.message })),
+      })
+    }
+    req.body = result.data
+    next()
+  }
+}
 
 // Proteger todas las rutas admin
 router.use(authenticateToken);
@@ -485,9 +505,8 @@ router.post('/listings/:id/approve', async (req, res) => {
  * @route   POST /api/admin/listings/:id/reject
  * @body    { reason: string }
  */
-router.post('/listings/:id/reject', async (req, res) => {
+router.post('/listings/:id/reject', validate(rejectSchema), async (req, res) => {
   const { reason } = req.body;
-  if (!reason) return res.status(400).json({ error: 'El motivo de rechazo es obligatorio' });
 
   const prev = (await prisma.service.findUnique({ where: { id: req.params.id } }))?.status;
   moderateService(req, res, req.params.id, 'REJECTED', {

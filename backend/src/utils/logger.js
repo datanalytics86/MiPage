@@ -66,11 +66,12 @@ class Logger {
     }
   }
 
-  sendToErrorTracking(data) {
-    // Aquí implementar integración con Sentry, etc.
-    // Por ahora, solo placeholder
-    if (process.env.SENTRY_DSN) {
-      // Sentry.captureException(data);
+  sendToErrorTracking(err, meta) {
+    try {
+      const { captureException } = require('./sentry');
+      captureException(err instanceof Error ? err : new Error(String(err)), meta);
+    } catch (_) {
+      // sentry module not loaded yet, skip
     }
   }
 
