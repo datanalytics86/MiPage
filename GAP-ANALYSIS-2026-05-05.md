@@ -52,16 +52,15 @@
 ### 4.1 Funcionalidades de negocio
 - [ ] **Pagos:** Stripe / Mercado Pago no integrado. No hay modelo `Payment`, ni webhooks, ni checkout.
 - [ ] **Chat tiempo real:** Socket.io listado en stack pero **sin implementación** (no hay `socket.ts/js`, ni rooms, ni eventos).
-- [ ] **Envío real de emails:** Endpoint de invitación crea token pero **no envía email** (SendGrid/Resend pendiente).
-  - Ubicación: `backend/src/controllers/userManagement.controller.js:346` → `// TODO: Enviar email con el link de registro`
+- [x] **Envío real de emails:** `sendInvitationEmail()` vía SendGrid implementado. Graceful fallback sin API key. (commit: bloque A)
 - [ ] **Upload de imágenes directo:** Cloudinary/S3 SDK no integrado. Solo se aceptan URLs externas.
 - [ ] **Verificación de identidad** (RUT/documento) para publishers.
 - [ ] **2FA / MFA** para admin/publisher.
 - [ ] **Notificaciones in-app** (no hay sistema de notifications).
 
 ### 4.2 Frontend incompleto
-- [ ] `frontend/src/app/(main)/explorar/[category]/page.tsx:18` → filtro por categoría no se pasa a `ExplorarPage`.
-- [ ] `frontend/src/app/(main)/perfil/[slug]/page.tsx:151` → usa `mockProvider`; falta fetch real desde API.
+- [x] `frontend/src/app/(main)/explorar/[category]/page.tsx` → filtro de categoría ahora se pasa a `ExplorarView`. (commit: bloque A)
+- [x] `frontend/src/app/(main)/perfil/[slug]/page.tsx` → fetch real a `GET /api/providers/:slug` con skeleton + 404. (commit: bloque A)
 - [ ] SEO avanzado: Schema.org / OpenGraph / sitemap.xml / robots.txt no optimizados.
 - [ ] PWA / offline support no configurado.
 
@@ -73,10 +72,10 @@
 - [ ] **Performance:** sin Lighthouse CI ni budgets.
 
 ### 4.4 Observabilidad y producción
-- [ ] **Sentry / error tracking** no integrado.
+- [x] **Sentry / error tracking:** `utils/sentry.js` backend + `lib/sentry.ts` frontend, graceful sin DSN. (commit: bloque D)
 - [ ] **Analytics** (Google Analytics / Plausible) no integrado.
-- [ ] **Logging estructurado** (Winston/Pino) no confirmado en backend.
-- [ ] **Rate limiting / WAF** no documentado.
+- [x] **Logging estructurado:** pino + pino-pretty instalados; logger.js usa JSON en producción. (commit: bloque D)
+- [x] **Rate limiting / WAF:** helmet + cors + express-rate-limit correctamente configurados (5 req auth, 100 req general). (verificado bloque D)
 - [ ] **Backups DB** y estrategia de restore no documentada.
 - [ ] **Migration guide** SQLite/Supabase → PostgreSQL producción incompleto.
 
@@ -102,7 +101,10 @@
 | Error 404 en Vercel | `DEPLOY-VERCEL-FIX.md` | Resuelto (Root Directory: `frontend`) |
 | Acceso admin | `SOLUCION-ACCESO-ADMIN.md` | Resuelto |
 | Acceso a Codespaces | `ACCESO_CODESPACES.md` | Resuelto |
-| TODOs en código | (3 ocurrencias listadas arriba) | Pendiente |
+| TODOs en código | (3 ocurrencias) | ✅ Cerrados (commit: bloque A) |
+| Admin panel avisos | Faltaba moderación intuitiva | ✅ Implementado (commit: bloque B) |
+| Publisher flujo subida | Faltaba wizard + upload real | ✅ Implementado (commit: bloque C) |
+| Hardening producción | Sentry, pino, zod | ✅ Implementado (commit: bloque D) |
 
 ---
 
