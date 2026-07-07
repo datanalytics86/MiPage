@@ -1,0 +1,444 @@
+'use client'
+
+import React, { useMemo, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Star,
+  Heart,
+  Shield,
+  MapPin,
+  Phone,
+  Instagram,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Flag,
+  MessageCircle,
+  Share2,
+  Grid3X3,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { cn, formatPrice, formatDate, getInitials } from '@/lib/utils'
+import { useProvider } from '@/hooks/useProviders'
+import { useFavorites } from '@/hooks/useFavorites'
+import { getProviderImage, normalizeCategory } from '@/lib/providers'
+import { hasSupabaseEnv } from '@/lib/supabase/env'
+import type { ProviderFull } from '@/types/database'
+
+interface ProfileMedia {
+  id: string
+  url: string
+  is_primary: boolean
+}
+
+interface ProfileReview {
+  id: string
+  rating: number
+  content: string
+  created_at: string
+  provider_response: string | null
+  user?: { full_name: string | null; avatar_url: string | null }
+}
+
+interface ProfileView {
+  id: string
+  slug: string
+  display_name: string
+  bio: string | null
+  category: string
+  age: number | null
+  city: string
+  commune: string | null
+  address_hint: string | null
+  whatsapp: string | null
+  instagram: string | null
+  height_cm: number | null
+  is_verified: boolean
+  average_rating: number
+  review_count: number
+  media: ProfileMedia[]
+  services: ProviderFull['services']
+  reviews: ProfileReview[]
+}
+
+function buildProfileView(data: ProviderFull): ProfileView {
+  const galleryMedia: ProfileMedia[] =
+    data.gallery?.length > 0
+      ? [...data.gallery]
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((g, i) => ({
+            id: g.id,
+            url: g.url,
+            is_primary: g.is_cover || i === 0,
+          }))
+      : (data.photos || []).map((url, i) => ({
+          id: `photo-${i}`,
+          url,
+          is_primary: i === 0,
+        }))
+
+  if (galleryMedia.length === 0 && data.cover_photo) {
+    galleryMedia.push({ id: 'cover', url: data.cover_photo, is_primary: true })
+  }
+  if (galleryMedia.length === 0) {
+    galleryMedia.push({ id: 'placeholder', url: getProviderImage(data), is_primary: true })
+  }
+
+  return {
+    id: data.id,
+    slug: data.slug,
+    display_name: data.display_name,
+    bio: data.bio,
+    category: normalizeCategory(data.category),
+    age: data.age,
+    city: data.city,
+    commune: data.address,
+    address_hint: data.address,
+    whatsapp: data.whatsapp,
+    instagram: data.instagram,
+    height_cm: data.height,
+    is_verified: data.is_verified,
+    average_rating: Number(data.rating) || 0,
+    review_count: data.review_count,
+    media: galleryMedia,
+    services: data.services || [],
+    reviews: (data.reviews || []).map((r) => ({
+      id: r.id,
+      rating: r.rating,
+      content: r.comment,
+      created_at: r.created_at,
+      provider_response: r.provider_response,
+      user: {
+        full_name: r.user?.name ?? 'Usuario',
+        avatar_url: r.user?.avatar_url ?? null,
+      },
+    })),
+  }
+}
+
+export function ProviderProfileClient({ slug }: { slug: string }) {
+  const { data, isLoading, error } = useProvider(slug)
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
+  const provider = useMemo(() => (data ? buildProfileView(data) : null), [data])
+
+  if (!hasSupabaseEnv()) {
+    return (
+      <div className="container-luxury py-16 text-center">
+        <p className="text-foreground-secondary">
+          Conecta Supabase para ver perfiles en vivo.
+        </p>
+        <Link href="/explorar">
+          <Button className="mt-4">Volver a explorar</Button>
+        </Link>
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container-luxury py-16">
+        <div className="h-[400px] rounded-2xl bg-muted animate-pulse mb-8" />
+        <div className="h-8 w-64 bg-muted animate-pulse rounded mb-4" />
+        <div className="h-4 w-full max-w-xl bg-muted animate-pulse rounded" />
+      </div>
+    )
+  }
+
+  if (error || !provider) {
+    return (
+      <div className="container-luxury py-16 text-center">
+        <h1 className="font-display text-2xl font-semibold mb-2">Perfil no encontrado</h1>
+        <p className="text-foreground-secondary mb-6">
+          Este profesional no existe o aún no está publicado.
+        </p>
+        <Link href="/explorar">
+          <Button>Explorar profesionales</Button>
+        </Link>
+      </div>
+    )
+  }
+
+  const favorited = isFavorite(provider.id)
+  const primaryImage = provider.media.find((m) => m.is_primary) || provider.media[0]
+  const otherImages = provider.media.filter((m) => m.id !== primaryImage?.id).slice(0, 4)
+  const minPrice =
+    provider.services.length > 0
+      ? Math.min(...provider.services.map((s) => s.price))
+      : 0
+
+  const whatsappLink = provider.whatsapp
+    ? `https://wa.me/${provider.whatsapp}?text=${encodeURIComponent(
+        `Hola ${provider.display_name}, vi tu perfil en MiPage y me gustaría agendar una cita.`
+      )}`
+    : '#'
+
+  return (
+    <div className="min-h-screen bg-background">
+      <section className="relative">
+        <div className="container-luxury py-4">
+          <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-2 h-[480px] rounded-2xl overflow-hidden">
+            <div
+              className="col-span-2 row-span-2 relative cursor-pointer group"
+              onClick={() => {
+                setCurrentImageIndex(0)
+                setIsGalleryOpen(true)
+              }}
+            >
+              <Image
+                src={primaryImage?.url || ''}
+                alt={provider.display_name}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                priority
+              />
+            </div>
+            {otherImages.map((media, index) => (
+              <div
+                key={media.id}
+                className="relative cursor-pointer group"
+                onClick={() => {
+                  setCurrentImageIndex(index + 1)
+                  setIsGalleryOpen(true)
+                }}
+              >
+                <Image
+                  src={media.url}
+                  alt={`${provider.display_name} - ${index + 2}`}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
+            ))}
+            <button
+              onClick={() => setIsGalleryOpen(true)}
+              className="absolute bottom-4 right-4 bg-white text-foreground px-4 py-2 rounded-lg font-medium shadow-lg flex items-center gap-2"
+            >
+              <Grid3X3 className="h-4 w-4" />
+              Ver todas las fotos
+            </button>
+          </div>
+          <div className="md:hidden relative h-[400px] rounded-2xl overflow-hidden">
+            <Image
+              src={primaryImage?.url || ''}
+              alt={provider.display_name}
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="container-luxury py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-8">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground">
+                  {provider.display_name}
+                </h1>
+                {provider.is_verified && (
+                  <div className="flex items-center gap-1 text-sage">
+                    <Shield className="h-5 w-5" />
+                    <span className="text-sm font-medium">Verificada</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-foreground-secondary">
+                {provider.age && <span>{provider.age} años</span>}
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {provider.commune ? `${provider.commune}, ` : ''}
+                  {provider.city}
+                </span>
+                <Badge variant={provider.category === 'masajes' ? 'default' : 'secondary'}>
+                  {provider.category === 'masajes' ? 'Masajes' : 'Modelaje'}
+                </Badge>
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <Star className="h-5 w-5 fill-gold text-gold" />
+                <span className="font-semibold text-lg">{provider.average_rating.toFixed(1)}</span>
+                <span className="text-foreground-secondary">·</span>
+                <Link
+                  href={`/perfil/${provider.slug}/comentarios`}
+                  className="text-foreground-secondary hover:text-gold"
+                >
+                  {provider.review_count} reseñas
+                </Link>
+              </div>
+            </div>
+
+            <hr className="border-border" />
+
+            {provider.bio && (
+              <>
+                <div>
+                  <h2 className="font-display text-2xl font-semibold mb-4">Sobre mí</h2>
+                  <p className="text-foreground-secondary leading-relaxed whitespace-pre-line">
+                    {provider.bio}
+                  </p>
+                </div>
+                <hr className="border-border" />
+              </>
+            )}
+
+            {provider.services.length > 0 && (
+              <>
+                <div>
+                  <h2 className="font-display text-2xl font-semibold mb-4">Servicios</h2>
+                  <div className="space-y-4">
+                    {provider.services.map((service) => (
+                      <Card key={service.id}>
+                        <CardContent className="p-4 flex justify-between items-start">
+                          <div>
+                            <h3 className="font-semibold">{service.name}</h3>
+                            {service.description && (
+                              <p className="text-sm text-foreground-secondary mt-1">
+                                {service.description}
+                              </p>
+                            )}
+                            {service.duration && (
+                              <div className="flex items-center gap-1 text-sm text-foreground-muted mt-2">
+                                <Clock className="h-4 w-4" />
+                                {service.duration}
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-semibold text-gold">{formatPrice(service.price)}</span>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+                <hr className="border-border" />
+              </>
+            )}
+
+            {provider.reviews.length > 0 && (
+              <div>
+                <h2 className="font-display text-2xl font-semibold mb-4">Reseñas</h2>
+                <div className="space-y-4">
+                  {provider.reviews.slice(0, 3).map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="p-4">
+                        <div className="flex gap-3">
+                          <Avatar>
+                            <AvatarImage src={review.user?.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {getInitials(review.user?.full_name || 'U')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{review.user?.full_name}</p>
+                            <p className="text-sm text-foreground-muted">
+                              {formatDate(review.created_at)}
+                            </p>
+                            <p className="text-foreground-secondary mt-2">{review.content}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <Card className="shadow-soft-lg">
+                <CardContent className="p-6">
+                  {minPrice > 0 && (
+                    <p className="text-2xl font-semibold mb-4">
+                      Desde {formatPrice(minPrice)}
+                    </p>
+                  )}
+                  {provider.whatsapp && (
+                    <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full mb-3" size="lg">
+                        <Phone className="h-5 w-5 mr-2" />
+                        Contactar por WhatsApp
+                      </Button>
+                    </a>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => toggleFavorite(provider.id)}
+                  >
+                    <Heart
+                      className={cn('h-5 w-5 mr-2', favorited && 'fill-error text-error')}
+                    />
+                    {favorited ? 'Guardado' : 'Guardar'}
+                  </Button>
+                  {provider.instagram && (
+                    <a
+                      href={`https://instagram.com/${provider.instagram}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 mt-6 text-foreground-secondary hover:text-gold"
+                    >
+                      <Instagram className="h-5 w-5" />@{provider.instagram}
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <AnimatePresence>
+        {isGalleryOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black"
+          >
+            <button
+              onClick={() => setIsGalleryOpen(false)}
+              className="absolute top-4 right-4 z-10 p-2 text-white"
+            >
+              <X className="h-8 w-8" />
+            </button>
+            <div className="h-full flex items-center justify-center p-16">
+              <Image
+                src={provider.media[currentImageIndex]?.url || ''}
+                alt=""
+                width={1200}
+                height={800}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+            {currentImageIndex > 0 && (
+              <button
+                onClick={() => setCurrentImageIndex((i) => i - 1)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white"
+              >
+                <ChevronLeft className="h-10 w-10" />
+              </button>
+            )}
+            {currentImageIndex < provider.media.length - 1 && (
+              <button
+                onClick={() => setCurrentImageIndex((i) => i + 1)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white"
+              >
+                <ChevronRight className="h-10 w-10" />
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}

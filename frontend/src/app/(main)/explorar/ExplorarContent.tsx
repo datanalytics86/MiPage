@@ -8,7 +8,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ProviderCard } from '@/components/providers/ProviderCard'
+import { useProviders } from '@/hooks/useProviders'
 import { mockProviders, filterCities, sortOptions } from '@/lib/mockProviders'
+import { toProviderCardData } from '@/lib/providers'
+import { hasSupabaseEnv } from '@/lib/supabase/env'
 import type { FilterOptions, ProviderCategory } from '@/types'
 
 const PAGE_SIZE = 8
@@ -99,32 +102,46 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     setVisibleCount(PAGE_SIZE)
   }
 
-  const filteredProviders = useMemo(() => {
-    return mockProviders.filter((provider) => {
+  const providerFilters = useMemo(() => {
+    const sortMap: Record<string, 'rating' | 'price_low' | 'price_high' | 'newest' | undefined> = {
+      rating: 'rating',
+      price_asc: 'price_low',
+      price_desc: 'price_high',
+      newest: 'newest',
+    }
+    return {
+      category: filters.category !== 'all' ? filters.category : undefined,
+      city: filters.city && filters.city !== 'Todas' ? filters.city : undefined,
+      is_verified: filters.verified_only ? true : undefined,
+      search: searchQuery.trim() || undefined,
+      sort: sortMap[filters.sort_by || 'relevance'],
+      limit: visibleCount,
+    }
+  }, [filters, searchQuery, visibleCount])
+
+  const { data: dbData, isLoading } = useProviders(providerFilters)
+  const useMock = !hasSupabaseEnv()
+
+  const mockFiltered = useMemo(() => {
+    const filtered = mockProviders.filter((provider) => {
       if (filters.category && filters.category !== 'all' && provider.category !== filters.category) {
         return false
       }
       if (filters.city && filters.city !== 'Todas' && provider.city !== filters.city) {
         return false
       }
-      if (filters.verified_only && !provider.is_verified) {
-        return false
-      }
+      if (filters.verified_only && !provider.is_verified) return false
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
         return (
           provider.display_name.toLowerCase().includes(query) ||
           provider.city.toLowerCase().includes(query) ||
-          (provider.commune?.toLowerCase().includes(query) ?? false) ||
-          provider.category.toLowerCase().includes(query)
+          (provider.commune?.toLowerCase().includes(query) ?? false)
         )
       }
       return true
     })
-  }, [filters, searchQuery])
-
-  const sortedProviders = useMemo(() => {
-    return [...filteredProviders].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       switch (filters.sort_by) {
         case 'rating':
           return b.average_rating - a.average_rating
@@ -136,10 +153,15 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
           return (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0)
       }
     })
-  }, [filteredProviders, filters.sort_by])
+  }, [filters, searchQuery])
 
-  const visibleProviders = sortedProviders.slice(0, visibleCount)
-  const hasMore = visibleCount < sortedProviders.length
+  const sortedProviders = useMock
+    ? mockFiltered
+    : (dbData?.items ?? []).map(toProviderCardData)
+
+  const totalCount = useMock ? mockFiltered.length : (dbData?.total ?? 0)
+  const visibleProviders = useMock ? sortedProviders.slice(0, visibleCount) : sortedProviders
+  const hasMore = useMock ? visibleCount < mockFiltered.length : visibleCount < totalCount
 
   const activeFiltersCount = [
     filters.category !== 'all',
@@ -285,8 +307,11 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
 
           <div className="mt-4 flex items-center justify-between">
             <p className="text-foreground-secondary text-sm">
-              <span className="font-medium text-foreground">{sortedProviders.length}</span> profesionales
+              <span className="font-medium text-foreground">{totalCount}</span> profesionales
               encontrados
+              {isLoading && !useMock && (
+                <span className="ml-2 text-foreground-muted">(cargando...)</span>
+              )}
             </p>
             <label className="hidden sm:flex items-center gap-2 cursor-pointer">
               <input
@@ -339,7 +364,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
               size="lg"
               onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
             >
-              Cargar más ({sortedProviders.length - visibleCount} restantes)
+              Cargar más ({totalCount - visibleCount} restantes)
               <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </div>

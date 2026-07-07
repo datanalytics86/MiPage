@@ -246,6 +246,25 @@ export interface Database {
           resolved_at?: string | null
         }
       }
+      site_settings: {
+        Row: {
+          key: string
+          value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          key: string
+          value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+      }
       gallery: {
         Row: {
           id: string

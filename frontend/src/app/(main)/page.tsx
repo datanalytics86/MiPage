@@ -8,7 +8,11 @@ import { Search, ArrowRight, Sparkles, Shield, MessageCircle, Star, Users, MapPi
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ProviderCard } from '@/components/providers/ProviderCard'
-import { featuredProviders } from '@/lib/mockProviders'
+import { useFeaturedProviders } from '@/hooks/useProviders'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { featuredProviders as mockFeatured } from '@/lib/mockProviders'
+import { toProviderCardData } from '@/lib/providers'
+import { hasSupabaseEnv } from '@/lib/supabase/env'
 import { siteConfig } from '@/lib/site'
 
 const categories = [
@@ -44,6 +48,21 @@ const trustBadges = [
 export default function HomePage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = React.useState('')
+  const { data: featuredDb = [] } = useFeaturedProviders(4)
+  const { data: settings } = useSiteSettings()
+
+  const displayProviders = hasSupabaseEnv() && featuredDb.length > 0
+    ? featuredDb.map(toProviderCardData)
+    : mockFeatured
+
+  const displayStats = settings?.stats
+    ? [
+        { value: settings.stats.professionals, label: 'Profesionales verificados' },
+        { value: settings.stats.reviews, label: 'Reseñas publicadas' },
+        { value: settings.stats.rating, label: 'Calificación promedio' },
+        { value: settings.stats.cities, label: 'Ciudades en Chile' },
+      ]
+    : siteConfig.stats
 
   const handleSearch = () => {
     const q = searchQuery.trim()
@@ -168,7 +187,7 @@ export default function HomePage() {
       <section className="border-y border-border bg-background-secondary/60">
         <div className="container-luxury py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {siteConfig.stats.map((stat, index) => (
+            {displayStats.map((stat, index) => (
               <motion.div
                 key={stat.label}
                 initial={{ opacity: 0, y: 12 }}
@@ -207,7 +226,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredProviders.map((provider, index) => (
+            {displayProviders.map((provider, index) => (
               <motion.div
                 key={provider.id}
                 initial={{ opacity: 0, y: 20 }}

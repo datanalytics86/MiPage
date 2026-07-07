@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useSiteSettings, useUpdateSiteSettings } from '@/hooks/useSiteSettings'
+import { useToast } from '@/stores/uiStore'
 
 interface SettingSection {
   id: string
@@ -35,10 +37,12 @@ const sections: SettingSection[] = [
 ]
 
 export default function AdminConfiguracionPage() {
+  const toast = useToast()
+  const { data: siteSettings, isLoading } = useSiteSettings()
+  const updateSettings = useUpdateSiteSettings()
   const [activeSection, setActiveSection] = useState('general')
   const [hasChanges, setHasChanges] = useState(false)
 
-  // Mock settings state
   const [settings, setSettings] = useState({
     siteName: 'MiPage',
     siteDescription: 'Marketplace de servicios profesionales en Chile',
@@ -54,20 +58,82 @@ export default function AdminConfiguracionPage() {
     maintenanceMode: false,
   })
 
-  const handleChange = (key: string, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }))
+  React.useEffect(() => {
+    if (!siteSettings) return
+    setSettings({
+      siteName: siteSettings.general.siteName,
+      siteDescription: siteSettings.general.siteDescription,
+      supportEmail: siteSettings.email.supportEmail,
+      adminEmail: siteSettings.email.adminEmail,
+      timezone: siteSettings.general.timezone,
+      currency: siteSettings.general.currency,
+      commissionRate: siteSettings.payments.commissionRate,
+      minWithdrawal: siteSettings.payments.minWithdrawal,
+      requireEmailVerification: siteSettings.security.requireEmailVerification,
+      requireIdVerification: siteSettings.security.requireIdVerification,
+      allowProviderRegistration: siteSettings.security.allowProviderRegistration,
+      maintenanceMode: siteSettings.general.maintenanceMode,
+    })
+  }, [siteSettings])
+
+  const handleChange = (key: string, value: unknown) => {
+    setSettings((prev) => ({ ...prev, [key]: value }))
     setHasChanges(true)
   }
 
-  const handleSave = () => {
-    // Save logic here
-    setHasChanges(false)
-    alert('Configuración guardada')
+  const handleSave = async () => {
+    try {
+      await updateSettings.mutateAsync({
+        general: {
+          siteName: settings.siteName,
+          siteDescription: settings.siteDescription,
+          timezone: settings.timezone,
+          currency: settings.currency,
+          maintenanceMode: settings.maintenanceMode,
+        },
+        email: {
+          supportEmail: settings.supportEmail,
+          adminEmail: settings.adminEmail,
+        },
+        security: {
+          requireEmailVerification: settings.requireEmailVerification,
+          requireIdVerification: settings.requireIdVerification,
+          allowProviderRegistration: settings.allowProviderRegistration,
+        },
+        payments: {
+          commissionRate: settings.commissionRate,
+          minWithdrawal: settings.minWithdrawal,
+        },
+      })
+      setHasChanges(false)
+      toast.success('Configuración guardada en la base de datos')
+    } catch {
+      toast.error('Error', 'No se pudo guardar la configuración')
+    }
   }
 
   const handleReset = () => {
-    // Reset logic here
+    if (siteSettings) {
+      setSettings({
+        siteName: siteSettings.general.siteName,
+        siteDescription: siteSettings.general.siteDescription,
+        supportEmail: siteSettings.email.supportEmail,
+        adminEmail: siteSettings.email.adminEmail,
+        timezone: siteSettings.general.timezone,
+        currency: siteSettings.general.currency,
+        commissionRate: siteSettings.payments.commissionRate,
+        minWithdrawal: siteSettings.payments.minWithdrawal,
+        requireEmailVerification: siteSettings.security.requireEmailVerification,
+        requireIdVerification: siteSettings.security.requireIdVerification,
+        allowProviderRegistration: siteSettings.security.allowProviderRegistration,
+        maintenanceMode: siteSettings.general.maintenanceMode,
+      })
+    }
     setHasChanges(false)
+  }
+
+  if (isLoading) {
+    return <div className="h-64 bg-muted animate-pulse rounded-xl" />
   }
 
   return (
