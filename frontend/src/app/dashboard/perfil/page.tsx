@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Save, User, MapPin, Phone, Instagram, Ruler } from 'lucide-react'
+import { Save, User, MapPin, Phone, Instagram, Ruler, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,6 +14,8 @@ import { normalizeCategory } from '@/lib/providers'
 import { useToast } from '@/stores/uiStore'
 
 export default function DashboardPerfilPage() {
+  const searchParams = useSearchParams()
+  const showWelcome = searchParams.get('welcome') === 'pending'
   const toast = useToast()
   const { provider, refreshProfile } = useAuth()
   const updateProvider = useUpdateOwnProvider()
@@ -87,6 +90,19 @@ export default function DashboardPerfilPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      {showWelcome && provider.status === 'pending' && (
+        <div className="p-4 rounded-xl bg-warning/10 border border-warning/20 text-sm">
+          <p className="font-medium text-warning flex items-center gap-2">
+            <Clock className="h-4 w-4 shrink-0" />
+            ¡Bienvenida a MiPage!
+          </p>
+          <p className="text-foreground-secondary mt-1">
+            Completa tu perfil, servicios y galería. Tu perfil público se publicará cuando un
+            administrador apruebe tu solicitud.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center gap-2">
         <Badge variant={provider.status === 'approved' ? 'success' : 'warning'}>
           {provider.status === 'approved' ? 'Perfil publicado' : `Estado: ${provider.status}`}

@@ -1,28 +1,32 @@
 -- =============================================
 -- SEED DEMO DATA — MiPage
 -- =============================================
--- PREREQUISITOS (crear en Supabase Auth → Users):
---   admin@mipage.cl        (role: admin en profiles)
---   valentina@mipage.cl    (role: provider)
---   camila@mipage.cl       (role: provider)
---   sofia@mipage.cl        (role: provider)
---   isabella@mipage.cl     (role: provider)
---   cliente@mipage.cl      (role: user)
+-- PREREQUISITOS:
+--   1. Ejecutar migraciones 002, 004 y 005
+--   2. Crear usuarios en Supabase Auth (o usar: node scripts/seed-demo.mjs)
 --
--- Tras crear usuarios, el trigger handle_new_user crea profiles.
--- Luego ejecuta este script.
+-- Usuarios demo:
+--   admin@mipage.cl        → admin
+--   valentina@mipage.cl    → provider
+--   camila@mipage.cl       → provider
+--   sofia@mipage.cl        → provider
+--   isabella@mipage.cl     → provider
+--   cliente@mipage.cl      → user
+--
+-- El trigger ensure_provider_profile (005) crea providers al asignar role=provider.
+-- Este script enriquece esos registros con datos de demostración.
 
 -- Admin role
 UPDATE profiles SET role = 'admin', name = 'Admin MiPage'
 WHERE email = 'admin@mipage.cl';
 
--- Provider roles
+-- Provider roles (dispara creación automática de providers pendientes)
 UPDATE profiles SET role = 'provider', name = 'Valentina Reyes' WHERE email = 'valentina@mipage.cl';
 UPDATE profiles SET role = 'provider', name = 'Camila Silva' WHERE email = 'camila@mipage.cl';
 UPDATE profiles SET role = 'provider', name = 'Sofía Martínez' WHERE email = 'sofia@mipage.cl';
 UPDATE profiles SET role = 'provider', name = 'Isabella Rojas' WHERE email = 'isabella@mipage.cl';
 
--- Providers
+-- Enriquecer providers demo
 INSERT INTO providers (user_id, slug, display_name, bio, category, city, address, whatsapp, status, is_verified, is_featured, rating, review_count, price_min, age, cover_photo, photos)
 SELECT p.id, 'valentina-reyes', 'Valentina Reyes',
   'Terapeuta certificada con más de 5 años de experiencia en masajes relajantes y descontracturantes.',
@@ -30,7 +34,12 @@ SELECT p.id, 'valentina-reyes', 'Valentina Reyes',
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800',
   ARRAY['https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800','https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800']
 FROM profiles p WHERE p.email = 'valentina@mipage.cl'
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (user_id) DO UPDATE SET
+  slug = EXCLUDED.slug, display_name = EXCLUDED.display_name, bio = EXCLUDED.bio,
+  category = EXCLUDED.category, city = EXCLUDED.city, address = EXCLUDED.address,
+  whatsapp = EXCLUDED.whatsapp, status = EXCLUDED.status, is_verified = EXCLUDED.is_verified,
+  is_featured = EXCLUDED.is_featured, rating = EXCLUDED.rating, review_count = EXCLUDED.review_count,
+  price_min = EXCLUDED.price_min, age = EXCLUDED.age, cover_photo = EXCLUDED.cover_photo, photos = EXCLUDED.photos;
 
 INSERT INTO providers (user_id, slug, display_name, bio, category, city, address, whatsapp, status, is_verified, is_featured, rating, review_count, price_min, age, cover_photo, photos)
 SELECT p.id, 'camila-silva', 'Camila Silva',
@@ -39,7 +48,12 @@ SELECT p.id, 'camila-silva', 'Camila Silva',
   'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800',
   ARRAY['https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800']
 FROM profiles p WHERE p.email = 'camila@mipage.cl'
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (user_id) DO UPDATE SET
+  slug = EXCLUDED.slug, display_name = EXCLUDED.display_name, bio = EXCLUDED.bio,
+  category = EXCLUDED.category, city = EXCLUDED.city, address = EXCLUDED.address,
+  whatsapp = EXCLUDED.whatsapp, status = EXCLUDED.status, is_verified = EXCLUDED.is_verified,
+  is_featured = EXCLUDED.is_featured, rating = EXCLUDED.rating, review_count = EXCLUDED.review_count,
+  price_min = EXCLUDED.price_min, age = EXCLUDED.age, cover_photo = EXCLUDED.cover_photo, photos = EXCLUDED.photos;
 
 INSERT INTO providers (user_id, slug, display_name, bio, category, city, whatsapp, status, is_verified, is_featured, rating, review_count, price_min, age, cover_photo)
 SELECT p.id, 'sofia-martinez', 'Sofía Martínez',
@@ -47,7 +61,12 @@ SELECT p.id, 'sofia-martinez', 'Sofía Martínez',
   'masajes', 'Viña del Mar', '56934567890', 'approved', false, false, 4.7, 1, 40000, 31,
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800'
 FROM profiles p WHERE p.email = 'sofia@mipage.cl'
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (user_id) DO UPDATE SET
+  slug = EXCLUDED.slug, display_name = EXCLUDED.display_name, bio = EXCLUDED.bio,
+  category = EXCLUDED.category, city = EXCLUDED.city, whatsapp = EXCLUDED.whatsapp,
+  status = EXCLUDED.status, is_verified = EXCLUDED.is_verified, is_featured = EXCLUDED.is_featured,
+  rating = EXCLUDED.rating, review_count = EXCLUDED.review_count, price_min = EXCLUDED.price_min,
+  age = EXCLUDED.age, cover_photo = EXCLUDED.cover_photo;
 
 INSERT INTO providers (user_id, slug, display_name, bio, category, city, address, whatsapp, status, is_verified, is_featured, rating, review_count, price_min, age, cover_photo)
 SELECT p.id, 'isabella-rojas', 'Isabella Rojas',
@@ -55,7 +74,12 @@ SELECT p.id, 'isabella-rojas', 'Isabella Rojas',
   'modelaje', 'Santiago', 'Ñuñoa', '56945678901', 'approved', true, false, 4.9, 2, 75000, 26,
   'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800'
 FROM profiles p WHERE p.email = 'isabella@mipage.cl'
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (user_id) DO UPDATE SET
+  slug = EXCLUDED.slug, display_name = EXCLUDED.display_name, bio = EXCLUDED.bio,
+  category = EXCLUDED.category, city = EXCLUDED.city, address = EXCLUDED.address,
+  whatsapp = EXCLUDED.whatsapp, status = EXCLUDED.status, is_verified = EXCLUDED.is_verified,
+  is_featured = EXCLUDED.is_featured, rating = EXCLUDED.rating, review_count = EXCLUDED.review_count,
+  price_min = EXCLUDED.price_min, age = EXCLUDED.age, cover_photo = EXCLUDED.cover_photo;
 
 -- Services (Valentina)
 INSERT INTO services (provider_id, name, description, price, duration, sort_order)

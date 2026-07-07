@@ -16,7 +16,16 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
-  signUp: (email: string, password: string, data?: { name?: string; role?: 'user' | 'provider' }) => Promise<{ error: Error | null }>
+  signUp: (
+    email: string,
+    password: string,
+    data?: {
+      name?: string
+      role?: 'user' | 'provider'
+      category?: 'masajes' | 'modelaje'
+      city?: string
+    }
+  ) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
 }
@@ -138,50 +147,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (
     email: string,
     password: string,
-    data?: { name?: string; role?: 'user' | 'provider' }
+    data?: {
+      name?: string
+      role?: 'user' | 'provider'
+      category?: 'masajes' | 'modelaje'
+      city?: string
+    }
   ) => {
     try {
+      const role = data?.role || 'user'
       const { data: authData, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             name: data?.name || '',
-            role: data?.role || 'user',
+            role,
+            category: data?.category || 'masajes',
+            city: data?.city || 'Santiago',
           },
         },
       })
 
       if (error) return { error }
 
-      // Create profile after signup
+      // Profile y provider los crean los triggers de Supabase (handle_new_user + ensure_provider_profile).
+      // Solo sincronizamos nombre/rol por si el trigger aún no propagó metadata.
       if (authData.user) {
-        await supabase.from('profiles').insert({
-          id: authData.user.id,
-          email,
-          name: data?.name || null,
-          role: data?.role || 'user',
-        })
-
-        // If registering as provider, create provider record
-        if (data?.role === 'provider') {
-          const slug = (data.name || email.split('@')[0])
-            .toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^a-z0-9-]/g, '')
-
-          await supabase.from('providers').insert({
-            user_id: authData.user.id,
-            slug: `${slug}-${Date.now()}`,
-            display_name: data.name || 'Nuevo Proveedor',
-            category: 'masajes',
-            city: 'Santiago',
-            status: 'pending',
+        await supabase
+          .from('profiles')
+          .update({
+            name: data?.name || null,
+            role,
           })
+          .eq('id', authData.user.id)
+
+        if (role === 'provider') {
+          await supabase
+            .from('providers')
+            .update({
+              display_name: data?.name || 'Nuevo Proveedor',
+              category: data?.category || 'masajes',
+              city: data?.city || 'Santiago',
+            })
+            .eq('user_id', authData.user.id)
         }
       }
 
-      return { error: null }
+      return {
+        error: null,
+        needsEmailConfirmation: !authData.session,
+      }
     } catch (error) {
       return { error: error as Error }
     }
