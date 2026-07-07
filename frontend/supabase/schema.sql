@@ -394,46 +394,37 @@ CREATE TRIGGER update_rating_on_review
   FOR EACH ROW EXECUTE FUNCTION update_provider_rating();
 
 -- =============================================
--- STORAGE BUCKETS
+-- STORAGE BUCKETS (ver migrations/004_storage_gallery.sql)
 -- =============================================
 
--- Create storage bucket for avatars
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('avatars', 'avatars', true)
-ON CONFLICT DO NOTHING;
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'gallery', 'gallery', true, 10485760,
+  ARRAY['image/jpeg','image/jpg','image/png','image/webp','image/gif','video/mp4','video/quicktime']
+)
+ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 10485760;
 
--- Create storage bucket for provider gallery
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('gallery', 'gallery', true)
-ON CONFLICT DO NOTHING;
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('avatars', 'avatars', true, 5242880, ARRAY['image/jpeg','image/jpg','image/png','image/webp'])
+ON CONFLICT (id) DO UPDATE SET public = true, file_size_limit = 5242880;
 
--- Storage policies for avatars
-CREATE POLICY "Avatar images are publicly accessible"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'avatars');
-
-CREATE POLICY "Users can upload own avatar"
-  ON storage.objects FOR INSERT
-  WITH CHECK (
-    bucket_id = 'avatars'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
-CREATE POLICY "Users can update own avatar"
-  ON storage.objects FOR UPDATE
-  USING (
-    bucket_id = 'avatars'
-    AND auth.uid()::text = (storage.foldername(name))[1]
-  );
-
--- Storage policies for gallery
 CREATE POLICY "Gallery images are publicly accessible"
-  ON storage.objects FOR SELECT
-  USING (bucket_id = 'gallery');
+  ON storage.objects FOR SELECT USING (bucket_id = 'gallery');
 
 CREATE POLICY "Providers can upload gallery images"
-  ON storage.objects FOR INSERT
+  ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (
+    bucket_id = 'gallery'
+    AND EXISTS (
+      SELECT 1 FROM providers
+      WHERE providers.user_id = auth.uid()
+      AND providers.id::text = (storage.foldername(name))[1]
+    )
+  );
+
+CREATE POLICY "Providers can update own gallery images"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (
     bucket_id = 'gallery'
     AND EXISTS (
       SELECT 1 FROM providers
@@ -443,7 +434,7 @@ CREATE POLICY "Providers can upload gallery images"
   );
 
 CREATE POLICY "Providers can delete own gallery images"
-  ON storage.objects FOR DELETE
+  ON storage.objects FOR DELETE TO authenticated
   USING (
     bucket_id = 'gallery'
     AND EXISTS (
@@ -452,3 +443,25 @@ CREATE POLICY "Providers can delete own gallery images"
       AND providers.id::text = (storage.foldername(name))[1]
     )
   );
+
+CREATE POLICY "Admins can manage gallery storage"
+  ON storage.objects FOR ALL TO authenticated
+  USING (
+    bucket_id = 'gallery'
+    AND EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'admin')
+  );
+
+CREATE POLICY "Avatar images are publicly accessible"
+  ON storage.objects FOR SELECT USING (bucket_id = 'avatars');
+
+CREATE POLICY "Users can upload own avatar"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users can update own avatar"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users can delete own avatar"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);

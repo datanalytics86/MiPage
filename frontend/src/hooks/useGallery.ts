@@ -33,6 +33,15 @@ function getPublicUrl(path: string) {
   return data.publicUrl
 }
 
+function extractGalleryStoragePath(url: string): string | null {
+  const publicMatch = url.match(/\/storage\/v1\/object\/public\/gallery\/(.+)$/)
+  if (publicMatch) return decodeURIComponent(publicMatch[1].split('?')[0])
+  if (url.includes('/gallery/')) {
+    return url.split('/gallery/')[1]?.split('?')[0] ?? null
+  }
+  return null
+}
+
 export function useAddGalleryUrl() {
   const queryClient = useQueryClient()
 
@@ -153,12 +162,10 @@ export function useDeleteGalleryItem() {
     }) => {
       const supabase = getSupabaseClient()
 
-      const storagePath = url.includes('/gallery/')
-        ? url.split('/gallery/')[1]?.split('?')[0]
-        : null
-
+      const storagePath = extractGalleryStoragePath(url)
       if (storagePath) {
-        await supabase.storage.from('gallery').remove([storagePath])
+        const { error: storageError } = await supabase.storage.from('gallery').remove([storagePath])
+        if (storageError) console.warn('Storage delete:', storageError.message)
       }
 
       const { error } = await supabase.from('gallery').delete().eq('id', id)
