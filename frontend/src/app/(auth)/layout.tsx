@@ -12,7 +12,7 @@ export default function AuthLayout({
         <div className="container-luxury">
           <Link href="/" className="inline-block">
             <span className="font-display text-2xl font-semibold text-foreground">
-              Luxe<span className="text-gold">Services</span>
+              Mi<span className="text-gold">Page</span>
             </span>
           </Link>
         </div>

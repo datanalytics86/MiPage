@@ -7,22 +7,22 @@ import { motion } from 'framer-motion'
 import { Star, Heart, MapPin, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatPrice } from '@/lib/utils'
+import { useFavorites } from '@/hooks/useFavorites'
 import type { ProviderCardData } from '@/types'
 
 interface ProviderCardProps {
   provider: ProviderCardData
-  onFavoriteToggle?: (id: string) => void
   className?: string
 }
 
-export function ProviderCard({ provider, onFavoriteToggle, className }: ProviderCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(provider.is_favorite || false)
+export function ProviderCard({ provider, className }: ProviderCardProps) {
+  const { isFavorite, toggleFavorite } = useFavorites()
+  const favorited = isFavorite(provider.id)
 
-  const handleFavoriteClick = (e: React.MouseEvent) => {
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsFavorite(!isFavorite)
-    onFavoriteToggle?.(provider.id)
+    await toggleFavorite(provider.id)
   }
 
   return (
@@ -36,7 +36,6 @@ export function ProviderCard({ provider, onFavoriteToggle, className }: Provider
         whileHover={{ y: -4 }}
         transition={{ duration: 0.2 }}
       >
-        {/* Image Container */}
         <div className="relative aspect-portrait overflow-hidden">
           <Image
             src={provider.primary_image || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600'}
@@ -46,10 +45,8 @@ export function ProviderCard({ provider, onFavoriteToggle, className }: Provider
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
 
-          {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-          {/* Featured Badge */}
           {provider.is_featured && (
             <div className="absolute top-3 left-3">
               <Badge variant="gold" className="shadow-lg">
@@ -58,26 +55,25 @@ export function ProviderCard({ provider, onFavoriteToggle, className }: Provider
             </div>
           )}
 
-          {/* Favorite Button */}
           <button
+            type="button"
             onClick={handleFavoriteClick}
+            aria-label={favorited ? 'Quitar de favoritos' : 'Agregar a favoritos'}
             className={cn(
               'absolute top-3 right-3 p-2 rounded-full transition-all duration-200',
               'bg-white/20 backdrop-blur-sm hover:bg-white/40',
-              isFavorite && 'bg-white/90 hover:bg-white'
+              favorited && 'bg-white/90 hover:bg-white'
             )}
           >
             <Heart
               className={cn(
                 'h-5 w-5 transition-colors',
-                isFavorite ? 'fill-error text-error' : 'text-white'
+                favorited ? 'fill-error text-error' : 'text-white'
               )}
             />
           </button>
 
-          {/* Bottom Info Overlay */}
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            {/* Name and Verified */}
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-display text-xl font-semibold text-white truncate">
                 {provider.display_name}
@@ -87,7 +83,6 @@ export function ProviderCard({ provider, onFavoriteToggle, className }: Provider
               )}
             </div>
 
-            {/* Location and Age */}
             <div className="flex items-center gap-2 text-white/80 text-sm mb-2">
               <span>{provider.age} años</span>
               <span>·</span>
@@ -97,7 +92,6 @@ export function ProviderCard({ provider, onFavoriteToggle, className }: Provider
               </span>
             </div>
 
-            {/* Rating */}
             <div className="flex items-center gap-1.5">
               <Star className="h-4 w-4 fill-gold text-gold" />
               <span className="text-white font-medium">
@@ -110,7 +104,6 @@ export function ProviderCard({ provider, onFavoriteToggle, className }: Provider
           </div>
         </div>
 
-        {/* Card Footer */}
         <div className="p-4 bg-card">
           <div className="flex items-center justify-between">
             <Badge variant={provider.category === 'masajes' ? 'default' : 'secondary'}>

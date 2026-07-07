@@ -155,7 +155,7 @@ export const useFavoritesStore = create<FavoritesState>()(
       },
     }),
     {
-      name: 'luxe-favorites',
+      name: 'mipage-favorites',
       partialize: (state) => ({
         favorites: state.favorites.map(f => ({
           id: f.id,

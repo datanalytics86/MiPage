@@ -67,7 +67,7 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between h-16 px-6 border-b border-border">
             <Link href="/" className="flex items-center">
               <span className="font-display text-xl font-semibold text-foreground">
-                Luxe<span className="text-gold">Services</span>
+                Mi<span className="text-gold">Page</span>
               </span>
             </Link>
             <button

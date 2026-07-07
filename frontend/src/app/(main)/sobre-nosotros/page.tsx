@@ -50,7 +50,7 @@ export default function SobreNosotrosPage() {
               Conectando talentos con quienes los buscan
             </h1>
             <p className="text-xl text-foreground-secondary">
-              LuxeServices nació con la misión de crear un espacio premium donde
+              MiPage nació con la misión de crear un espacio premium donde
               profesionales talentosos puedan mostrar su trabajo y conectar con
               clientes que valoran la calidad.
             </p>
@@ -83,7 +83,7 @@ export default function SobreNosotrosPage() {
             </h2>
             <div className="space-y-6 text-foreground-secondary text-lg">
               <p>
-                LuxeServices comenzó en 2024 con una idea simple: crear una plataforma
+                MiPage comenzó en 2024 con una idea simple: crear una plataforma
                 donde los profesionales de servicios de bienestar y modelaje pudieran
                 destacar su trabajo de manera elegante y profesional.
               </p>
@@ -93,7 +93,7 @@ export default function SobreNosotrosPage() {
                 la experiencia premium que ambos merecían.
               </p>
               <p>
-                Hoy, LuxeServices es la plataforma líder en Chile para conectar con
+                Hoy, MiPage es la plataforma líder en Chile para conectar con
                 profesionales verificados en masajes terapéuticos, modelaje y servicios
                 relacionados. Cada perfil es cuidadosamente revisado para garantizar
                 autenticidad y calidad.
@@ -138,7 +138,7 @@ export default function SobreNosotrosPage() {
             </h2>
             <p className="text-lg text-foreground-secondary mb-8">
               Ya sea que busques servicios profesionales o quieras ofrecer los tuyos,
-              LuxeServices es el lugar perfecto para ti.
+              MiPage es el lugar perfecto para ti.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/explorar">

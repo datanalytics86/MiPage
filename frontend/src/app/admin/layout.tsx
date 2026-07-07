@@ -90,7 +90,7 @@ export default function AdminLayout({
               </div>
               <div>
                 <span className="font-display text-lg font-semibold text-foreground">
-                  Luxe<span className="text-gold">Admin</span>
+                  Mi<span className="text-gold">Admin</span>
                 </span>
               </div>
             </Link>

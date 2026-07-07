@@ -23,7 +23,7 @@ export default function TerminosPage() {
               1. Aceptación de los Términos
             </h2>
             <p>
-              Al acceder y utilizar LuxeServices, aceptas estar sujeto a estos términos de servicio.
+              Al acceder y utilizar MiPage, aceptas estar sujeto a estos términos de servicio.
               Si no estás de acuerdo con alguna parte de estos términos, no podrás acceder al servicio.
             </p>
           </section>
@@ -33,7 +33,7 @@ export default function TerminosPage() {
               2. Descripción del Servicio
             </h2>
             <p>
-              LuxeServices es una plataforma que conecta a usuarios con proveedores de servicios
+              MiPage es una plataforma que conecta a usuarios con proveedores de servicios
               profesionales en las categorías de masajes terapéuticos, modelaje y servicios relacionados.
               Actuamos únicamente como intermediarios y no somos responsables de los servicios
               prestados por los proveedores.
@@ -95,7 +95,7 @@ export default function TerminosPage() {
               7. Limitación de Responsabilidad
             </h2>
             <p>
-              LuxeServices no será responsable por daños indirectos, incidentales, especiales o
+              MiPage no será responsable por daños indirectos, incidentales, especiales o
               consecuentes que resulten del uso o la imposibilidad de uso de nuestros servicios.
               No garantizamos la calidad de los servicios proporcionados por los proveedores.
             </p>

@@ -95,10 +95,11 @@ export function Footer() {
           </p>
           <div className="flex items-center space-x-4">
             <a
-              href="https://instagram.com"
+              href={siteConfig.social.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="text-white/40 hover:text-gold transition-colors"
+              aria-label="Instagram"
             >
               <Instagram className="h-5 w-5" />
             </a>

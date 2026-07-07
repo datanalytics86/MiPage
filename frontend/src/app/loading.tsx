@@ -10,7 +10,7 @@ export default function Loading() {
 
         {/* Brand */}
         <p className="font-display text-xl font-semibold text-foreground">
-          Luxe<span className="text-gold">Services</span>
+          Mi<span className="text-gold">Page</span>
         </p>
         <p className="text-sm text-foreground-muted mt-2">
           Cargando...

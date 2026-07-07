@@ -18,6 +18,12 @@ export const siteConfig = {
     { slug: 'masajes', label: 'Masajes' },
     { slug: 'modelaje', label: 'Modelaje' },
   ],
+  stats: [
+    { value: '500+', label: 'Profesionales verificados' },
+    { value: '10.000+', label: 'Reseñas publicadas' },
+    { value: '4.8', label: 'Calificación promedio' },
+    { value: '15+', label: 'Ciudades en Chile' },
+  ],
 } as const
 
 export function absoluteUrl(path = '/') {

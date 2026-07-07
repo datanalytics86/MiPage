@@ -158,7 +158,7 @@ export default function ProviderPage({ params }: ProviderPageProps) {
   const minPrice = Math.min(...provider.services.map((s) => s.price))
 
   const whatsappLink = `https://wa.me/${provider.whatsapp}?text=${encodeURIComponent(
-    `Hola ${provider.display_name}, vi tu perfil en LuxeServices y me gustaría agendar una cita.`
+    `Hola ${provider.display_name}, vi tu perfil en MiPage y me gustaría agendar una cita.`
   )}`
 
   return (

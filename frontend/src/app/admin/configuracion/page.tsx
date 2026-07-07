@@ -40,10 +40,10 @@ export default function AdminConfiguracionPage() {
 
   // Mock settings state
   const [settings, setSettings] = useState({
-    siteName: 'LuxeServices',
-    siteDescription: 'La plataforma premium para servicios de lujo',
-    supportEmail: 'soporte@luxeservices.com',
-    adminEmail: 'admin@luxeservices.com',
+    siteName: 'MiPage',
+    siteDescription: 'Marketplace de servicios profesionales en Chile',
+    supportEmail: 'soporte@mipage.cl',
+    adminEmail: 'contacto@mipage.cl',
     timezone: 'America/Santiago',
     currency: 'CLP',
     commissionRate: 15,
