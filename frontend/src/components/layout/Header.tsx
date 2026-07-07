@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
+import { siteConfig } from '@/lib/site'
 
 export function Header() {
   const router = useRouter()
@@ -35,7 +36,8 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-display text-2xl font-semibold text-foreground">
-              Luxe<span className="text-gold">Services</span>
+              {siteConfig.name.slice(0, 2)}
+              <span className="text-gold">{siteConfig.name.slice(2)}</span>
             </span>
           </Link>
 

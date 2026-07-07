@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { siteConfig } from '@/lib/site'
 
 const contactReasons = [
   { id: 'general', label: 'Consulta general', icon: MessageSquare },
@@ -28,11 +29,28 @@ export default function ContactoPage() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
 
-    setSubmitted(true)
-    setIsSubmitting(false)
+      if (!response.ok) {
+        throw new Error('No se pudo enviar el mensaje')
+      }
+
+      setSubmitted(true)
+      setFormData({ name: '', email: '', reason: 'general', message: '' })
+    } catch {
+      window.location.href = `mailto:${siteConfig.emails.contact}?subject=${encodeURIComponent(
+        `Contacto MiPage — ${formData.reason}`
+      )}&body=${encodeURIComponent(
+        `Nombre: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`
+      )}`
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (submitted) {
@@ -86,10 +104,10 @@ export default function ContactoPage() {
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Email</h3>
                     <a
-                      href="mailto:contacto@luxeservices.com"
+                      href={`mailto:${siteConfig.emails.contact}`}
                       className="text-foreground-secondary hover:text-gold transition-colors"
                     >
-                      contacto@luxeservices.com
+                      {siteConfig.emails.contact}
                     </a>
                   </div>
                 </div>

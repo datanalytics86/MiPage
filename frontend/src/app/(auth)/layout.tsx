@@ -25,7 +25,7 @@ export default function AuthLayout({
 
       {/* Simple Footer */}
       <footer className="py-6 px-4 text-center text-foreground-muted text-sm">
-        © {new Date().getFullYear()} LuxeServices. Todos los derechos reservados.
+        © {new Date().getFullYear()} MiPage. Todos los derechos reservados.
       </footer>
     </div>
   )

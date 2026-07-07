@@ -1,12 +1,58 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Providers } from '@/components/Providers'
 import { Toaster } from '@/components/ui/Toaster'
+import { absoluteUrl, siteConfig } from '@/lib/site'
 import './globals.css'
 
+export const viewport: Viewport = {
+  themeColor: '#0f172a',
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export const metadata: Metadata = {
-  title: 'LuxeServices - Servicios Profesionales Premium',
-  description: 'Descubre servicios profesionales de masajes terapéuticos y modelaje en Chile. Plataforma premium con perfiles verificados.',
-  keywords: 'masajes, modelaje, servicios profesionales, Chile, Santiago',
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: `${siteConfig.name} — ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  keywords: [
+    'masajes',
+    'modelaje',
+    'servicios profesionales',
+    'Chile',
+    'Santiago',
+    'marketplace',
+    'MiPage',
+  ],
+  authors: [{ name: siteConfig.name }],
+  creator: siteConfig.name,
+  openGraph: {
+    type: 'website',
+    locale: siteConfig.locale,
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${siteConfig.name} — ${siteConfig.tagline}`,
+    description: siteConfig.description,
+  },
+  alternates: {
+    canonical: absoluteUrl(),
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  manifest: '/site.webmanifest',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({

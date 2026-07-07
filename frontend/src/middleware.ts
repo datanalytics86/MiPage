@@ -1,20 +1,21 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession, protectedRoutes, adminRoutes, authRoutes } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
+import { hasSupabaseEnv } from '@/lib/supabase/env'
 
 export async function middleware(request: NextRequest) {
-  // Update session first
-  const response = await updateSession(request)
+  if (!hasSupabaseEnv()) {
+    return NextResponse.next()
+  }
 
+  const response = await updateSession(request)
   const { pathname } = request.nextUrl
 
-  // Check if route needs protection
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-  const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
-  const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
+  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route))
+  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))
 
   if (isProtectedRoute || isAdminRoute) {
-    // Create Supabase client to check auth
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -29,16 +30,16 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    // Not authenticated - redirect to login
     if (!user) {
       const redirectUrl = new URL('/login', request.url)
       redirectUrl.searchParams.set('redirect', pathname)
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Check admin access
     if (isAdminRoute) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -51,7 +52,6 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Check provider access for dashboard
     if (pathname.startsWith('/dashboard')) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -65,7 +65,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth pages
   if (isAuthRoute) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -81,7 +80,9 @@ export async function middleware(request: NextRequest) {
       }
     )
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (user) {
       const redirect = request.nextUrl.searchParams.get('redirect') || '/'
@@ -94,13 +95,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

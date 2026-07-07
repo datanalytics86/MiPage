@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad - LuxeServices',
-  description: 'Política de privacidad y protección de datos de LuxeServices',
+  title: 'Política de Privacidad',
+  description: 'Política de privacidad y protección de datos de MiPage',
 }
 
 export default function PrivacidadPage() {

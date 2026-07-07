@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Términos de Servicio - LuxeServices',
-  description: 'Términos y condiciones de uso de la plataforma LuxeServices',
+  title: 'Términos de Servicio',
+  description: 'Términos y condiciones de uso de la plataforma MiPage',
 }
 
 export default function TerminosPage() {

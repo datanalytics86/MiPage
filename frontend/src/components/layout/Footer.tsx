@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Instagram, Mail, MapPin } from 'lucide-react'
+import { siteConfig } from '@/lib/site'
 
 export function Footer() {
   return (
@@ -11,7 +12,8 @@ export function Footer() {
           <div className="space-y-4">
             <Link href="/" className="inline-block">
               <span className="font-display text-2xl font-semibold">
-                Luxe<span className="text-gold">Services</span>
+                {siteConfig.name.slice(0, 2)}
+                <span className="text-gold">{siteConfig.name.slice(2)}</span>
               </span>
             </Link>
             <p className="text-white/60 text-sm leading-relaxed">
@@ -89,7 +91,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/40 text-sm">
-            © {new Date().getFullYear()} LuxeServices. Todos los derechos reservados.
+            © {new Date().getFullYear()} {siteConfig.name}. Todos los derechos reservados.
           </p>
           <div className="flex items-center space-x-4">
             <a
@@ -101,7 +103,7 @@ export function Footer() {
               <Instagram className="h-5 w-5" />
             </a>
             <a
-              href="mailto:contacto@luxeservices.cl"
+              href={`mailto:${siteConfig.emails.contact}`}
               className="text-white/40 hover:text-gold transition-colors"
             >
               <Mail className="h-5 w-5" />

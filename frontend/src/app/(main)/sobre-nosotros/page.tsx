@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 export const metadata: Metadata = {
-  title: 'Sobre Nosotros - LuxeServices',
-  description: 'Conoce más sobre LuxeServices, la plataforma premium de servicios profesionales en Chile',
+  title: 'Sobre Nosotros',
+  description: 'Conoce más sobre MiPage, el marketplace de servicios profesionales en Chile',
 }
 
 const values = [

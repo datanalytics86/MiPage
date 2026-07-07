@@ -1,0 +1,18 @@
+{
+  "name": "MiPage",
+  "short_name": "MiPage",
+  "description": "Marketplace de servicios profesionales en Chile",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "es-CL",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
