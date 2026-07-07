@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
+import { hasSupabaseEnv } from '@/lib/supabase/env'
 import { useAuth } from '@/contexts/AuthContext'
 import type { Review, ReviewWithUser } from '@/types/database'
 
@@ -26,7 +27,7 @@ export function useProviderReviews(providerId: string, limit = 10) {
         .from('reviews')
         .select(`
           *,
-          user:profiles!reviews_user_id_fkey (name, avatar_url)
+          user:profiles (name, avatar_url)
         `)
         .eq('provider_id', providerId)
         .order('created_at', { ascending: false })
@@ -35,7 +36,7 @@ export function useProviderReviews(providerId: string, limit = 10) {
       if (error) throw error
       return data as ReviewWithUser[]
     },
-    enabled: !!providerId,
+    enabled: hasSupabaseEnv() && !!providerId,
   })
 }
 

@@ -3,107 +3,78 @@
 import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import {
-  Eye,
-  Star,
-  MessageSquare,
-  TrendingUp,
-  AlertCircle,
-  ArrowRight,
-  Calendar,
-} from 'lucide-react'
+import { Eye, Star, MessageSquare, TrendingUp, AlertCircle, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
-
-// Mock data
-const stats = [
-  { name: 'Visitas totales', value: '1,250', icon: Eye, change: '+12%', trend: 'up' },
-  { name: 'Rating promedio', value: '4.9', icon: Star, change: '+0.1', trend: 'up' },
-  { name: 'Total reseñas', value: '47', icon: MessageSquare, change: '+3', trend: 'up' },
-  { name: 'Este mes', value: '156', icon: TrendingUp, change: '+24%', trend: 'up' },
-]
-
-const recentReviews = [
-  {
-    id: '1',
-    user: 'Carlos M.',
-    rating: 5,
-    content: 'Excelente profesional, muy recomendada...',
-    date: '2024-12-08',
-    responded: true,
-  },
-  {
-    id: '2',
-    user: 'Andrea P.',
-    rating: 5,
-    content: 'Ambiente muy agradable y profesional...',
-    date: '2024-12-05',
-    responded: false,
-  },
-  {
-    id: '3',
-    user: 'Miguel T.',
-    rating: 4,
-    content: 'Muy buen servicio, puntual...',
-    date: '2024-11-28',
-    responded: false,
-  },
-]
-
-const alerts = [
-  { type: 'warning', message: '2 reseñas pendientes de respuesta' },
-]
+import { useAuth } from '@/contexts/AuthContext'
+import { useProviderReviews } from '@/hooks/useReviews'
 
 export default function DashboardOverviewPage() {
+  const { provider } = useAuth()
+  const { data: reviews = [] } = useProviderReviews(provider?.id || '', 5)
+
+  if (!provider) {
+    return (
+      <p className="text-foreground-secondary">Completa tu perfil de proveedor para ver estadísticas.</p>
+    )
+  }
+
+  const pendingResponses = reviews.filter((r) => !r.provider_response).length
+
+  const stats = [
+    { name: 'Visitas totales', value: String(provider.view_count), icon: Eye },
+    { name: 'Rating promedio', value: Number(provider.rating).toFixed(1), icon: Star },
+    { name: 'Total reseñas', value: String(provider.review_count), icon: MessageSquare },
+    {
+      name: 'Precio desde',
+      value: provider.price_min ? `$${provider.price_min.toLocaleString('es-CL')}` : '—',
+      icon: TrendingUp,
+    },
+  ]
+
   return (
     <div className="space-y-8">
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="space-y-3">
-          {alerts.map((alert, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 p-4 rounded-xl bg-warning/10 text-warning"
-            >
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              <span className="text-sm font-medium">{alert.message}</span>
-              <Link href="/dashboard/resenas" className="ml-auto">
-                <Button variant="ghost" size="sm" className="text-warning hover:text-warning">
-                  Ver reseñas
-                  <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+      {pendingResponses > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 p-4 rounded-xl bg-warning/10 text-warning"
+        >
+          <AlertCircle className="h-5 w-5" />
+          <span className="text-sm font-medium">
+            {pendingResponses} reseña(s) pendiente(s) de respuesta
+          </span>
+          <Link href="/dashboard/resenas" className="ml-auto">
+            <Button variant="ghost" size="sm">
+              Ver reseñas
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </Link>
+        </motion.div>
       )}
 
-      {/* Stats Grid */}
+      {provider.status !== 'approved' && (
+        <Card className="border-warning/40 bg-warning/5">
+          <CardContent className="p-4 text-sm">
+            Tu perfil está en estado <strong>{provider.status}</strong>. Un administrador debe aprobarlo
+            para que aparezca en Explorar.
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <motion.div
-            key={stat.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
+          <motion.div key={stat.name} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }}>
             <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-lg bg-gold/10">
-                    <stat.icon className="h-5 w-5 text-gold" />
-                  </div>
-                  <Badge variant={stat.trend === 'up' ? 'success' : 'destructive'}>
-                    {stat.change}
-                  </Badge>
+              <CardContent className="p-5 flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-gold/10">
+                  <stat.icon className="h-6 w-6 text-gold" />
                 </div>
-                <div className="mt-4">
-                  <p className="text-3xl font-semibold text-foreground">{stat.value}</p>
-                  <p className="text-sm text-foreground-muted mt-1">{stat.name}</p>
+                <div>
+                  <p className="text-sm text-foreground-muted">{stat.name}</p>
+                  <p className="text-2xl font-semibold">{stat.value}</p>
                 </div>
               </CardContent>
             </Card>
@@ -111,110 +82,59 @@ export default function DashboardOverviewPage() {
         ))}
       </div>
 
-      {/* Recent Reviews */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="font-display text-xl">Reseñas recientes</CardTitle>
+          <CardTitle>Reseñas recientes</CardTitle>
           <Link href="/dashboard/resenas">
-            <Button variant="ghost" size="sm">
-              Ver todas
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
+            <Button variant="ghost" size="sm">Ver todas</Button>
           </Link>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {recentReviews.map((review) => (
-              <div
-                key={review.id}
-                className="flex items-start gap-4 p-4 rounded-xl bg-muted/50"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-foreground">{review.user}</span>
-                    <div className="flex">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < review.rating
-                              ? 'fill-gold text-gold'
-                              : 'fill-muted text-muted'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    {!review.responded && (
-                      <Badge variant="warning" className="ml-2">Sin responder</Badge>
+        <CardContent className="space-y-4">
+          {reviews.length === 0 ? (
+            <p className="text-sm text-foreground-muted text-center py-6">Aún no tienes reseñas</p>
+          ) : (
+            reviews.map((review) => (
+              <div key={review.id} className="p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">{review.user?.name || 'Cliente'}</span>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 fill-gold text-gold" />
+                    <span>{review.rating}</span>
+                    {!review.provider_response && (
+                      <Badge variant="warning">Sin respuesta</Badge>
                     )}
                   </div>
-                  <p className="text-sm text-foreground-secondary line-clamp-1">
-                    {review.content}
-                  </p>
-                  <p className="text-xs text-foreground-muted mt-1">
-                    {formatDate(review.date)}
-                  </p>
                 </div>
-                <Link href="/dashboard/resenas">
-                  <Button variant="outline" size="sm">
-                    {review.responded ? 'Ver' : 'Responder'}
-                  </Button>
-                </Link>
+                <p className="text-sm text-foreground-secondary line-clamp-2">{review.comment}</p>
+                <p className="text-xs text-foreground-muted mt-2">{formatDate(review.created_at)}</p>
               </div>
-            ))}
-          </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link href="/dashboard/perfil">
-          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer group">
+          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer h-full">
             <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gold/10 group-hover:bg-gold/20 transition-colors">
-                  <Calendar className="h-6 w-6 text-gold" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Actualizar disponibilidad</h3>
-                  <p className="text-sm text-foreground-muted">Configura tus horarios</p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-foreground-muted ml-auto group-hover:text-gold transition-colors" />
-              </div>
+              <h3 className="font-semibold mb-1">Editar perfil</h3>
+              <p className="text-sm text-foreground-muted">Actualiza tu bio y contacto</p>
             </CardContent>
           </Card>
         </Link>
-
-        <Link href="/dashboard/galeria">
-          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer group">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-rose/10 group-hover:bg-rose/20 transition-colors">
-                  <TrendingUp className="h-6 w-6 text-rose" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Subir nuevas fotos</h3>
-                  <p className="text-sm text-foreground-muted">Actualiza tu galería</p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-foreground-muted ml-auto group-hover:text-rose transition-colors" />
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-
         <Link href="/dashboard/servicios">
-          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer group">
+          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer h-full">
             <CardContent className="p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-sage/10 group-hover:bg-sage/20 transition-colors">
-                  <MessageSquare className="h-6 w-6 text-sage" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Gestionar servicios</h3>
-                  <p className="text-sm text-foreground-muted">Edita precios y duración</p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-foreground-muted ml-auto group-hover:text-sage transition-colors" />
-              </div>
+              <h3 className="font-semibold mb-1">Mis servicios</h3>
+              <p className="text-sm text-foreground-muted">Gestiona precios y duración</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/dashboard/galeria">
+          <Card className="hover:shadow-soft-lg transition-shadow cursor-pointer h-full">
+            <CardContent className="p-6">
+              <h3 className="font-semibold mb-1">Mi galería</h3>
+              <p className="text-sm text-foreground-muted">Sube fotos de tu trabajo</p>
             </CardContent>
           </Card>
         </Link>

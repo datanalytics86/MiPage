@@ -18,3 +18,16 @@ export {
   useAdminStats,
 } from './useAdmin'
 export { useSiteSettings, useUpdateSiteSettings } from './useSiteSettings'
+export {
+  useProviderServices,
+  useCreateService,
+  useUpdateService,
+  useDeleteService,
+} from './useServices'
+export {
+  useProviderGallery,
+  useAddGalleryUrl,
+  useUploadGalleryFile,
+  useDeleteGalleryItem,
+  useSetGalleryCover,
+} from './useGallery'
