@@ -3,7 +3,6 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Heart, LogOut, LayoutDashboard, Shield, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -171,95 +170,91 @@ export function Header() {
           </button>
         </div>
 
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-border"
-            >
-              <div className="py-4 space-y-3">
-                <form onSubmit={handleHeaderSearch} className="px-4 relative">
-                  <Search className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
-                  <Input
-                    type="search"
-                    placeholder="Buscar profesionales..."
-                    value={headerSearch}
-                    onChange={(e) => setHeaderSearch(e.target.value)}
-                    className="pl-9"
-                  />
-                </form>
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      'block px-4 py-2 rounded-lg transition-colors',
-                      link.match(pathname)
-                        ? 'text-gold bg-gold/10 font-medium'
-                        : 'text-foreground-secondary hover:text-gold hover:bg-muted'
-                    )}
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                <div className="border-t border-border pt-3 mt-3 space-y-2 px-4">
-                  {isAuthenticated && profile ? (
-                    <>
-                      <Link href="/favoritos" onClick={() => setIsMenuOpen(false)}>
-                        <Button variant="ghost" className="w-full justify-start">
-                          <Heart className="h-5 w-5 mr-2" />
-                          Favoritos
-                        </Button>
-                      </Link>
-                      {profile.role === 'provider' && (
-                        <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
-                          <Button variant="ghost" className="w-full justify-start">
-                            <LayoutDashboard className="h-5 w-5 mr-2" />
-                            Mi Dashboard
-                          </Button>
-                        </Link>
-                      )}
-                      {profile.role === 'admin' && (
-                        <Link href="/admin" onClick={() => setIsMenuOpen(false)}>
-                          <Button variant="ghost" className="w-full justify-start">
-                            <Shield className="h-5 w-5 mr-2" />
-                            Panel Admin
-                          </Button>
-                        </Link>
-                      )}
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-error"
-                        onClick={() => {
-                          handleSignOut()
-                          setIsMenuOpen(false)
-                        }}
-                      >
-                        <LogOut className="h-5 w-5 mr-2" />
-                        Cerrar sesión
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Link href="/login" onClick={() => setIsMenuOpen(false)}>
-                        <Button variant="outline" className="w-full">
-                          Iniciar sesión
-                        </Button>
-                      </Link>
-                      <Link href="/register" onClick={() => setIsMenuOpen(false)}>
-                        <Button className="w-full">Registrarse</Button>
-                      </Link>
-                    </>
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-border animate-fade-in">
+            <div className="py-4 space-y-3">
+              <form onSubmit={handleHeaderSearch} className="px-4 relative">
+                <Search
+                  className="absolute left-7 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted"
+                  aria-hidden
+                />
+                <Input
+                  type="search"
+                  placeholder="Buscar profesionales..."
+                  value={headerSearch}
+                  onChange={(e) => setHeaderSearch(e.target.value)}
+                  className="pl-9"
+                  aria-label="Buscar profesionales"
+                />
+              </form>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'block px-4 py-2 rounded-lg transition-colors',
+                    link.match(pathname)
+                      ? 'text-gold bg-gold/10 font-medium'
+                      : 'text-foreground-secondary hover:text-gold hover:bg-muted'
                   )}
-                </div>
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <div className="border-t border-border pt-3 mt-3 space-y-2 px-4">
+                {isAuthenticated && profile ? (
+                  <>
+                    <Link href="/favoritos" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <Heart className="h-5 w-5 mr-2" aria-hidden />
+                        Favoritos
+                      </Button>
+                    </Link>
+                    {profile.role === 'provider' && (
+                      <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start">
+                          <LayoutDashboard className="h-5 w-5 mr-2" aria-hidden />
+                          Mi Dashboard
+                        </Button>
+                      </Link>
+                    )}
+                    {profile.role === 'admin' && (
+                      <Link href="/admin" onClick={() => setIsMenuOpen(false)}>
+                        <Button variant="ghost" className="w-full justify-start">
+                          <Shield className="h-5 w-5 mr-2" aria-hidden />
+                          Panel Admin
+                        </Button>
+                      </Link>
+                    )}
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start text-error"
+                      onClick={() => {
+                        handleSignOut()
+                        setIsMenuOpen(false)
+                      }}
+                    >
+                      <LogOut className="h-5 w-5 mr-2" aria-hidden />
+                      Cerrar sesión
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        Iniciar sesión
+                      </Button>
+                    </Link>
+                    <Link href="/register" onClick={() => setIsMenuOpen(false)}>
+                      <Button className="w-full">Registrarse</Button>
+                    </Link>
+                  </>
+                )}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   )

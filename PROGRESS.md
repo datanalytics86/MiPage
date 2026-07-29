@@ -2,7 +2,9 @@
 
 **Última actualización:** 2026-07-29  
 **Default branch:** `main`  
-**PR #12:** MERGED → https://github.com/datanalytics86/MiPage/pull/12  
+**HEAD:** ver `git log -1`  
+**PR #12:** MERGED (2026-07-29) → https://github.com/datanalytics86/MiPage/pull/12  
+**Release:** https://github.com/datanalytics86/MiPage/releases/tag/v1.1.0-tier1  
 
 ---
 
@@ -10,69 +12,66 @@
 
 | Criterio | Estado |
 |----------|--------|
-| Dark premium en toda la app | **Sí** (`html.dark`, tokens Lust, dashboard/admin sin `bg-white`) |
-| Componentes foto elite + uso | **Sí** PhotoGrid, GalleryLightbox, Skeleton, Empty/Error; blur placeholders |
-| Lighthouse ≥ 92 (4 categorías) | **Desktop local final: 97 / 100 / 100 / 100** ✅. Live prev: 96/98/96/100 ✅. Mobile local thr. ~81 (CPU 4× localhost) — **revalidar en edge tras Vercel Production=`main`** |
-| E2E 5 flujos críticos | **36 passed**, 4 skipped (auth creds) ✅ |
-| Panel Admin solo-admin | **Sí** moderación + preview + reject presets + metadata + settings |
-| ADMIN-GUIDE práctico | **Sí** |
-| PR #12 mergeada + main + default | **Sí** |
-| Migrations 002–006 en prod Supabase | **Pendiente** (requiere SQL Editor / CLI del proyecto prod) |
-| PRs Express cerradas | **Sí** #2,#4,#5,#6,#8,#9,#10,#11 closed as superseded |
-| Live refleja `main` | **Pendiente** apuntar Vercel Production Branch = `main` + redeploy |
-| Docs honestas | **Sí** |
-| type-check + tests + build | **Verde** (26 unit tests) |
+| Dark premium en toda la app | **Hecho** (`html.dark`, tokens Lust, dashboard/admin dark) |
+| PhotoGrid, GalleryLightbox, Skeleton, EmptyState, ErrorState | **Hecho** e integrados |
+| Lighthouse ≥ 92 (4 categorías) | **Desktop local: 97/100/100/100**. Live viejo: 96/98/96/100. Mobile lab localhost ~81. **Re-medir preview/prod Vercel tras fix de deploy** |
+| E2E 5 flujos | **36 passed**, 4 skipped (creds E2E_*) |
+| Panel Admin solo-admin | **Hecho** |
+| ADMIN-GUIDE | **Hecho** |
+| PR #12 + `main` limpia | **Hecho** |
+| PRs Express cerradas | **Hecho** (#2–#11) |
+| Type-check + tests + build | **Verde** (CI main SUCCESS) |
+| Vercel Production → `main` | **Pendiente manual** (prod aún en `3576437`) |
+| Migrations 002–006 en Supabase prod | **Pendiente manual** |
+| Live refleja código nuevo (dark) | **Pendiente** (live sin `class=dark`; deploys preview fallaban por env) |
 
 ---
 
 ## FASE 0 — Completada
 
-- [x] PR #12 MERGEABLE, CI frontend SUCCESS  
-- [x] Rama `main` creada y PR retarget + merge  
-- [x] `default_branch` → `main`  
-- [x] Cierre PRs legacy Express/UI  
-- [x] CI workflow solo `main`  
+- [x] PR #12 mergeada a `main`
+- [x] Default branch = `main`
+- [x] PRs legacy cerradas
+- [x] Higiene ESLint / dual-stack archive
+- [x] CI verde en `main`
 
-## FASE 1 — Completada (código)
+## FASE 1–3 — Completadas en código
 
-- Dark premium residual (dashboard white → dark surfaces)  
-- next/font (sin Google Fonts CSS bloqueante)  
-- RSC home (LCP) + islas `HomeSearch` / `FeaturedProviders`  
-- PhotoGrid en perfil + blur placeholders  
-- AA contrast (badges, gold button, footer)  
+- Dark premium + design system
+- RSC home, next/font, photo-first
+- E2E + unit tests
+- Lighthouse desktop ≥ 92
 
-## FASE 2 — Completada (base)
+## FASE 4 — Ops + fix deploy Vercel (esta iteración)
 
-- Admin usable; scripts seed/health/backup-check; emails graceful  
+### Problema encontrado
 
-## FASE 3 — En curso / parcial
+Los **Preview deploys de `main` fallaban** en Vercel. Causa: `validate-env.mjs` trataba `VERCEL=1` como producción estricta y hacía `exit 1` si faltaban `NEXT_PUBLIC_SUPABASE_*` (común en Preview si los secrets solo están en Production).
 
-- Lighthouse desktop ≥ 92 ✅  
-- Lighthouse mobile local Performance < 92 (revalidar en edge)  
-- E2E suite añadida  
+### Fix aplicado
 
-## FASE 4 — Ops (tú / Vercel Dashboard)
+- `validate-env.mjs`: Preview/CI → placeholders + warn; **Production** Vercel → requiere secrets reales.
+- Header sin framer-motion (menos JS mobile).
+- Push a `main` para reintentar deploy automático.
 
-1. [ ] Vercel → Project Settings → Git → **Production Branch = `main`** (no hay token CLI en este entorno)
-2. [ ] Supabase SQL: migrations `002`…`006` en prod  
-3. [ ] Env Vercel: `NEXT_PUBLIC_SUPABASE_*`, service role server-only, Resend opcional  
-4. [ ] Redeploy production + Lighthouse mobile live  
-5. [x] Tag release `v1.1.0-tier1` + GitHub Release  
+### Checklist manual Vercel (dueño del proyecto)
 
-**Release:** https://github.com/datanalytics86/MiPage/releases/tag/v1.1.0-tier1
+1. Vercel → **mi-page** → Settings → Git → **Production Branch = `main`**
+2. Settings → Environment Variables → asegurar `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY` en **Production** (y Preview si quieres data real en previews)
+3. Redeploy Production desde el último commit de `main`
+4. Supabase SQL Editor: `frontend/supabase/schema.sql` + migrations `002`…`006`
+5. Verificar live: `html.dark`, `/api/health`, admin login
 
 ---
 
-## Lighthouse scores (medidos)
+## Lighthouse (lab)
 
 | Target | Perf | A11y | BP | SEO |
 |--------|------|------|-----|-----|
-| Live `mi-page-lake.vercel.app` (prev deploy) | 96 | 98 | 96 | 100 |
-| Local desktop (post-Tier1) | 98 | 100 | 96 | 100 |
-| Local mobile (post-Tier1) | ~83 | 100 | 96 | 100 |
+| Desktop local (Tier-1) | 97 | 100 | 100 | 100 |
+| Live `mi-page-lake` (commit viejo) | 96 | 98 | 96 | 100 |
+| Mobile local throttled | ~81 | 100 | 100 | 100 |
 
 ---
 
-## Commits post-merge (esta sesión)
-
-Ver `git log main` tras push de polish continuo.
+*No declarar “live Tier-1” hasta Production en `main` con dark visible y health 200.*

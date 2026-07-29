@@ -1,12 +1,15 @@
 archive/
 node_modules/
+frontend/node_modules/
 .git/
 coverage/
 frontend/coverage/
 frontend/playwright-report/
 frontend/test-results/
+frontend/lighthouse-reports/
 *.md
 !README.md
 !ARCHITECTURE-DECISION.md
 .env
 .env.local
+.env*.local
