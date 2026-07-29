@@ -44,6 +44,12 @@ const cleanText = sanitizePlainText
 
 const STEPS = ['Datos básicos', 'Fotos', 'Servicios y envío'] as const
 
+const STEP_HINTS = [
+  'Usa tu nombre público real. Las fotos se revisan antes de publicarte.',
+  'Mínimo 3 fotos nítidas (rostro y servicio). Puedes reordenar después en Galería.',
+  'Define un precio desde y un servicio. Al enviar queda en revisión (PENDING).',
+] as const
+
 export default function NuevoAvisoWizardPage() {
   const router = useRouter()
   const toast = useToast()
@@ -300,6 +306,9 @@ export default function NuevoAvisoWizardPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">{STEPS[step]}</CardTitle>
+          <p className="text-sm text-foreground-secondary font-normal mt-1">
+            {STEP_HINTS[step]}
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           {step === 0 && (

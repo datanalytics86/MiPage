@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -42,6 +42,12 @@ import { getProviderImage } from '@/lib/providers'
 import { useToast } from '@/stores/uiStore'
 import type { ProviderStatus } from '@/types/database'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  analyzeProviderFlags,
+  moderationRiskScore,
+  type ModerationFlag,
+} from '@/lib/moderation'
+import { useSearchParams } from 'next/navigation'
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning',
@@ -65,16 +71,26 @@ const REJECT_REASONS = [
   'Perfil incompleto o bio insuficiente',
 ] as const
 
-export default function AdminProveedoresPage() {
+function AdminProveedoresInner() {
   const toast = useToast()
+  const searchParams = useSearchParams()
   const { data: providers = [], isLoading, error } = useAdminProviders()
   const updateProvider = useUpdateProvider()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>(
+    searchParams.get('status') || 'all'
+  )
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [preview, setPreview] = useState<AdminProviderRow | null>(null)
   const [rejectTarget, setRejectTarget] = useState<AdminProviderRow | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [bulkBusy, setBulkBusy] = useState(false)
+
+  useEffect(() => {
+    const s = searchParams.get('status')
+    if (s) setStatusFilter(s)
+  }, [searchParams])
 
   const mutate = async (
     id: string,
@@ -113,18 +129,113 @@ export default function AdminProveedoresPage() {
     setRejectReason('')
   }
 
-  const filteredProviders = providers.filter((provider) => {
-    const matchesSearch =
-      provider.display_name.toLowerCase().includes(search.toLowerCase()) ||
-      provider.email.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || provider.status === statusFilter
-    const matchesCategory =
-      categoryFilter === 'all' ||
-      provider.category.toLowerCase() === categoryFilter.toLowerCase()
-    return matchesSearch && matchesStatus && matchesCategory
-  })
+  const filteredProviders = useMemo(() => {
+    return providers.filter((provider) => {
+      const matchesSearch =
+        provider.display_name.toLowerCase().includes(search.toLowerCase()) ||
+        provider.email.toLowerCase().includes(search.toLowerCase())
+      const matchesStatus = statusFilter === 'all' || provider.status === statusFilter
+      const matchesCategory =
+        categoryFilter === 'all' ||
+        provider.category.toLowerCase() === categoryFilter.toLowerCase()
+      return matchesSearch && matchesStatus && matchesCategory
+    })
+  }, [providers, search, statusFilter, categoryFilter])
+
+  const flagsById = useMemo(() => {
+    const map = new Map<string, ModerationFlag[]>()
+    for (const p of filteredProviders) {
+      map.set(
+        p.id,
+        analyzeProviderFlags({
+          display_name: p.display_name,
+          city: p.city,
+          category: p.category,
+          photos: p.photos,
+          cover_photo: p.cover_photo,
+          price_min: p.price_min,
+        })
+      )
+    }
+    return map
+  }, [filteredProviders])
 
   const categories = Array.from(new Set(providers.map((p) => p.category)))
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const selectVisiblePending = () => {
+    const ids = filteredProviders
+      .filter((p) => p.status === 'pending')
+      .map((p) => p.id)
+    setSelected(new Set(ids))
+  }
+
+  const clearSelection = () => setSelected(new Set())
+
+  const bulkApprove = async () => {
+    if (selected.size === 0) return
+    setBulkBusy(true)
+    let ok = 0
+    for (const id of Array.from(selected)) {
+      const p = providers.find((x) => x.id === id)
+      if (!p || p.status !== 'pending') continue
+      try {
+        await updateProvider.mutateAsync({
+          id,
+          updates: { status: 'approved', rejection_reason: null },
+          notify: {
+            type: 'provider_approved',
+            email: p.email,
+            displayName: p.display_name,
+          },
+        })
+        ok += 1
+      } catch {
+        /* continue batch */
+      }
+    }
+    setBulkBusy(false)
+    clearSelection()
+    toast.success('Lote completado', `${ok} aprobado(s)`)
+  }
+
+  const bulkReject = async () => {
+    if (selected.size === 0) return
+    const reason = rejectReason.trim() || 'No cumple políticas de contenido'
+    setBulkBusy(true)
+    let ok = 0
+    for (const id of Array.from(selected)) {
+      const p = providers.find((x) => x.id === id)
+      if (!p || p.status !== 'pending') continue
+      try {
+        await updateProvider.mutateAsync({
+          id,
+          updates: { status: 'rejected', rejection_reason: reason },
+          notify: {
+            type: 'provider_rejected',
+            email: p.email,
+            displayName: p.display_name,
+            reason,
+          },
+        })
+        ok += 1
+      } catch {
+        /* continue */
+      }
+    }
+    setBulkBusy(false)
+    clearSelection()
+    setRejectReason('')
+    toast.success('Lote completado', `${ok} rechazado(s)`)
+  }
 
   if (error) {
     return (
@@ -165,8 +276,49 @@ export default function AdminProveedoresPage() {
         ))}
       </div>
 
+      {selected.size > 0 && (
+        <Card className="border-gold/30 bg-gold/5">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+            <p className="text-sm text-foreground">
+              <span className="font-semibold text-gold">{selected.size}</span> seleccionado(s)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" disabled={bulkBusy} onClick={bulkApprove}>
+                Aprobar lote
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={bulkBusy}
+                onClick={bulkReject}
+              >
+                Rechazar lote
+              </Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}>
+                Limpiar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={selectVisiblePending}>
+              Seleccionar pendientes visibles
+            </Button>
+            {statusFilter !== 'pending' && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => setStatusFilter('pending')}
+              >
+                Ver solo pendientes
+              </Button>
+            )}
+          </div>
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
@@ -175,6 +327,7 @@ export default function AdminProveedoresPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
+                aria-label="Buscar proveedores"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -225,6 +378,13 @@ export default function AdminProveedoresPage() {
                 <CardContent className="p-4">
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex items-center gap-4 flex-1">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-border accent-gold"
+                        checked={selected.has(provider.id)}
+                        onChange={() => toggleSelect(provider.id)}
+                        aria-label={`Seleccionar ${provider.display_name}`}
+                      />
                       <Avatar className="h-16 w-16">
                         <AvatarImage src={getProviderImage(provider)} />
                         <AvatarFallback>
@@ -243,6 +403,21 @@ export default function AdminProveedoresPage() {
                           <Badge className={statusColors[provider.status]}>
                             {statusLabels[provider.status]}
                           </Badge>
+                          {(flagsById.get(provider.id) || [])
+                            .filter((f) => f.severity !== 'info')
+                            .slice(0, 2)
+                            .map((f) => (
+                              <Badge
+                                key={f.code}
+                                variant={f.severity === 'high' ? 'destructive' : 'warning'}
+                                title={f.message}
+                              >
+                                {f.severity === 'high' ? '⚠' : '·'} {f.code}
+                              </Badge>
+                            ))}
+                          {moderationRiskScore(flagsById.get(provider.id) || []) >= 5 && (
+                            <Badge variant="destructive">Revisar primero</Badge>
+                          )}
                         </div>
                         <p className="text-sm text-foreground-muted">{provider.email}</p>
                         <div className="flex items-center gap-4 mt-1 text-sm text-foreground-secondary">
@@ -519,5 +694,21 @@ export default function AdminProveedoresPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function AdminProveedoresPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-24 rounded-xl bg-muted animate-pulse" />
+          ))}
+        </div>
+      }
+    >
+      <AdminProveedoresInner />
+    </Suspense>
   )
 }

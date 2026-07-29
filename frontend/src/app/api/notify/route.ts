@@ -4,6 +4,7 @@ import {
   buildRejectionEmail,
   sendTransactionalEmail,
 } from '@/lib/email'
+import { clientIpFromRequest, rateLimit } from '@/lib/rateLimit'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -16,6 +17,18 @@ const schema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const ip = clientIpFromRequest(req)
+  const rl = rateLimit(`notify:${ip}`, 20, 60_000)
+  if (!rl.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(rl.retryAfterSec) },
+      }
+    )
+  }
+
   let json: unknown
   try {
     json = await req.json()

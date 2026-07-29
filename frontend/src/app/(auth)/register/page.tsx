@@ -146,22 +146,40 @@ function RegisterForm() {
               </p>
             )}
             {formData.isProvider && (
-              <div className="p-4 rounded-xl bg-warning/10 text-left text-sm text-foreground-secondary">
+              <div className="p-4 rounded-xl bg-warning/10 text-left text-sm text-foreground-secondary space-y-2">
                 <p className="font-medium text-warning flex items-center gap-2">
                   <Clock className="h-4 w-4 shrink-0" />
-                  Perfil pendiente de aprobación
+                  Siguiente: publica tu aviso
                 </p>
-                <p className="mt-2">
-                  Cuando confirmes tu correo podrás acceder al dashboard y completar tu perfil. Un
-                  administrador revisará tu solicitud antes de publicarla en el sitio.
-                </p>
+                <ol className="list-decimal list-inside space-y-1 mt-2">
+                  <li>Confirma tu correo (si te lo pedimos)</li>
+                  <li>Inicia sesión y abre el dashboard</li>
+                  <li>
+                    Completa el wizard <strong>Publicar aviso</strong> (fotos + precio)
+                  </li>
+                  <li>Espera la revisión humana (estado PENDING)</li>
+                </ol>
               </div>
             )}
-            <Link href="/login">
-              <Button className="w-full" size="lg">
-                Ir a iniciar sesión
-              </Button>
-            </Link>
+            {!formData.isProvider && (
+              <p className="text-sm text-foreground-muted">
+                Explora perfiles, guarda favoritos y deja reseñas cuando inicies sesión.
+              </p>
+            )}
+            <div className="flex flex-col gap-2">
+              <Link href="/login">
+                <Button className="w-full" size="lg">
+                  Ir a iniciar sesión
+                </Button>
+              </Link>
+              {formData.isProvider && (
+                <Link href="/dashboard/avisos/nuevo">
+                  <Button variant="outline" className="w-full">
+                    Ir al wizard de aviso
+                  </Button>
+                </Link>
+              )}
+            </div>
           </CardContent>
         </Card>
       </motion.div>

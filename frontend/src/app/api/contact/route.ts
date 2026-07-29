@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { clientIpFromRequest, rateLimit } from '@/lib/rateLimit'
 import { z } from 'zod'
 
 const contactSchema = z.object({
@@ -10,6 +11,15 @@ const contactSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const ip = clientIpFromRequest(request)
+    const rl = rateLimit(`contact:${ip}`, 10, 60_000)
+    if (!rl.ok) {
+      return NextResponse.json(
+        { ok: false, error: 'Demasiadas solicitudes. Espera un momento.' },
+        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } }
+      )
+    }
+
     const body = await request.json()
     const data = contactSchema.parse(body)
 

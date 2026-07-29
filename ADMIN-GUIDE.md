@@ -1,88 +1,93 @@
 # ADMIN-GUIDE — MiPage (un solo administrador)
 
-Guía ultra simple para **Nicolás**. Sin código. ~10 minutos al día.
+Guía ultra simple. **Sin código.** Objetivo: **≤ 8 minutos al día**.  
+Detalle de automatización: **`ADMIN-AUTOMATION.md`**.
 
 ---
 
 ## Acceso
 
-1. Entra a https://mi-page-lake.vercel.app/login  
-2. Usa la cuenta con rol `admin` en Supabase (`profiles.role = 'admin'`)  
-3. Ve a **Admin** → `/admin`
+1. https://mi-page-lake.vercel.app/login (o tu dominio)  
+2. Cuenta con `profiles.role = 'admin'`  
+3. **Admin** → `/admin`
 
-Si no puedes entrar: Supabase Dashboard → Table Editor → `profiles` → pon `role = admin` en tu usuario.
-
----
-
-## Checklist diario (≤ 10 minutos)
-
-| # | Tarea | Dónde | Hecho |
-|---|--------|--------|-------|
-| 1 | Abrir **Admin → Moderación** y filtrar **Pendiente** | `/admin/proveedores` | ☐ |
-| 2 | En cada pendiente: **Fotos** (preview grande) | Modal | ☐ |
-| 3 | **Aprobar** o **Rechazar** (motivo predefinido o custom) | Botones | ☐ |
-| 4 | Revisar **reportes** nuevos | Admin → Reportes | ☐ |
-| 5 | Mirar **stats** (pendientes, aprobados) | Admin home | ☐ |
-| 6 | (Semanal) textos / banners | Admin → Configuración | ☐ |
-| 7 | (Semanal) health + backups | `/api/health` + Supabase PITR | ☐ |
+Si no entras: Supabase → Table Editor → `profiles` → `role = admin`.
 
 ---
 
-## Cómo moderar un aviso
+## Checklist diario (≤ 8 minutos)
 
-1. **Admin → Moderación**  
-2. Filtra por estado **Pendiente**  
-3. Clic **Fotos** → revisa imágenes (calidad, contenido sensible, rostro, texto)  
-4. Si OK → **Aprobar** (queda público en Explorar)  
-5. Si no → **Rechazar** → elige un **motivo predefinido** o escribe uno custom  
-   - El publisher recibe email si `RESEND_API_KEY` está en Vercel  
-   - Si no hay Resend, el rechazo igual se guarda en DB (`rejection_reason`) 
+| Min | Tarea | Dónde | ☐ |
+|-----|--------|--------|---|
+| 0:00 | Leer **Cola del día** | `/admin` | |
+| 0:30 | Ir a pendientes | Botón “Revisar N pendientes” o `/admin/proveedores?status=pending` | |
+| 1:00 | Priorizar badges **Revisar primero** / flags rojos | Lista | |
+| 2:00 | **Fotos** en cada caso dudoso | Preview grande | |
+| 4:00 | **Aprobar** (individual o **lote**) | Botones / bulk bar | |
+| 6:00 | **Rechazar** con motivo (chip o custom) | Modal / lote | |
+| 7:00 | Reportes si el banner lo indica | `/admin/reportes` | |
+| 7:30 | (Opc.) health | `/api/health` | |
 
-### Criterios sugeridos de rechazo
+### Semanal (~10 min extra)
 
-- Fotos borrosas / stock sin persona real  
-- Contenido sexual explícito no permitido por política del sitio  
-- Datos de contacto spam en la bio  
-- Categoría incorrecta o ciudad inventada  
-- Menores de edad (rechazo inmediato + suspensión)
-
----
-
-## Cómo agregar campos metadata
-
-1. **Admin → Metadata**  
-2. Completa:
-   - **Key:** `snake_case` (ej. `years_experience`)  
-   - **Label:** texto visible  
-   - **Tipo:** text / number / select / …  
-   - **Aplica a:** masajes / modelaje / todas  
-3. **Crear campo**  
-4. El wizard de publicación (`/dashboard/avisos/nuevo`) usará defaults locales si la tabla no existe; con migration `006` lee de Supabase.
-
-Si falla el insert: ejecuta `frontend/supabase/migrations/006_listings_metadata_moderation.sql` en el SQL Editor de Supabase.
+- Site settings / textos → Configuración  
+- Metadata fields nuevos → Metadata  
+- Featured / destacados → menú ⋮ en moderación  
+- `npm run backup-check` o Dashboard Supabase backups  
 
 ---
 
-## Destacar un perfil (featured)
+## Moderación (one-click + lote)
 
-- En Moderación → menú ⋮ → **Destacar**  
-- Opcional pagos: endpoint `/api/payments/featured` (requiere `MERCADOPAGO_ACCESS_TOKEN`)
+1. Filtro **Pendiente**  
+2. Revisa flags automáticos (sugerencias, no decisiones):  
+   - `NO_PHOTOS`, `BIO_SPAM` = prioridad alta  
+   - `FEW_PHOTOS`, `BIO_THIN` = aviso  
+3. **Fotos** → calidad, persona real, política  
+4. Aprobar o rechazar  
+5. **Lote:** “Seleccionar pendientes visibles” → Aprobar/Rechazar lote  
+
+### Motivos de rechazo sugeridos
+
+- Fotos borrosas / stock  
+- Contenido no permitido  
+- Spam / contacto engañoso  
+- Categoría o ciudad incorrecta  
+- Perfil incompleto  
+- Menores → rechazo inmediato + suspensión  
+
+Emails: si `RESEND_API_KEY` está en Vercel, el publisher recibe aviso. Si no, el rechazo igual se guarda.
 
 ---
 
-## Métricas en vivo
+## Metadata
 
-- Admin home: total usuarios, proveedores aprobados, reportes pendientes  
-- Supabase Dashboard → Table Editor / Auth → users para detalle  
-- Health: `https://TU_DOMINIO/api/health`
+1. Admin → **Metadata**  
+2. Key `snake_case`, label, tipo, aplica a categoría  
+3. Migration `006` debe estar aplicada en Supabase  
 
 ---
 
-## Solicitudes de borrado de datos (Ley 19.628)
+## Destacar (featured)
 
-1. Usuario autenticado hace POST a `/api/account/delete-request`  
-2. Aparece en tabla `data_deletion_requests` (Supabase)  
-3. Admin procesa: anonimiza/borra perfil + storage y marca `completed`
+Moderación → ⋮ → **Destacar**  
+Opcional: pago Mercado Pago (`/api/payments/featured`).
+
+---
+
+## Métricas
+
+- Admin home: usuarios, proveedores activos, reportes  
+- Cola del día: resumen en lenguaje natural  
+- Health: `GET /api/health`  
+
+---
+
+## Borrado de datos (Ley 19.628)
+
+1. Usuario autenticado → `POST /api/account/delete-request`  
+2. Tabla `data_deletion_requests`  
+3. Admin procesa en Supabase / proceso  
 
 ---
 
@@ -90,25 +95,29 @@ Si falla el insert: ejecuta `frontend/supabase/migrations/006_listings_metadata_
 
 | Síntoma | Qué mirar |
 |---------|-----------|
-| Admin vacío | Env Supabase en Vercel; rol admin |
-| Upload falla | Bucket `gallery` + policies 004 |
-| Nadie ve perfiles nuevos | Status sigue `pending` — falta aprobar |
-| Emails no salen | `RESEND_API_KEY` + `EMAIL_FROM` |
-| Health 503 | Faltan `NEXT_PUBLIC_SUPABASE_*` |
+| Admin vacío | Env Supabase + rol admin |
+| Upload falla | Bucket `gallery` + migration 004 |
+| No aparecen perfiles nuevos | Siguen `pending` |
+| Emails no salen | `RESEND_API_KEY` |
+| Health 503 | Faltan `NEXT_PUBLIC_SUPABASE_*` reales en Production |
 
 ---
 
 ## No hagas esto
 
-- No restaures `archive/2026-legacy/backend` en producción  
+- No restaures `archive/2026-legacy/backend` en prod  
 - No subas `.env` a git  
-- No des `service_role` al frontend  
-- No apruebes sin mirar las fotos  
+- No expongas `service_role` al browser  
+- No apruebes sin mirar fotos en casos con flag **high**  
 
 ---
 
-## Contacto técnico
+## Docs relacionadas
 
-Repo: `datanalytics86/MiPage`  
-ADR: `ARCHITECTURE-DECISION.md`  
-Auditoría: `AUDIT-REPORT.md`
+| Archivo | Uso |
+|---------|-----|
+| `ADMIN-AUTOMATION.md` | Automatizaciones y bulk |
+| `QA-REPORT.md` | Calidad y residuales |
+| `UX-OPPORTUNITIES.md` | Mejoras de fricción |
+| `ARCHITECTURE-DECISION.md` | Supabase-first |
+| `PROGRESS.md` | Estado del proyecto |

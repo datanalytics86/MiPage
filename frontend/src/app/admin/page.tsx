@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useAdminStats, useAdminProviders, useAdminReports } from '@/hooks/useAdmin'
+import { summarizeAdminDay } from '@/lib/moderation'
 
 function buildStats(data: { totalUsers: number; activeProviders: number; pendingReports: number }) {
   return [
@@ -79,9 +80,39 @@ export default function AdminDashboardPage() {
   const recentReports = reports.slice(0, 5)
   const pendingProviders = providers.filter((p) => p.status === 'pending').length
   const pendingReports = reports.filter((r) => r.status === 'pending').length
+  const daySummary = summarizeAdminDay({
+    pendingProviders,
+    pendingReports,
+  })
+  const needsAttention = pendingProviders > 0 || pendingReports > 0
 
   return (
     <div className="space-y-6">
+      {needsAttention && (
+        <Card className="border-warning/40 bg-warning/5">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="font-medium text-foreground">Cola del día</p>
+              <p className="text-sm text-foreground-secondary mt-0.5">{daySummary}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {pendingProviders > 0 && (
+                <Button size="sm" asChild>
+                  <Link href="/admin/proveedores?status=pending">
+                    Revisar {pendingProviders} pendiente{pendingProviders === 1 ? '' : 's'}
+                  </Link>
+                </Button>
+              )}
+              {pendingReports > 0 && (
+                <Button size="sm" variant="outline" asChild>
+                  <Link href="/admin/reportes">Ver reportes</Link>
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((stat, index) => (
           <motion.div

@@ -348,11 +348,15 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
         ) : (
           <EmptyState
             icon={Search}
-            title="No se encontraron resultados"
-            description="Intenta ajustar los filtros o buscar con otros términos. La fotografía es el centro de MiPage: prueba otra ciudad o categoría."
+            title="Nadie por aquí todavía"
+            description="Prueba otra ciudad o categoría. Si eres profesional, publica tu aviso y aparece aquí tras la moderación."
             actionLabel="Limpiar filtros"
             onAction={clearFilters}
-          />
+          >
+            <p className="text-sm text-foreground-muted mb-4">
+              Tip: en Santiago y Viña del Mar suele haber más perfiles de modelaje y masajes.
+            </p>
+          </EmptyState>
         )}
 
         {hasMore && (
