@@ -59,10 +59,10 @@
 
   body {
     @apply bg-background text-foreground font-body antialiased;
+    /* No background-attachment:fixed — hurts mobile LCP/scroll perf */
     background-image:
       radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 169, 98, 0.08), transparent),
       radial-gradient(ellipse 60% 40% at 100% 0%, rgba(212, 165, 165, 0.04), transparent);
-    background-attachment: fixed;
     min-height: 100dvh;
   }
 

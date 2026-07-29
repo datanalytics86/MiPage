@@ -9,7 +9,9 @@ const display = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-display',
-  display: 'swap',
+  // optional: avoid font-block delaying LCP on mobile throttling
+  display: 'optional',
+  preload: true,
 })
 
 const body = DM_Sans({
@@ -17,6 +19,7 @@ const body = DM_Sans({
   weight: ['400', '500', '700'],
   variable: '--font-body',
   display: 'swap',
+  preload: true,
 })
 
 export const viewport: Viewport = {
