@@ -78,14 +78,21 @@ export default function NuevoAvisoWizardPage() {
   )
 
   if (authLoading) {
-    return <p className="text-foreground-muted">Cargando…</p>
+    return (
+      <div className="flex items-center justify-center py-20 text-foreground-muted">
+        Cargando wizard…
+      </div>
+    )
   }
 
   if (!hasSupabaseEnv()) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          Configura Supabase para publicar avisos.
+      <Card className="border-warning/30">
+        <CardContent className="p-8 text-center space-y-2">
+          <p className="font-display text-xl font-semibold">Supabase no configurado</p>
+          <p className="text-foreground-secondary text-sm">
+            Configura las variables de entorno para publicar avisos con fotos reales.
+          </p>
         </CardContent>
       </Card>
     )

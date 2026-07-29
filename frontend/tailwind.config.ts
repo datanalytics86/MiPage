@@ -10,19 +10,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Fondos
         background: {
-          DEFAULT: '#FAF7F2',
-          secondary: '#FFFFFF',
-          dark: '#1A1A1A',
+          DEFAULT: '#0A0A0B',
+          secondary: '#141416',
+          elevated: '#1C1C20',
+          dark: '#050506',
         },
-        // Textos
         foreground: {
-          DEFAULT: '#1A1A1A',
-          secondary: '#525252',
-          muted: '#A3A3A3',
+          DEFAULT: '#F5F0E8',
+          secondary: '#A8A29E',
+          muted: '#6B6560',
         },
-        // Acentos
         gold: {
           DEFAULT: '#C9A962',
           light: '#E5D4A1',
@@ -36,52 +34,63 @@ const config: Config = {
           DEFAULT: '#9CAF88',
           light: '#B8C9A8',
         },
-        // Estados
-        success: '#4A7C59',
+        success: '#6B9B7A',
         warning: '#D4A051',
-        error: '#C45C5C',
-        // Componentes UI
-        border: '#E5E5E5',
-        input: '#E5E5E5',
+        error: '#D07070',
+        border: 'rgba(255, 255, 255, 0.08)',
+        input: 'rgba(255, 255, 255, 0.1)',
         ring: '#C9A962',
         primary: {
           DEFAULT: '#C9A962',
-          foreground: '#FFFFFF',
+          foreground: '#0A0A0B',
         },
         secondary: {
-          DEFAULT: '#FAF7F2',
-          foreground: '#1A1A1A',
+          DEFAULT: '#1C1C20',
+          foreground: '#F5F0E8',
         },
         destructive: {
-          DEFAULT: '#C45C5C',
+          DEFAULT: '#D07070',
           foreground: '#FFFFFF',
         },
         muted: {
-          DEFAULT: '#F5F5F5',
-          foreground: '#737373',
+          DEFAULT: '#1C1C20',
+          foreground: '#A8A29E',
         },
         accent: {
-          DEFAULT: '#FAF7F2',
-          foreground: '#1A1A1A',
+          DEFAULT: 'rgba(201, 169, 98, 0.12)',
+          foreground: '#E5D4A1',
         },
         card: {
-          DEFAULT: '#FFFFFF',
-          foreground: '#1A1A1A',
+          DEFAULT: '#141416',
+          foreground: '#F5F0E8',
+        },
+        popover: {
+          DEFAULT: '#1C1C20',
+          foreground: '#F5F0E8',
         },
       },
       fontFamily: {
-        display: ['Cormorant Garamond', 'serif'],
-        body: ['DM Sans', 'sans-serif'],
+        display: ['Cormorant Garamond', 'Georgia', 'serif'],
+        body: ['DM Sans', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: '0.75rem',
         md: '0.5rem',
-        sm: '0.25rem',
+        sm: '0.375rem',
       },
       boxShadow: {
-        'soft': '0 2px 8px rgba(0,0,0,0.06)',
-        'soft-lg': '0 4px 16px rgba(0,0,0,0.08)',
-        'gold': '0 4px 16px rgba(201, 169, 98, 0.2)',
+        soft: '0 2px 12px rgba(0,0,0,0.45)',
+        'soft-lg': '0 8px 32px rgba(0,0,0,0.55)',
+        gold: '0 4px 24px rgba(201, 169, 98, 0.25)',
+        glow: '0 0 40px rgba(201, 169, 98, 0.12)',
+      },
+      transitionDuration: {
+        fast: '150ms',
+        base: '250ms',
+        slow: '400ms',
+      },
+      transitionTimingFunction: {
+        premium: 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
       keyframes: {
         'fade-in': {
@@ -92,10 +101,20 @@ const config: Config = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
         },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        'scale-in': {
+          '0%': { opacity: '0', transform: 'scale(0.96)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
       },
       animation: {
-        'fade-in': 'fade-in 0.3s ease-out',
-        'slide-in': 'slide-in 0.3s ease-out',
+        'fade-in': 'fade-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'slide-in': 'slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        shimmer: 'shimmer 1.6s ease-in-out infinite',
+        'scale-in': 'scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       },
     },
   },

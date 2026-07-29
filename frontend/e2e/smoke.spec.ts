@@ -25,6 +25,16 @@ test.describe('public smoke', () => {
     await expect(page.locator('body')).toBeVisible()
   })
 
+  test('dark theme root class', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.locator('html')).toHaveClass(/dark/)
+  })
+
+  test('favoritos empty or login gate', async ({ page }) => {
+    await page.goto('/favoritos')
+    await expect(page.getByText(/favoritos|sesión|iniciar/i).first()).toBeVisible()
+  })
+
   test('health endpoint', async ({ request }) => {
     const res = await request.get('/api/health')
     // 200 when supabase env present, 503 degraded otherwise

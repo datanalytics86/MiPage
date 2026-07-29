@@ -72,16 +72,16 @@ export default function HomePage() {
   return (
     <div>
       <section className="relative min-h-[620px] lg:min-h-[720px] flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-gold/8" />
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-gold/5" />
         <div
-          className="absolute inset-0 opacity-[0.35]"
+          className="absolute inset-0 opacity-40"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 20% 30%, rgba(201,169,98,0.15) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(212,165,165,0.12) 0%, transparent 50%)',
+              'radial-gradient(circle at 20% 30%, rgba(201,169,98,0.12) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(212,165,165,0.08) 0%, transparent 50%)',
           }}
         />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gold/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-rose/20 rounded-full blur-3xl" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gold/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-rose/10 rounded-full blur-3xl" />
 
         <div className="container-luxury relative z-10 py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">

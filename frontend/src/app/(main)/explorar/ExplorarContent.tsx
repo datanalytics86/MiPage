@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ProviderCard } from '@/components/providers/ProviderCard'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ProviderGridSkeleton } from '@/components/ui/Skeleton'
 import { useProviders } from '@/hooks/useProviders'
 import { mockProviders } from '@/lib/mockProviders'
 import { filterCities, sortOptions } from '@/lib/filters'
@@ -328,7 +330,9 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
       </div>
 
       <div className="container-luxury py-8">
-        {visibleProviders.length > 0 ? (
+        {isLoading && !useMock && visibleProviders.length === 0 ? (
+          <ProviderGridSkeleton count={8} />
+        ) : visibleProviders.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {visibleProviders.map((provider, index) => (
               <motion.div
@@ -337,25 +341,18 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
               >
-                <ProviderCard provider={provider} />
+                <ProviderCard provider={provider} priority={index < 4} />
               </motion.div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-              <Search className="h-8 w-8 text-foreground-muted" />
-            </div>
-            <h3 className="font-display text-xl font-semibold text-foreground mb-2">
-              No se encontraron resultados
-            </h3>
-            <p className="text-foreground-secondary mb-4">
-              Intenta ajustar los filtros o buscar con otros términos
-            </p>
-            <Button variant="outline" onClick={clearFilters}>
-              Limpiar filtros
-            </Button>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No se encontraron resultados"
+            description="Intenta ajustar los filtros o buscar con otros términos. La fotografía es el centro de MiPage: prueba otra ciudad o categoría."
+            actionLabel="Limpiar filtros"
+            onAction={clearFilters}
+          />
         )}
 
         {hasMore && (

@@ -4,7 +4,7 @@ Marketplace web de servicios de **modelaje** y **masajes** (Chile), centrado en 
 
 **Live:** https://mi-page-lake.vercel.app  
 
-> **Estado honesto (2026-07):** Supabase-first consolidado. Flujo publish → moderate → public implementado en código. **No** es “100% completo”: faltan chat, app móvil, i18n, geo avanzada, y dependemos de que migration `006` + env de producción estén aplicados. Ver `AUDIT-REPORT.md` y `ARCHITECTURE-DECISION.md`.
+> **Estado honesto (2026-07-29):** Supabase-first consolidado + **design system dark premium** (`DESIGN-SYSTEM.md`). Flujo publish → moderate → public en código. **No** es “100% completo”: faltan chat, app móvil, i18n, geo avanzada; Lighthouse ≥ 92 no medido en live; migration `006` + env de prod deben estar aplicados. Ver `AUDIT-REPORT.md`.
 
 ---
 
@@ -116,7 +116,8 @@ npm run backup-check  # checklist backups PITR
 | Archivo | Contenido |
 |---------|-----------|
 | `ARCHITECTURE-DECISION.md` | Por qué Supabase-first |
-| `AUDIT-REPORT.md` | Auditoría forense baseline |
+| `AUDIT-REPORT.md` | Auditoría forense (re-audit 2026-07-29) |
+| `DESIGN-SYSTEM.md` | Tokens dark premium + componentes foto-first |
 | `ADMIN-GUIDE.md` | Operación diaria (10 min) |
 | `archive/2026-legacy/` | Docs y backend históricos |
 

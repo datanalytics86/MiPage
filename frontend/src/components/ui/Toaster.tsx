@@ -14,17 +14,20 @@ const icons = {
 }
 
 const colors = {
-  success: 'bg-success/10 border-success/20 text-success',
-  error: 'bg-error/10 border-error/20 text-error',
-  warning: 'bg-warning/10 border-warning/20 text-warning',
-  info: 'bg-blue-500/10 border-blue-500/20 text-blue-500',
+  success: 'border-success/30 text-success',
+  error: 'border-error/30 text-error',
+  warning: 'border-warning/30 text-warning',
+  info: 'border-gold/30 text-gold',
 }
 
 export function Toaster() {
   const { toasts, removeToast } = useUIStore()
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
+    <div
+      className="fixed bottom-4 right-4 z-[90] flex flex-col gap-2 max-w-sm w-[calc(100%-2rem)] sm:w-full pointer-events-none safe-pb"
+      aria-live="polite"
+    >
       <AnimatePresence>
         {toasts.map((toast) => {
           const Icon = icons[toast.type]
@@ -32,16 +35,17 @@ export function Toaster() {
           return (
             <motion.div
               key={toast.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -12, scale: 0.96 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
               className={cn(
-                'flex items-start gap-3 p-4 rounded-xl border shadow-lg bg-background',
+                'pointer-events-auto flex items-start gap-3 p-4 rounded-2xl border shadow-soft-lg',
+                'glass-strong',
                 colors[toast.type]
               )}
             >
-              <Icon className="h-5 w-5 shrink-0 mt-0.5" />
+              <Icon className="h-5 w-5 shrink-0 mt-0.5" aria-hidden />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground">{toast.title}</p>
                 {toast.message && (
@@ -51,8 +55,10 @@ export function Toaster() {
                 )}
               </div>
               <button
+                type="button"
                 onClick={() => removeToast(toast.id)}
-                className="shrink-0 p-1 rounded-full hover:bg-muted transition-colors"
+                className="shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                aria-label="Cerrar notificación"
               >
                 <X className="h-4 w-4 text-foreground-muted" />
               </button>

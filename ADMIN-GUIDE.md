@@ -34,9 +34,9 @@ Si no puedes entrar: Supabase Dashboard → Table Editor → `profiles` → pon 
 2. Filtra por estado **Pendiente**  
 3. Clic **Fotos** → revisa imágenes (calidad, contenido sensible, rostro, texto)  
 4. Si OK → **Aprobar** (queda público en Explorar)  
-5. Si no → **Rechazar** → escribe motivo claro  
+5. Si no → **Rechazar** → elige un **motivo predefinido** o escribe uno custom  
    - El publisher recibe email si `RESEND_API_KEY` está en Vercel  
-   - Si no hay Resend, el rechazo igual se guarda en DB  
+   - Si no hay Resend, el rechazo igual se guarda en DB (`rejection_reason`) 
 
 ### Criterios sugeridos de rechazo
 

@@ -57,6 +57,14 @@ const statusLabels: Record<string, string> = {
   suspended: 'Suspendido',
 }
 
+const REJECT_REASONS = [
+  'Fotos de baja calidad o borrosas',
+  'Contenido no permitido por la política del sitio',
+  'Datos de contacto spam o engañosos',
+  'Categoría o ubicación incorrecta',
+  'Perfil incompleto o bio insuficiente',
+] as const
+
 export default function AdminProveedoresPage() {
   const toast = useToast()
   const { data: providers = [], isLoading, error } = useAdminProviders()
@@ -120,8 +128,11 @@ export default function AdminProveedoresPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-error">Error al cargar proveedores. Verifica la conexión a Supabase.</p>
+      <div className="py-8">
+        <p className="text-center text-error mb-2">Error al cargar proveedores</p>
+        <p className="text-center text-foreground-secondary text-sm">
+          Verifica la conexión a Supabase y que tu rol sea admin.
+        </p>
       </div>
     )
   }
@@ -395,8 +406,8 @@ export default function AdminProveedoresPage() {
       )}
 
       {preview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto border-gold/20 shadow-soft-lg">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -409,7 +420,7 @@ export default function AdminProveedoresPage() {
                   Cerrar
                 </Button>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {(preview.photos?.length
                   ? preview.photos
                   : preview.cover_photo
@@ -420,8 +431,8 @@ export default function AdminProveedoresPage() {
                   <img
                     key={url}
                     src={url}
-                    alt=""
-                    className="rounded-lg object-cover aspect-square w-full border"
+                    alt={`Foto de ${preview.display_name}`}
+                    className="rounded-xl object-cover aspect-portrait w-full border border-white/10 shadow-soft"
                   />
                 ))}
                 {!preview.photos?.length && !preview.cover_photo && (
@@ -472,10 +483,27 @@ export default function AdminProveedoresPage() {
               <p className="text-sm text-foreground-muted">
                 El publisher recibirá un email/notificación con el motivo (si Resend está configurado).
               </p>
+              <div className="flex flex-wrap gap-2">
+                {REJECT_REASONS.map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => setRejectReason(reason)}
+                    className={cn(
+                      'text-xs px-3 py-1.5 rounded-full border transition-colors',
+                      rejectReason === reason
+                        ? 'border-gold bg-gold/15 text-gold'
+                        : 'border-border text-foreground-secondary hover:border-gold/40'
+                    )}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
               <Textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Motivo del rechazo (fotos, bio, política…)"
+                placeholder="Motivo del rechazo (elige uno o escribe personalizado…)"
                 rows={4}
               />
               <div className="flex justify-end gap-2">
