@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { Star, Heart, MapPin, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatPrice } from '@/lib/utils'
+import { DARK_BLUR_DATA_URL_CLIENT } from '@/lib/image'
 import { useFavorites } from '@/hooks/useFavorites'
 import type { ProviderCardData } from '@/types'
 
@@ -51,6 +52,8 @@ export function ProviderCard({ provider, className, priority }: ProviderCardProp
             className="object-cover transition-transform duration-500 ease-premium group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             priority={priority}
+            placeholder="blur"
+            blurDataURL={DARK_BLUR_DATA_URL_CLIENT}
           />
 
           <div className="scrim-bottom" />

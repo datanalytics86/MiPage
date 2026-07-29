@@ -23,7 +23,7 @@ export function Footer() {
 
           {/* Links */}
           <div>
-            <h4 className="font-display text-lg font-semibold mb-4">Explorar</h4>
+            <h2 className="font-display text-lg font-semibold mb-4">Explorar</h2>
             <ul className="space-y-2">
               <li>
                 <Link href="/explorar/masajes" className="text-white/60 hover:text-gold transition-colors text-sm">
@@ -45,7 +45,7 @@ export function Footer() {
 
           {/* Para Profesionales */}
           <div>
-            <h4 className="font-display text-lg font-semibold mb-4">Profesionales</h4>
+            <h2 className="font-display text-lg font-semibold mb-4">Profesionales</h2>
             <ul className="space-y-2">
               <li>
                 <Link href="/register?type=provider" className="text-white/60 hover:text-gold transition-colors text-sm">
@@ -67,7 +67,7 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="font-display text-lg font-semibold mb-4">Legal</h4>
+            <h2 className="font-display text-lg font-semibold mb-4">Legal</h2>
             <ul className="space-y-2">
               <li>
                 <Link href="/terminos" className="text-white/60 hover:text-gold transition-colors text-sm">
@@ -90,7 +90,7 @@ export function Footer() {
 
         {/* Bottom */}
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-white/40 text-sm">
+          <p className="text-white/70 text-sm">
             © {new Date().getFullYear()} {siteConfig.name}. Todos los derechos reservados.
           </p>
           <div className="flex items-center space-x-4">
@@ -98,16 +98,17 @@ export function Footer() {
               href={siteConfig.social.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/40 hover:text-gold transition-colors"
-              aria-label="Instagram"
+              className="text-white/70 hover:text-gold transition-colors"
+              aria-label="Instagram de MiPage"
             >
-              <Instagram className="h-5 w-5" />
+              <Instagram className="h-5 w-5" aria-hidden />
             </a>
             <a
               href={`mailto:${siteConfig.emails.contact}`}
-              className="text-white/40 hover:text-gold transition-colors"
+              className="text-white/70 hover:text-gold transition-colors"
+              aria-label={`Email ${siteConfig.emails.contact}`}
             >
-              <Mail className="h-5 w-5" />
+              <Mail className="h-5 w-5" aria-hidden />
             </a>
           </div>
         </div>

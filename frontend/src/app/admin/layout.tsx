@@ -64,7 +64,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -149,7 +149,7 @@ export default function AdminLayout({
                   Admin User
                 </p>
                 <p className="text-xs text-foreground-muted truncate">
-                  admin@luxeservices.com
+                  admin@mipage.cl
                 </p>
               </div>
             </div>

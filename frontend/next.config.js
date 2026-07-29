@@ -17,9 +17,9 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
-      "font-src 'self' data: https://fonts.gstatic.com",
+      "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.resend.com https://api.mercadopago.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",
@@ -29,7 +29,16 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
+  poweredByHeader: false,
+  compress: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'framer-motion', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
+  },
   images: {
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60 * 60 * 24 * 7,
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: '*.supabase.co' },

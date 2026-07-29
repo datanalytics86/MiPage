@@ -1,19 +1,32 @@
-'use client'
-
-import React from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { Search, ArrowRight, Sparkles, Shield, MessageCircle, Star, Users, MapPin } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import {
+  Search,
+  ArrowRight,
+  Sparkles,
+  Shield,
+  MessageCircle,
+  Star,
+  Users,
+  MapPin,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ProviderCard } from '@/components/providers/ProviderCard'
-import { useFeaturedProviders } from '@/hooks/useProviders'
-import { useSiteSettings } from '@/hooks/useSiteSettings'
-import { featuredProviders as mockFeatured } from '@/lib/mockProviders'
-import { toProviderCardData } from '@/lib/providers'
-import { hasSupabaseEnv } from '@/lib/supabase/env'
+import { HomeSearch } from '@/components/home/HomeSearch'
 import { siteConfig } from '@/lib/site'
+
+const FeaturedProviders = dynamic(
+  () =>
+    import('@/components/home/FeaturedProviders').then((m) => m.FeaturedProviders),
+  {
+    loading: () => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" aria-hidden>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="aspect-portrait rounded-2xl bg-muted animate-pulse" />
+        ))}
+      </div>
+    ),
+  }
+)
 
 const categories = [
   { name: 'Masajes', slug: 'masajes', icon: '💆', color: 'bg-rose/20 text-rose hover:bg-rose/30' },
@@ -45,30 +58,8 @@ const trustBadges = [
   { icon: MapPin, label: 'Cobertura nacional' },
 ]
 
+/** Server Component home — hero HTML is in the first HTML byte stream (LCP). */
 export default function HomePage() {
-  const router = useRouter()
-  const [searchQuery, setSearchQuery] = React.useState('')
-  const { data: featuredDb = [] } = useFeaturedProviders(4)
-  const { data: settings } = useSiteSettings()
-
-  const displayProviders = hasSupabaseEnv() && featuredDb.length > 0
-    ? featuredDb.map(toProviderCardData)
-    : mockFeatured
-
-  const displayStats = settings?.stats
-    ? [
-        { value: settings.stats.professionals, label: 'Profesionales verificados' },
-        { value: settings.stats.reviews, label: 'Reseñas publicadas' },
-        { value: settings.stats.rating, label: 'Calificación promedio' },
-        { value: settings.stats.cities, label: 'Ciudades en Chile' },
-      ]
-    : siteConfig.stats
-
-  const handleSearch = () => {
-    const q = searchQuery.trim()
-    router.push(q ? `/explorar?q=${encodeURIComponent(q)}` : '/explorar')
-  }
-
   return (
     <div>
       <section className="relative min-h-[620px] lg:min-h-[720px] flex items-center overflow-hidden">
@@ -85,101 +76,48 @@ export default function HomePage() {
 
         <div className="container-luxury relative z-10 py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-2 rounded-full text-sm font-medium mb-6 border border-gold/20"
-            >
-              <Shield className="h-4 w-4" />
+            <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-2 rounded-full text-sm font-medium mb-6 border border-gold/20">
+              <Shield className="h-4 w-4" aria-hidden />
               {siteConfig.name} — marketplace verificado en Chile
-            </motion.div>
+            </div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6"
-            >
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6">
               Descubre servicios{' '}
               <span className="text-gold">profesionales</span> de confianza
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lg text-foreground-secondary mb-8 max-w-2xl mx-auto"
-            >
+            <p className="text-lg text-foreground-secondary mb-8 max-w-2xl mx-auto">
               {siteConfig.description}
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="max-w-xl mx-auto mb-6"
-            >
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  handleSearch()
-                }}
-                className="relative"
-              >
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground-muted" />
-                <Input
-                  type="search"
-                  placeholder="Buscar por nombre, ciudad o servicio..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 pr-28 h-14 text-base rounded-2xl shadow-soft-lg border-gold/20 focus-visible:ring-gold/40"
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl"
-                >
-                  Buscar
-                </Button>
-              </form>
-            </motion.div>
+            <HomeSearch />
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.35 }}
-              className="flex flex-wrap justify-center gap-3 mb-10"
-            >
+            <div className="flex flex-wrap justify-center gap-3 mb-10">
               {categories.map((category) => (
-                <Link key={category.slug} href={`/explorar/${category.slug}`}>
-                  <button
-                    type="button"
-                    className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${category.color}`}
-                  >
-                    <span className="text-xl">{category.icon}</span>
-                    {category.name}
-                  </button>
+                <Link
+                  key={category.slug}
+                  href={`/explorar/${category.slug}`}
+                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${category.color}`}
+                >
+                  <span className="text-xl" aria-hidden>
+                    {category.icon}
+                  </span>
+                  {category.name}
                 </Link>
               ))}
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex flex-wrap justify-center gap-4 sm:gap-6"
-            >
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
               {trustBadges.map((badge) => (
                 <div
                   key={badge.label}
                   className="flex items-center gap-2 text-sm text-foreground-secondary"
                 >
-                  <badge.icon className="h-4 w-4 text-gold" />
+                  <badge.icon className="h-4 w-4 text-gold" aria-hidden />
                   {badge.label}
                 </div>
               ))}
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -187,20 +125,13 @@ export default function HomePage() {
       <section className="border-y border-border bg-background-secondary/60">
         <div className="container-luxury py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {displayStats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.08 }}
-                className="text-center"
-              >
+            {siteConfig.stats.map((stat) => (
+              <div key={stat.label} className="text-center">
                 <p className="font-display text-3xl md:text-4xl font-semibold text-gold mb-1">
                   {stat.value}
                 </p>
                 <p className="text-sm text-foreground-secondary">{stat.label}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -217,35 +148,23 @@ export default function HomePage() {
                 Los mejor valorados por nuestra comunidad
               </p>
             </div>
-            <Link href="/explorar">
-              <Button variant="ghost" className="hidden sm:inline-flex">
+            <Button variant="ghost" className="hidden sm:inline-flex" asChild>
+              <Link href="/explorar">
                 Ver todos
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+                <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {displayProviders.map((provider, index) => (
-              <motion.div
-                key={provider.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <ProviderCard provider={provider} />
-              </motion.div>
-            ))}
-          </div>
+          <FeaturedProviders />
 
           <div className="mt-8 text-center sm:hidden">
-            <Link href="/explorar">
-              <Button variant="outline">
+            <Button variant="outline" asChild>
+              <Link href="/explorar">
                 Ver todos los profesionales
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+                <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -262,23 +181,16 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((step, index) => (
-              <motion.div
-                key={step.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="text-center"
-              >
+            {steps.map((step) => (
+              <div key={step.title} className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 text-gold mb-6">
-                  <step.icon className="h-8 w-8" />
+                  <step.icon className="h-8 w-8" aria-hidden />
                 </div>
                 <h3 className="font-display text-xl font-semibold text-foreground mb-3">
                   {step.title}
                 </h3>
                 <p className="text-foreground-secondary">{step.description}</p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -291,14 +203,15 @@ export default function HomePage() {
               ¿Ofreces servicios profesionales?
             </h2>
             <p className="text-white/70 mb-8 text-lg">
-              Únete a nuestra comunidad de profesionales verificados y conecta con clientes que buscan calidad.
+              Únete a nuestra comunidad de profesionales verificados y conecta con
+              clientes que buscan calidad.
             </p>
-            <Link href="/register?type=provider">
-              <Button size="lg" className="bg-gold hover:bg-gold-dark text-white">
+            <Button size="lg" asChild>
+              <Link href="/register?type=provider">
                 Registrarme como profesional
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+                <ArrowRight className="ml-2 h-5 w-5" aria-hidden />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

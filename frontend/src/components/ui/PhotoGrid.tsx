@@ -4,6 +4,7 @@ import React from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { DARK_BLUR_DATA_URL_CLIENT } from '@/lib/image'
 
 export interface PhotoItem {
   id: string
@@ -65,6 +66,8 @@ export function PhotoGrid({
                   : '(max-width: 768px) 50vw, 33vw'
               }
               priority={index < priorityCount}
+              placeholder="blur"
+              blurDataURL={DARK_BLUR_DATA_URL_CLIENT}
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-base" />
           </motion.button>

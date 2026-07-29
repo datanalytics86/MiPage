@@ -20,9 +20,10 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: 'npm run dev',
+        // Prefer already-running server; otherwise spin up production start
+        command: 'npx next start -p 3000',
         url: baseURL,
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true,
         timeout: 120_000,
       },
 })

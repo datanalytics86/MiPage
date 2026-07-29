@@ -14,7 +14,7 @@ export const mockProviders: ProviderCardData[] = [
     average_rating: 4.9,
     review_count: 47,
     price_from: 45000,
-    primary_image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600',
+    primary_image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=480&q=75&auto=format',
   },
   {
     id: '2',
@@ -29,7 +29,7 @@ export const mockProviders: ProviderCardData[] = [
     average_rating: 4.8,
     review_count: 32,
     price_from: 80000,
-    primary_image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600',
+    primary_image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=480&q=75&auto=format',
   },
   {
     id: '3',
@@ -44,7 +44,7 @@ export const mockProviders: ProviderCardData[] = [
     average_rating: 4.7,
     review_count: 28,
     price_from: 40000,
-    primary_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600',
+    primary_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=480&q=75&auto=format',
   },
   {
     id: '4',
@@ -59,7 +59,7 @@ export const mockProviders: ProviderCardData[] = [
     average_rating: 4.9,
     review_count: 56,
     price_from: 75000,
-    primary_image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600',
+    primary_image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=480&q=75&auto=format',
   },
   {
     id: '5',
@@ -74,7 +74,7 @@ export const mockProviders: ProviderCardData[] = [
     average_rating: 4.6,
     review_count: 19,
     price_from: 55000,
-    primary_image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600',
+    primary_image: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=480&q=75&auto=format',
   },
   {
     id: '6',
@@ -89,7 +89,7 @@ export const mockProviders: ProviderCardData[] = [
     average_rating: 4.5,
     review_count: 12,
     price_from: 60000,
-    primary_image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600',
+    primary_image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=480&q=75&auto=format',
   },
 ]
 

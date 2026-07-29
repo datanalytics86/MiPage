@@ -18,11 +18,13 @@ const config: Config = {
         },
         foreground: {
           DEFAULT: '#F5F0E8',
-          secondary: '#A8A29E',
-          muted: '#6B6560',
+          // AA on #0A0A0B (≥4.5:1 for normal text)
+          secondary: '#C4BEB8',
+          muted: '#9A948E',
         },
         gold: {
-          DEFAULT: '#C9A962',
+          // Slightly brighter for AA contrast on dark UI (#0A0A0B text on gold ≥ 4.5)
+          DEFAULT: '#D4B56A',
           light: '#E5D4A1',
           dark: '#A88B3D',
         },
@@ -70,8 +72,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['Cormorant Garamond', 'Georgia', 'serif'],
-        body: ['DM Sans', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Georgia', 'serif'],
+        body: ['var(--font-body)', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         lg: '0.75rem',

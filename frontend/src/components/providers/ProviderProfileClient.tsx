@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import {
   Star,
@@ -19,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { PhotoGridSkeleton } from '@/components/ui/Skeleton'
+import { PhotoGrid } from '@/components/ui/PhotoGrid'
 import { GalleryLightbox } from '@/components/ui/GalleryLightbox'
 import { cn, formatPrice, formatDate, getInitials } from '@/lib/utils'
 import { useProvider } from '@/hooks/useProviders'
@@ -164,8 +164,6 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
   }
 
   const favorited = isFavorite(provider.id)
-  const primaryImage = provider.media.find((m) => m.is_primary) || provider.media[0]
-  const otherImages = provider.media.filter((m) => m.id !== primaryImage?.id).slice(0, 4)
   const minPrice =
     provider.services.length > 0
       ? Math.min(...provider.services.map((s) => s.price))
@@ -177,60 +175,38 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
       )}`
     : '#'
 
+  const galleryPhotos = provider.media.map((m) => ({
+    id: m.id,
+    url: m.url,
+    alt: provider.display_name,
+  }))
+
   return (
     <div className="min-h-screen bg-background">
       <section className="relative">
         <div className="container-luxury py-4">
-          <div className="hidden md:grid grid-cols-4 grid-rows-2 gap-2 h-[480px] rounded-2xl overflow-hidden">
-            <div
-              className="col-span-2 row-span-2 relative cursor-pointer group"
+          <div className="relative rounded-2xl overflow-hidden">
+            <PhotoGrid
+              photos={galleryPhotos}
+              featuredLayout
+              priorityCount={1}
+              onSelect={(index) => {
+                setCurrentImageIndex(index)
+                setIsGalleryOpen(true)
+              }}
+              className="md:min-h-[420px]"
+            />
+            <button
+              type="button"
               onClick={() => {
                 setCurrentImageIndex(0)
                 setIsGalleryOpen(true)
               }}
+              className="absolute bottom-4 right-4 glass-strong text-foreground px-4 py-2 rounded-xl font-medium shadow-soft-lg flex items-center gap-2 hover:bg-white/15 transition-colors z-10"
             >
-              <Image
-                src={primaryImage?.url || ''}
-                alt={provider.display_name}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                priority
-              />
-            </div>
-            {otherImages.map((media, index) => (
-              <div
-                key={media.id}
-                className="relative cursor-pointer group"
-                onClick={() => {
-                  setCurrentImageIndex(index + 1)
-                  setIsGalleryOpen(true)
-                }}
-              >
-                <Image
-                  src={media.url}
-                  alt={`${provider.display_name} - ${index + 2}`}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setIsGalleryOpen(true)}
-              className="absolute bottom-4 right-4 glass-strong text-foreground px-4 py-2 rounded-xl font-medium shadow-soft-lg flex items-center gap-2 hover:bg-white/15 transition-colors"
-            >
-              <Grid3X3 className="h-4 w-4 text-gold" />
-              Ver todas las fotos
+              <Grid3X3 className="h-4 w-4 text-gold" aria-hidden />
+              Ver todas las fotos ({galleryPhotos.length})
             </button>
-          </div>
-          <div className="md:hidden relative h-[400px] rounded-2xl overflow-hidden">
-            <Image
-              src={primaryImage?.url || ''}
-              alt={provider.display_name}
-              fill
-              className="object-cover"
-              priority
-            />
           </div>
         </div>
       </section>

@@ -14,17 +14,17 @@ Si no puedes entrar: Supabase Dashboard → Table Editor → `profiles` → pon 
 
 ---
 
-## Checklist diario (10 minutos)
+## Checklist diario (≤ 10 minutos)
 
 | # | Tarea | Dónde | Hecho |
 |---|--------|--------|-------|
-| 1 | Revisar **pendientes** de moderación | Admin → Moderación | ☐ |
-| 2 | Abrir **Fotos** en cada pendiente | Preview modal | ☐ |
-| 3 | **Aprobar** o **Rechazar** (con motivo) | Botones | ☐ |
+| 1 | Abrir **Admin → Moderación** y filtrar **Pendiente** | `/admin/proveedores` | ☐ |
+| 2 | En cada pendiente: **Fotos** (preview grande) | Modal | ☐ |
+| 3 | **Aprobar** o **Rechazar** (motivo predefinido o custom) | Botones | ☐ |
 | 4 | Revisar **reportes** nuevos | Admin → Reportes | ☐ |
-| 5 | Mirar stats del dashboard | Admin home | ☐ |
-| 6 | (Semanal) Site settings / textos | Admin → Configuración | ☐ |
-| 7 | (Semanal) `npm run backup-check` o Dashboard backups | Supabase | ☐ |
+| 5 | Mirar **stats** (pendientes, aprobados) | Admin home | ☐ |
+| 6 | (Semanal) textos / banners | Admin → Configuración | ☐ |
+| 7 | (Semanal) health + backups | `/api/health` + Supabase PITR | ☐ |
 
 ---
 

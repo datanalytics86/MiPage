@@ -43,8 +43,9 @@ El backend Express/Prisma/temp-db fue **archivado** en `archive/2026-legacy/back
 | Resend en prod | Opcional (sin key = skip) |
 | Mercado Pago featured | Opcional (501 sin token) |
 | Cobertura E2E auth completa | Requiere credenciales seed |
-| Lighthouse ≥ 92 en prod | Verificar en live con datos reales |
+| Lighthouse ≥ 92 | Desktop local **98/100/96/100**; live prev **96/98/96/100**; mobile local thr. ~83 (revalidar en Vercel `main`) |
 | npm audit 0 high (Next 14) | Parcheado a `14.2.35`; cierre total exige Next 16 (breaking) |
+| Default branch | **`main`** (PR #12 mergeada) |
 
 ---
 

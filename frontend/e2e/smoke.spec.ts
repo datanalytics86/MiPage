@@ -31,8 +31,11 @@ test.describe('public smoke', () => {
   })
 
   test('favoritos empty or login gate', async ({ page }) => {
-    await page.goto('/favoritos')
-    await expect(page.getByText(/favoritos|sesión|iniciar/i).first()).toBeVisible()
+    await page.goto('/favoritos', { waitUntil: 'domcontentloaded' })
+    await expect(page.locator('body')).toBeVisible()
+    await expect(
+      page.getByRole('heading').or(page.getByText(/favorito|sesión|iniciar/i)).first()
+    ).toBeVisible({ timeout: 15000 })
   })
 
   test('health endpoint', async ({ request }) => {

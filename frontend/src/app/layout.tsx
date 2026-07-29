@@ -1,8 +1,23 @@
 import type { Metadata, Viewport } from 'next'
+import { Cormorant_Garamond, DM_Sans } from 'next/font/google'
 import { Providers } from '@/components/Providers'
 import { Toaster } from '@/components/ui/Toaster'
 import { absoluteUrl, siteConfig } from '@/lib/site'
 import './globals.css'
+
+const display = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-display',
+  display: 'swap',
+})
+
+const body = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-body',
+  display: 'swap',
+})
 
 export const viewport: Viewport = {
   themeColor: '#0A0A0B',
@@ -61,7 +76,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es" className="dark">
+    <html lang="es" className={`dark ${display.variable} ${body.variable}`}>
       <body className="min-h-screen bg-background font-body antialiased">
         <Providers>
           {children}

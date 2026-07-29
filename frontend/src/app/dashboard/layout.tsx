@@ -54,16 +54,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 h-full w-72 bg-white border-r border-border transform transition-transform duration-300 lg:translate-x-0',
+          'fixed top-0 left-0 z-50 h-full w-72 bg-background-secondary border-r border-border transform transition-transform duration-300 lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between h-16 px-6 border-b border-border">
-            <Link href="/" className="font-display text-xl font-semibold">
+            <Link href="/" className="font-display text-xl font-semibold text-foreground">
               Mi<span className="text-gold">Page</span>
             </Link>
-            <button className="lg:hidden p-2" onClick={() => setSidebarOpen(false)}>
+            <button
+              type="button"
+              className="lg:hidden p-2 rounded-lg hover:bg-muted"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Cerrar menú"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -130,11 +135,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex items-center h-16 px-4 bg-white border-b border-border lg:px-8">
-          <button className="lg:hidden p-2 mr-4" onClick={() => setSidebarOpen(true)}>
+        <header className="sticky top-0 z-30 flex items-center h-16 px-4 glass-strong border-b border-border lg:px-8">
+          <button
+            type="button"
+            className="lg:hidden p-2 mr-4 rounded-lg hover:bg-muted"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Abrir menú"
+          >
             <Menu className="h-6 w-6" />
           </button>
-          <h1 className="font-display text-xl font-semibold flex-1">
+          <h1 className="font-display text-xl font-semibold flex-1 text-foreground">
             {navigation.find((item) => item.href === pathname)?.name || 'Dashboard'}
           </h1>
           <Link href="/">

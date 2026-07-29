@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, feat/tier1-supabase-consolidation]
+    branches: [main]
   pull_request:
     branches: [main]
 

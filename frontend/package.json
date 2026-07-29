@@ -13,9 +13,11 @@
     "test:coverage": "vitest run --coverage",
     "test:ci": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:critical": "playwright test e2e/critical-flows.spec.ts e2e/smoke.spec.ts",
     "seed:demo": "node scripts/seed-demo.mjs",
     "health": "node scripts/health.mjs",
-    "backup-check": "node scripts/backup-check.mjs"
+    "backup-check": "node scripts/backup-check.mjs",
+    "lighthouse": "node scripts/lighthouse-check.mjs"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.1",
