@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { getSupabaseClient } from '@/lib/supabase/client'
+import { hasSupabaseEnv } from '@/lib/supabase/env'
 import type { Profile, Provider } from '@/types/database'
 
 interface AuthState {
@@ -42,10 +43,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: false,
   })
 
-  const supabase = getSupabaseClient()
+  const supabase = hasSupabaseEnv() ? getSupabaseClient() : null
 
   // Fetch user profile and provider data
   const fetchUserData = async (userId: string) => {
+    if (!supabase) return { profile: null, provider: null }
     try {
       // Fetch profile
       const { data: profile } = await supabase
@@ -74,6 +76,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
+    if (!supabase) {
+      setState((s) => ({ ...s, isLoading: false }))
+      return
+    }
+
     const initAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
@@ -133,6 +140,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    if (!supabase) {
+      return { error: new Error('Supabase no configurado') }
+    }
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -154,6 +164,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       city?: string
     }
   ) => {
+    if (!supabase) {
+      return { error: new Error('Supabase no configurado') }
+    }
     try {
       const role = data?.role || 'user'
       const { data: authData, error } = await supabase.auth.signUp({
@@ -204,7 +217,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    if (supabase) await supabase.auth.signOut()
   }
 
   const refreshProfile = async () => {
