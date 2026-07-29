@@ -55,11 +55,53 @@ export default function DashboardOverviewPage() {
         </motion.div>
       )}
 
-      {provider.status !== 'approved' && (
+      {provider.status === 'pending' && (
+        <Card className="border-gold/30 bg-gold/5">
+          <CardContent className="p-5 space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-gold/15 shrink-0">
+                <AlertCircle className="h-5 w-5 text-gold" aria-hidden />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-foreground flex flex-wrap items-center gap-2">
+                  Estado <Badge variant="warning">PENDING</Badge>
+                  <span className="text-foreground-secondary font-normal text-sm">
+                    — es un paso normal
+                  </span>
+                </p>
+                <p className="text-sm text-foreground-secondary leading-relaxed">
+                  Recibimos tu aviso y un administrador revisará las fotos y los datos.
+                  No es un error: cuando se apruebe, aparecerás en Explorar. Mientras tanto
+                  puedes seguir editando perfil, galería y servicios.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button size="sm" variant="outline" asChild>
+                <Link href="/dashboard/avisos/nuevo">Mejorar mi aviso</Link>
+              </Button>
+              <Button size="sm" variant="ghost" asChild>
+                <Link href="/dashboard/galeria">Subir más fotos</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {provider.status !== 'approved' && provider.status !== 'pending' && (
         <Card className="border-warning/40 bg-warning/5">
-          <CardContent className="p-4 text-sm">
-            Tu perfil está en estado <strong>{provider.status}</strong>. Un administrador debe aprobarlo
-            para que aparezca en Explorar.
+          <CardContent className="p-4 text-sm text-foreground-secondary">
+            Tu perfil está en estado <strong className="text-foreground">{provider.status}</strong>.
+            {provider.status === 'rejected' && (
+              <>
+                {' '}
+                Revisa el motivo de rechazo, corrige fotos o datos y vuelve a enviar desde el
+                wizard. Estamos para ayudarte a publicarte bien.
+              </>
+            )}
+            {provider.status === 'suspended' && (
+              <> Contacta soporte si crees que es un error.</>
+            )}
           </CardContent>
         </Card>
       )}

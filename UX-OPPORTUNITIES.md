@@ -20,8 +20,9 @@ Tono objetivo: **luxury calmado** — claro, corto, sin hype vacío.
 | 6 | Onboarding tour 3 pasos (spotlight) | Medio | Medio | Medio plazo |
 | 7 | Favoritos empty premium | Medio | Bajo | **Quick win** ✅ |
 | 8 | Contacto WhatsApp prefill desde perfil | Alto | Bajo | **Quick win** ✅ (`lib/whatsapp.ts`) |
-| 9 | Filtros explorar como chips mobile | Medio | Medio | Medio plazo |
-| 10 | i18n ES formal / informal | Bajo | Alto | Backlog |
+| 9 | Filtros explorar como chips mobile | Medio | Bajo | **Quick win** ✅ |
+| 10 | Hint PENDING en dashboard publisher | Alto | Bajo | **Quick win** ✅ |
+| 11 | i18n ES formal / informal | Bajo | Alto | Backlog |
 
 ---
 
@@ -54,6 +55,18 @@ Botón secundario “Ir al wizard de aviso”.
 ### 4. Microcopy admin (con C)
 
 Banner “Cola del día” con copy accionable y deep-link a pendientes.
+
+### 5. Chips de filtros mobile (explorar)
+
+Categoría + verificados + ciudad como chips táctiles (`aria-pressed`), selects en desktop.
+
+### 6. PENDING = paso normal (dashboard)
+
+Tarjeta gold: badge PENDING, explicación calmada, CTAs “Mejorar aviso” / “Subir fotos”.
+
+### 7. Rechazo empático (admin)
+
+Motivos predefinidos que indican **qué corregir** (no punitivos).
 
 ---
 

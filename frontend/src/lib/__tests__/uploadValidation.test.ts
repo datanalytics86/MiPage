@@ -67,4 +67,36 @@ describe('uploadValidation', () => {
     expect(looksLikeSqlInjection('union select password from users')).toBe(true)
     expect(looksLikeSqlInjection('masajes santiago')).toBe(false)
   })
+
+  it('rejects empty file and invalid name', () => {
+    expect(validateUploadFile(fakeFile('', 'image/jpeg', 0)).code).toBe('EMPTY')
+    const long = 'a'.repeat(201) + '.jpg'
+    expect(validateUploadFile(fakeFile(long, 'image/jpeg', 100)).code).toBe(
+      'NAME_INVALID'
+    )
+  })
+
+  it('accepts webp and mp4 under limit', () => {
+    expect(validateUploadFile(fakeFile('a.webp', 'image/webp', 500)).ok).toBe(true)
+    expect(validateUploadFile(fakeFile('v.mp4', 'video/mp4', 500)).ok).toBe(true)
+  })
+
+  it('rejects empty batch and accepts valid batch', () => {
+    expect(validateUploadBatch([]).code).toBe('EMPTY')
+    const ok = validateUploadBatch([
+      fakeFile('a.jpg', 'image/jpeg'),
+      fakeFile('b.png', 'image/png'),
+    ])
+    expect(ok.ok).toBe(true)
+  })
+
+  it('detects double extension tricks', () => {
+    expect(isDangerousFilename('photo.php.jpg')).toBe(true)
+  })
+
+  it('sanitizes javascript: and handlers', () => {
+    const clean = sanitizePlainText('x javascript:alert(1) onclick=evil')
+    expect(clean.toLowerCase()).not.toContain('javascript:')
+    expect(clean.toLowerCase()).not.toContain('onclick=')
+  })
 })

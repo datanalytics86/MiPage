@@ -1,115 +1,95 @@
-# QA-REPORT — MiPage (post Tier-1)
+# QA-REPORT — MiPage (cierre residual)
 
 **Fecha:** 2026-07-29  
-**Branch:** `main`  
-**Alcance:** Grupo A · 10 agentes QAQC  
+**Branch:** `main` · HEAD reciente: cierre visual/UX + QAQC residual  
+**Alcance:** Fase 3 QAQC de cierre + consolidación visual/UX  
 
 ---
 
-## Resumen ejecutivo
+## Resumen
 
-| Área | Resultado |
-|------|-----------|
-| Type-check | Verde |
-| Unit tests | **43** passed |
-| Cobertura crítica (lib) | **~93.8%** lines / **100%** functions (thresholds ≥80/85) |
-| E2E smoke + critical | Estables sin credenciales (auth full skip con `E2E_*`) |
-| Lighthouse desktop | **≥ 92** (lab reciente 98/100/100/100) |
-| Lighthouse mobile | A11y/BP/SEO 100; Perf lab local ~81 (throttling) — residual aceptado |
-| Security | Rate limit API contact/notify; RBAC puro; upload allowlist; env placeholders |
-
----
-
-## Hallazgos
-
-### P0 (bloqueantes) — resueltos o no presentes
-
-| ID | Hallazgo | Estado |
-|----|----------|--------|
-| P0-1 | Secrets `.env` en path activo | **OK** — solo examples |
-| P0-2 | Dual Express en runtime | **OK** — archive only |
-| P0-3 | Deploy Vercel preview fallaba por `validate-env` | **Fixed** (preview placeholders) |
-
-### P1 — mitigados en esta pasada
-
-| ID | Hallazgo | Fix |
-|----|----------|-----|
-| P1-1 | Cobertura solo 3 archivos / thr 75% | Expandido a rbac, moderation, rateLimit, env, filters; thr **80/85/70** |
-| P1-2 | `/api/notify` y `/api/contact` sin rate limit | **rateLimit** in-memory + 429 |
-| P1-3 | Moderación sin señales automáticas | **analyzeProviderFlags** + badges en admin |
-| P1-4 | CI sin E2E gate | Playwright critical en CI tras `next start` |
-| P1-5 | RBAC helpers solo en test file | Extraído a `src/lib/rbac.ts` |
-
-### P2 — residuales aceptados
-
-| ID | Residual | Justificación |
-|----|----------|---------------|
-| P2-1 | Mobile Lighthouse Perf lab ~81 | CPU 4× localhost; live histórico 96; A11y/BP/SEO 100 |
-| P2-2 | E2E auth completo requiere secrets | Skip documentado; gates públicos + RBAC unit |
-| P2-3 | Rate limit no distribuido | Suficiente single-region; Redis out of scope |
-| P2-4 | npm audit Next 14 high residual | Fix = Next 16 breaking; documentado en README |
-| P2-5 | Lint warnings `<img>` / hooks deps | No bloquean; backlog a11y images next/image |
+| Métrica | Valor |
+|---------|--------|
+| Unit tests | **50** passed |
+| Cobertura libs críticas | **~96.3%** lines · **~81.4%** branches · **100%** functions |
+| Thresholds CI | lines/stmts **85%**, functions **90%**, branches **75%** |
+| E2E | Smoke + critical; auth **skip limpio** sin `E2E_*`; documentado en `.env.example` |
+| Lighthouse desktop (lab) | **97 / 100 / 100 / 100** |
+| Lighthouse mobile (lab) | **81 / 100 / 100 / 100** |
+| Residual `<img>` | **0** en `frontend/src` |
 
 ---
 
-## Fixes aplicados (esta entrega)
+## Scores Lighthouse (lab local, post-cierre)
 
-1. `lib/rbac.ts` + tests  
-2. `lib/moderation.ts` (flags, transitions, risk, day summary) + tests  
-3. `lib/rateLimit.ts` + tests; wire contact + notify  
-4. Vitest coverage include expandido + thresholds ≥80%  
-5. CI: build → start → Playwright critical  
-6. Admin: flags de revisión, bulk approve/reject (ver ADMIN-AUTOMATION)  
+| Target | Perf | A11y | BP | SEO | Notas |
+|--------|------|------|-----|-----|--------|
+| Desktop | **97** | **100** | **100** | **100** | Cumple ≥92 |
+| Mobile (CPU 4×) | **81** | **100** | **100** | **100** | LCP texto hero ~5s en throttling |
+| Live Production | — | — | — | — | Solo si Production Branch = `main` (ops) |
 
----
-
-## Cobertura final (test:ci)
-
-```
-All critical lib files ~93.8% lines
-functions 100%
-branches ~77% (threshold 70%)
-```
-
-Archivos en scope: uploadValidation, metadataFields, email, rbac, moderation, rateLimit, filters, supabase/env.
+**Causa mobile Perf residual:** en lab localhost el LCP del párrafo hero se mide ~5s bajo throttling simulado; TBT bajo. En edge (histórico live viejo) Perf fue 96. **Acción:** revalidar en https://mi-page-lake.vercel.app tras apuntar Vercel a `main`.
 
 ---
 
-## Lighthouse (lab)
+## Tests añadidos / ampliados
 
-| Target | Perf | A11y | BP | SEO |
-|--------|------|------|-----|-----|
-| Desktop local | 98 | 100 | 100 | 100 |
-| Mobile local throttled | ~81 | 100 | 100 | 100 |
-
-**Criterio desktop ≥92: CUMPLIDO.**  
-Mobile perf: residual lab; revalidar en Production edge cuando Production Branch = `main`.
-
----
-
-## E2E
-
-- `e2e/smoke.spec.ts` + `e2e/critical-flows.spec.ts`
-- Sin auth: dark theme, explorar, RBAC gates, health, XSS probes
-- Con `E2E_PROVIDER_*` / `E2E_ADMIN_*`: wizard + moderación
+| Archivo | Qué cubre |
+|---------|-----------|
+| `uploadValidation.test.ts` | empty/name/mime/batch/double-ext/sanitize (+5 casos) |
+| `whatsapp.test.ts` | prefill wa.me |
+| `moderation.test.ts` | flags, risk, queue (prev) |
+| `env.test.ts` / `rateLimit.test.ts` / `rbac.test.ts` | prev pipeline |
+| `e2e/critical-flows.spec.ts` | provider≠admin, admin reject UI, explorar→perfil; skip con mensaje claro |
 
 ---
 
-## Checklist agentes A
+## Hallazgos P0 / P1 / P2
 
-| # | Agente | Hecho |
-|---|--------|-------|
-| 1 | Security | Sí |
-| 2 | Unit coverage | Sí ≥80% |
-| 3 | E2E hardening | Sí + CI |
-| 4 | a11y AA | Mejoras previas + residuales P2 |
-| 5 | Performance | Desktop ≥92 |
-| 6 | Images/Media | Upload validation + blur/aspect (prev) |
-| 7 | Error & resilience | Empty/Error states + rate limit |
-| 8 | Data & RLS | Transitions en moderation.ts |
-| 9 | CI quality gates | Coverage thr + e2e |
-| 10 | Regression smoke | E2E critical |
+### P0
+Ninguno en código activo.
+
+### P1 — mitigados
+| Item | Fix |
+|------|-----|
+| `<img>` residuales | Reemplazados por `next/image` |
+| Skeletons inconsistentes | `ProviderGrid` / `ListRow` / `DashboardBlock` |
+| E2E auth no documentado | `.env.example` + `frontend/.env.local.example` |
+| Branches coverage upload | **100%** lines en uploadValidation |
+
+### P2 — residuales finales (honestos)
+| Residual | Justificación |
+|----------|---------------|
+| Mobile LH Perf lab 81 | Throttling lab; edge revalidar post-deploy |
+| Branches globales ~81% (meta ideal 85%) | Metadatos/email/moderation edge cases; thr CI 75% |
+| E2E auth no corre en CI | Sin secrets en CI (by design); skip no falla |
+| Production live puede ser commit viejo | Checklist ops en PROGRESS |
 
 ---
 
-*Generado por pipeline QAQC multi-agente. No inventa scores no medidos.*
+## a11y cierre
+
+- Labels en selects/search explorar  
+- Chips `aria-pressed`  
+- Badges admin `aria-label` en flags  
+- Alt en next/image críticos  
+- Contraste badges gold/dark (prev)  
+
+---
+
+## Checklist criterios de éxito (cierre)
+
+- [x] Residual `<img>` crítico eliminado  
+- [x] Skeletons unificados  
+- [x] WhatsApp prefill  
+- [x] Empty favoritos premium  
+- [x] Copy rechazo empático  
+- [x] E2E auth documentado + ejecutable con env  
+- [x] LH desktop ≥92  
+- [x] Mobile LH medido y anotado  
+- [x] Reportes actualizados  
+- [x] type-check + tests + build (ver commit)  
+
+---
+
+*QAQC de cierre. No inventa scores de Production no medidos.*

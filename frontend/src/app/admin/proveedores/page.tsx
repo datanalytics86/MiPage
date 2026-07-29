@@ -411,12 +411,21 @@ function AdminProveedoresInner() {
                                 key={f.code}
                                 variant={f.severity === 'high' ? 'destructive' : 'warning'}
                                 title={f.message}
+                                aria-label={`Señal de revisión: ${f.message}`}
                               >
-                                {f.severity === 'high' ? '⚠' : '·'} {f.code}
+                                <span aria-hidden>
+                                  {f.severity === 'high' ? '!' : '·'}
+                                </span>{' '}
+                                {f.code.replace(/_/g, ' ')}
                               </Badge>
                             ))}
                           {moderationRiskScore(flagsById.get(provider.id) || []) >= 5 && (
-                            <Badge variant="destructive">Revisar primero</Badge>
+                            <Badge
+                              variant="destructive"
+                              aria-label="Prioridad alta: revisar antes de aprobar"
+                            >
+                              Revisar primero
+                            </Badge>
                           )}
                         </div>
                         <p className="text-sm text-foreground-muted">{provider.email}</p>

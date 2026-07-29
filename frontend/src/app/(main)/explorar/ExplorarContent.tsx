@@ -15,6 +15,7 @@ import { mockProviders } from '@/lib/mockProviders'
 import { filterCities, sortOptions } from '@/lib/filters'
 import { toProviderCardData } from '@/lib/providers'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
+import { cn } from '@/lib/utils'
 import type { FilterOptions, ProviderCategory } from '@/types'
 
 const PAGE_SIZE = 8
@@ -207,7 +208,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
 
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground-muted" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-foreground-muted" aria-hidden />
               <Input
                 type="search"
                 placeholder="Buscar por nombre, ciudad..."
@@ -220,16 +221,71 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                   if (e.key === 'Enter') syncUrl(filters, searchQuery)
                 }}
                 className="pl-10"
+                aria-label="Buscar profesionales"
               />
             </div>
 
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {/* Mobile: category chips (quick filter) */}
+            {!initialCategory && (
+              <div
+                className="flex sm:hidden gap-2 overflow-x-auto scrollbar-hide pb-1"
+                role="group"
+                aria-label="Categoría"
+              >
+                {(
+                  [
+                    { id: 'all', label: 'Todas' },
+                    { id: 'masajes', label: 'Masajes' },
+                    { id: 'modelaje', label: 'Modelaje' },
+                  ] as const
+                ).map((chip) => {
+                  const active = (filters.category || 'all') === chip.id
+                  return (
+                    <button
+                      key={chip.id}
+                      type="button"
+                      onClick={() =>
+                        updateFilters({
+                          category: chip.id as ProviderCategory | 'all',
+                        })
+                      }
+                      className={cn(
+                        'shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors min-h-[44px]',
+                        active
+                          ? 'bg-gold/15 border-gold text-gold'
+                          : 'border-border text-foreground-secondary hover:border-gold/40'
+                      )}
+                      aria-pressed={active}
+                    >
+                      {chip.label}
+                    </button>
+                  )
+                })}
+                <button
+                  type="button"
+                  onClick={() => updateFilters({ verified_only: !filters.verified_only })}
+                  className={cn(
+                    'shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors min-h-[44px]',
+                    filters.verified_only
+                      ? 'bg-sage/15 border-sage text-sage'
+                      : 'border-border text-foreground-secondary'
+                  )}
+                  aria-pressed={!!filters.verified_only}
+                >
+                  Verificados
+                </button>
+              </div>
+            )}
+
+            {/* Desktop selects */}
+            <div className="hidden sm:flex gap-2 overflow-x-auto scrollbar-hide">
               <select
                 value={filters.category || 'all'}
                 onChange={(e) =>
                   updateFilters({ category: e.target.value as ProviderCategory | 'all' })
                 }
                 className="input-luxury min-w-[140px]"
+                aria-label="Categoría"
               >
                 <option value="all">Categoría</option>
                 <option value="masajes">Masajes</option>
@@ -244,6 +300,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                   })
                 }
                 className="input-luxury min-w-[140px]"
+                aria-label="Ciudad"
               >
                 {filterCities.map((city) => (
                   <option key={city} value={city}>
@@ -258,6 +315,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                   updateFilters({ sort_by: e.target.value as FilterOptions['sort_by'] })
                 }
                 className="input-luxury min-w-[160px]"
+                aria-label="Ordenar por"
               >
                 {sortOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -266,6 +324,40 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                 ))}
               </select>
             </div>
+          </div>
+
+          {/* Mobile city chips */}
+          <div
+            className="flex sm:hidden gap-2 overflow-x-auto scrollbar-hide mt-3 pb-1"
+            role="group"
+            aria-label="Ciudad"
+          >
+            {filterCities.map((city) => {
+              const active =
+                city === 'Todas'
+                  ? !filters.city || filters.city === 'Todas'
+                  : filters.city === city
+              return (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() =>
+                    updateFilters({
+                      city: city === 'Todas' ? undefined : city,
+                    })
+                  }
+                  className={cn(
+                    'shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors min-h-[40px]',
+                    active
+                      ? 'bg-gold/15 border-gold text-gold'
+                      : 'border-border text-foreground-secondary'
+                  )}
+                  aria-pressed={active}
+                >
+                  {city}
+                </button>
+              )
+            })}
           </div>
 
           {(filters.category !== 'all' || filters.city || filters.verified_only || searchQuery) && (
