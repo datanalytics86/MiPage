@@ -1,494 +1,127 @@
-# MiPage - Marketplace de Servicios Profesionales
+# MiPage
 
-**Plataforma web moderna para servicios de Modelaje y Masajes Profesionales**
+Marketplace web de servicios de **modelaje** y **masajes** (Chile), centrado en perfiles visuales y moderación humana.
 
-📸 **Las fotos son lo primero** - Marketplace centrado en contenido visual de alta calidad
+**Live:** https://mi-page-lake.vercel.app  
 
-## 🚀 Características Principales
-
-- **Grid de Fotos Intuitivo**: Visualización atractiva de servicios con imágenes de alta calidad
-- **Sistema de Publicación**: Publishers pueden crear servicios con múltiples fotos
-- **Moderación de Contenido**: Panel de admin para aprobar/rechazar servicios
-- **Sistema de Roles**: USER, PUBLISHER, ADMIN con permisos específicos
-- **Sistema de Reseñas**: Usuarios pueden dejar comentarios y calificaciones
-- **Búsqueda Avanzada**: Filtros por categoría, ubicación y precio
-- **Responsive & PWA**: Optimizado para móviles y desktop
-- **Datos de Prueba**: Script de seed con usuarios y servicios listos para usar
-- **SEO Optimizado**: Next.js con SSR para mejor indexación
-
-## 🎯 Nuevo Sistema Completo
-
-### Para Publishers
-- ✅ Página de creación de servicios (`/services/new`)
-- ✅ Upload de fotos mediante URLs
-- ✅ Preview de fotos en tiempo real
-- ✅ Validación de formularios
-
-### Para Administradores
-- ✅ Panel de moderación (`/admin`)
-- ✅ Preview de fotos de servicios pendientes
-- ✅ Modal de galería completa
-- ✅ Información del publicador
-- ✅ Aprobación/rechazo con un click
-
-### Flujo Completo
-1. **Publisher** crea servicio → Estado PENDING
-2. **Admin** revisa fotos y datos
-3. **Admin** aprueba → Estado APPROVED (visible públicamente)
-4. **Usuario** puede ver, reseñar y contactar
-
-## 🛠️ Stack Tecnológico
-
-### Frontend
-- **Next.js 14** - Framework React con SSR/SSG
-- **React 18** - Biblioteca UI con hooks
-- **Tailwind CSS** - Diseño responsive y moderno
-- **TypeScript** - Tipado estático
-- **SWR** - Cache y fetching de datos
-- **Socket.io Client** - Notificaciones en tiempo real
-
-### Backend
-- **Node.js 20+** - Runtime JavaScript
-- **Express.js** - Framework web minimalista
-- **PostgreSQL** - Base de datos relacional
-- **Prisma** - ORM moderno para Node.js
-- **JWT** - Autenticación segura
-- **Socket.io** - Comunicación bidireccional
-- **Cloudinary** - Almacenamiento de imágenes
-
-### Infraestructura
-- **Supabase** - PostgreSQL gratuito y autenticación
-- **Vercel** - Hosting frontend (gratuito)
-- **Railway/Render** - Hosting backend (tier gratuito)
-- **Cloudinary** - CDN de imágenes (gratuito hasta 25GB)
-
-## 📋 Prerrequisitos
-
-Antes de comenzar, asegúrate de tener instalado:
-
-```bash
-# Node.js 20.x o superior
-node --version  # v20.x.x
-
-# npm o yarn
-npm --version   # 10.x.x
-
-# Git
-git --version   # 2.x.x
-```
-
-### Instalación de Prerrequisitos
-
-**En Ubuntu/Debian:**
-```bash
-# Instalar Node.js 20.x
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Instalar Git
-sudo apt-get install git
-```
-
-**En macOS:**
-```bash
-# Instalar Homebrew primero (si no lo tienes)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Instalar Node.js y Git
-brew install node git
-```
-
-**En Windows:**
-- Descarga Node.js desde: https://nodejs.org/
-- Descarga Git desde: https://git-scm.com/
-
-## 🚀 Setup Paso a Paso
-
-### 1. Clonar el Repositorio
-
-```bash
-git clone <tu-repositorio-url>
-cd MiPage
-```
-
-### 2. Configurar Base de Datos (Supabase)
-
-1. **Crear cuenta gratuita en Supabase**:
-   - Ve a https://supabase.com
-   - Crea una cuenta gratuita
-   - Crea un nuevo proyecto
-
-2. **Obtener credenciales**:
-   - En tu proyecto Supabase, ve a Settings > Database
-   - Copia el `Connection String` en modo `URI`
-   - Guarda también la `API URL` y `anon/public key`
-
-3. **Ejecutar migraciones**:
-   ```bash
-   # Las instrucciones detalladas están en backend/README.md
-   ```
-
-### 3. Configurar Backend
-
-```bash
-cd backend
-
-# Instalar dependencias
-npm install
-
-# Crear archivo .env
-cp .env.example .env
-
-# Editar .env con tus credenciales
-nano .env
-```
-
-**Contenido de `.env`:**
-```env
-# Base de datos
-DATABASE_URL="postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres"
-
-# JWT
-JWT_SECRET="tu-secreto-super-seguro-cambia-esto-123456"
-JWT_EXPIRES_IN="7d"
-
-# Cloudinary (registrate en cloudinary.com - gratuito)
-CLOUDINARY_CLOUD_NAME="tu-cloud-name"
-CLOUDINARY_API_KEY="tu-api-key"
-CLOUDINARY_API_SECRET="tu-api-secret"
-
-# Email (opcional - SendGrid gratuito 100 emails/día)
-SENDGRID_API_KEY="tu-sendgrid-key"
-FROM_EMAIL="noreply@tudominio.com"
-
-# Configuración
-PORT=3001
-NODE_ENV="development"
-FRONTEND_URL="http://localhost:3000"
-```
-
-**Generar migraciones de Prisma:**
-```bash
-# Generar cliente de Prisma
-npx prisma generate
-
-# Aplicar migraciones a la base de datos
-npx prisma db push
-
-# 🌱 IMPORTANTE: Ejecutar seed para crear datos de prueba
-npm run seed
-```
-
-**El seed creará:**
-- ✅ 5 usuarios (1 admin, 3 publishers, 1 usuario regular)
-- ✅ 6 servicios con fotos (3 modelaje, 3 masajes)
-- ✅ 2 reseñas de ejemplo
-- ✅ 2 posts de ejemplo
-
-**Credenciales de acceso:**
-```
-Admin:        admin@mipage.cl / password123
-Publisher 1:  maria@example.com / password123
-Publisher 2:  carlos@example.com / password123
-Usuario:      juan@example.com / password123
-```
-
-**Iniciar backend:**
-```bash
-npm run dev
-```
-
-### 4. Configurar Frontend
-
-```bash
-cd frontend
-
-# Instalar dependencias
-npm install
-
-# Crear archivo .env.local
-cp .env.example .env.local
-
-# Editar .env.local
-nano .env.local
-```
-
-**Contenido de `.env.local`:**
-```env
-NEXT_PUBLIC_API_URL="http://localhost:3001/api"
-NEXT_PUBLIC_SOCKET_URL="http://localhost:3001"
-NEXT_PUBLIC_SUPABASE_URL="https://[project-ref].supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="tu-anon-key"
-```
-
-**Iniciar frontend:**
-```bash
-npm run dev
-```
-
-### 5. Acceder a la Aplicación
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:3001
-- **API Docs**: http://localhost:3001/api-docs
-
-## 📱 Funcionalidades
-
-### Para Usuarios Visitantes
-- ✅ Ver grid de servicios con fotos
-- ✅ Buscar por categoría (Modelaje / Masajes Profesionales)
-- ✅ Filtrar por ubicación y precio
-- ✅ Ver detalles de servicios y perfiles
-
-### Para Usuarios Registrados
-- ✅ Crear cuenta y login
-- ✅ Dejar reseñas y comentarios
-- ✅ Guardar servicios favoritos
-- ✅ Recibir notificaciones en tiempo real
-
-### Para Publicadores
-- ✅ Crear perfil de proveedor de servicios
-- ✅ Publicar servicios en `/services/new`
-- ✅ Upload de múltiples fotos mediante URLs
-- ✅ Preview de fotos en tiempo real
-- ✅ Timeline cronológico de publicaciones
-- ✅ Responder a reseñas
-- ✅ Ver estadísticas de visualizaciones
-
-### Para Administradores
-- ✅ Panel de administración en `/admin`
-- ✅ Ver servicios pendientes de aprobación
-- ✅ Preview de fotos de cada servicio
-- ✅ Modal con galería completa de fotos
-- ✅ Información del publicador (avatar, email, nombre)
-- ✅ Aprobar/rechazar con un click
-- ✅ Ver estadísticas del sitio (usuarios, servicios, reseñas)
-- ✅ Gestionar usuarios
-
-## 🔒 Seguridad
-
-- **Autenticación JWT**: Tokens seguros con expiración
-- **Validación de Inputs**: Sanitización en backend y frontend
-- **Rate Limiting**: Protección contra ataques de fuerza bruta
-- **CORS**: Configurado solo para dominios autorizados
-- **Encriptación**: Contraseñas hasheadas con bcrypt
-- **SQL Injection**: Prevenido con Prisma ORM
-- **XSS Protection**: Sanitización de contenido HTML
-
-## 📊 Base de Datos
-
-### Esquema Principal
-
-```
-Users (usuarios)
-├── id (UUID)
-├── email (único)
-├── password (hasheado)
-├── name
-├── role (user, publisher, admin)
-└── createdAt
-
-Services (servicios)
-├── id (UUID)
-├── userId (FK)
-├── category (Modelaje | Masajes Profesionales)
-├── title
-├── description
-├── price
-├── location
-├── photos (array)
-├── status (pending, approved, rejected)
-└── createdAt
-
-Reviews (reseñas)
-├── id (UUID)
-├── serviceId (FK)
-├── userId (FK)
-├── rating (1-5)
-├── comment
-└── createdAt
-
-Posts (publicaciones timeline)
-├── id (UUID)
-├── userId (FK)
-├── content
-├── photos (array)
-└── createdAt
-```
-
-## 🎨 Estructura del Proyecto
-
-```
-MiPage/
-├── frontend/               # Aplicación Next.js
-│   ├── src/
-│   │   ├── app/           # App Router de Next.js 14
-│   │   ├── components/    # Componentes React reutilizables
-│   │   ├── lib/           # Utilidades y configuraciones
-│   │   └── styles/        # Estilos globales
-│   ├── public/            # Archivos estáticos
-│   └── package.json
-├── backend/               # API Node.js/Express
-│   ├── src/
-│   │   ├── controllers/   # Lógica de endpoints
-│   │   ├── models/        # Modelos Prisma
-│   │   ├── routes/        # Rutas API
-│   │   ├── middleware/    # Auth, validación, etc.
-│   │   ├── services/      # Lógica de negocio
-│   │   └── utils/         # Helpers
-│   ├── prisma/            # Esquema y migraciones
-│   └── package.json
-├── docs/                  # Documentación adicional
-└── README.md
-```
-
-## 🚀 Deployment
-
-### Frontend (Vercel - Gratuito)
-
-1. **Conectar a GitHub**:
-   - Ve a https://vercel.com
-   - Importa tu repositorio
-   - Selecciona la carpeta `frontend`
-
-2. **Variables de entorno**:
-   - Agrega todas las de `.env.local`
-   - Cambia las URLs a producción
-
-3. **Deploy**:
-   - Vercel lo hace automáticamente en cada push a main
-
-### Backend (Railway - Gratuito)
-
-1. **Conectar a GitHub**:
-   - Ve a https://railway.app
-   - Crea nuevo proyecto desde GitHub
-   - Selecciona la carpeta `backend`
-
-2. **Agregar PostgreSQL**:
-   - Railway ofrece PostgreSQL gratuito
-   - O mantén Supabase
-
-3. **Variables de entorno**:
-   - Agrega todas las de `.env`
-   - Railway proporciona el `DATABASE_URL`
-
-4. **Deploy**:
-   - Se despliega automáticamente
-
-### CI/CD (GitHub Actions)
-
-El proyecto incluye workflows automáticos:
-- Tests en cada PR
-- Deploy automático a main
-- Chequeo de tipos TypeScript
-- Linting de código
-
-## 💰 Costos y Monetización
-
-### Costos (Tier Gratuito)
-- ✅ **Supabase**: Gratuito hasta 500MB DB
-- ✅ **Vercel**: Gratuito para proyectos personales
-- ✅ **Railway**: $5/mes de crédito gratuito
-- ✅ **Cloudinary**: 25GB gratuitos
-- ⚠️ **Stripe** (pagos): 2.9% + $0.30 por transacción
-
-### Monetización Sugerida
-1. **Listings Premium**: $10-20/mes por destacado
-2. **Publicidad**: Banners para negocios relacionados
-3. **Comisión**: 5-10% en reservas directas
-4. **Verificación**: $5 por verificación de proveedor
-5. **Analytics**: $15/mes para proveedores
-
-## 🔧 Gestión para No-Expertos
-
-### Actualizar Contenido
-
-**Agregar nueva categoría:**
-```bash
-# Editar backend/prisma/schema.prisma
-enum Category {
-  MODELAJE
-  MASAJES
-  TU_NUEVA_CATEGORIA  // Agregar aquí
-}
-
-# Aplicar cambios
-cd backend
-npx prisma db push
-```
-
-**Moderar contenido:**
-- Accede al panel admin: https://tudominio.com/admin
-- Usa las herramientas visuales para aprobar/rechazar
-
-### Mantenimiento
-
-```bash
-# Actualizar dependencias (cada 2-3 meses)
-cd frontend
-npm update
-cd ../backend
-npm update
-
-# Backup de base de datos (semanal)
-# Supabase hace backups automáticos, o:
-cd backend
-npm run db:backup
-```
-
-### Escalar
-
-1. **Más tráfico**: Vercel escala automáticamente
-2. **Más categorías**: Editar enum en Prisma
-3. **Más features**: Contratar desarrollador freelance (presupuesto: $500-2000)
-
-## 📜 Cumplimiento Legal (Chile)
-
-### Ley de Protección de Datos Personales (Ley 19.628)
-
-1. **Consentimiento**: ✅ Incluido en registro
-2. **Política de Privacidad**: Ver `/docs/privacy-policy-chile.md`
-3. **Términos de Servicio**: Ver `/docs/terms-of-service.md`
-4. **Derecho a eliminación**: Implementado en perfil de usuario
-
-### Pasos Adicionales
-- Registrar marca en INAPI (opcional): ~$150.000 CLP
-- Obtener certificado SSL (gratuito con Vercel/Railway)
-- Términos claros para contenido sensible
-
-## 🧪 Testing
-
-```bash
-# Backend
-cd backend
-npm test
-npm run test:coverage
-
-# Frontend
-cd frontend
-npm test
-npm run test:e2e
-```
-
-## 📚 Documentación Adicional
-
-- [Guía de API](./docs/API.md)
-- [Componentes Frontend](./docs/COMPONENTS.md)
-- [Despliegue Avanzado](./docs/DEPLOYMENT.md)
-- [Solución de Problemas](./docs/TROUBLESHOOTING.md)
-- [Contribuir](./docs/CONTRIBUTING.md)
-
-## 🤝 Soporte
-
-- **Issues**: [GitHub Issues](../../issues)
-- **Email**: soporte@tudominio.com
-- **Docs**: https://docs.tudominio.com
-
-## 📄 Licencia
-
-MIT License - Ver [LICENSE](./LICENSE) para más detalles.
+> **Estado honesto (2026-07):** Supabase-first consolidado. Flujo publish → moderate → public implementado en código. **No** es “100% completo”: faltan chat, app móvil, i18n, geo avanzada, y dependemos de que migration `006` + env de producción estén aplicados. Ver `AUDIT-REPORT.md` y `ARCHITECTURE-DECISION.md`.
 
 ---
 
-**Hecho con ❤️ para emprendedores chilenos**
+## Stack real
+
+| Capa | Tecnología |
+|------|------------|
+| Frontend | Next.js 14 + TypeScript + Tailwind |
+| Auth / DB / Storage / RLS | **Supabase** |
+| Hosting | Vercel (`frontend/`) |
+| Emails (opcional) | Resend vía `/api/notify` |
+| Featured (opcional) | Mercado Pago vía `/api/payments/featured` |
+
+El backend Express/Prisma/temp-db fue **archivado** en `archive/2026-legacy/backend/` (no se despliega).
+
+---
+
+## Qué funciona hoy
+
+- Registro / login (Supabase Auth) con consentimiento **Ley 19.628**
+- Explorar + perfiles + favoritos + reseñas (con Supabase configurado)
+- Dashboard proveedor: perfil, servicios, galería, **wizard de aviso** (`/dashboard/avisos/nuevo`) → estado **PENDING**
+- Admin: cola de proveedores, preview de fotos, approve/reject + motivo, featured, metadata fields, site settings
+- Upload a Supabase Storage con validación de tipo/tamaño (bloquea `.exe`/`.php`, etc.)
+- Health: `GET /api/health`
+- Solicitud de borrado de datos: `POST /api/account/delete-request`
+- Tests unitarios (Vitest) + smoke E2E (Playwright)
+
+## Qué falta / es opcional
+
+| Ítem | Estado |
+|------|--------|
+| Chat en tiempo real | No |
+| App móvil | No |
+| i18n / geolocalización fina | No |
+| Resend en prod | Opcional (sin key = skip) |
+| Mercado Pago featured | Opcional (501 sin token) |
+| Cobertura E2E auth completa | Requiere credenciales seed |
+| Lighthouse ≥ 90 en prod | Verificar en live con datos reales |
+
+---
+
+## Setup local
+
+```bash
+git clone https://github.com/datanalytics86/MiPage.git
+cd MiPage/frontend
+cp .env.local.example .env.local
+# Completa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY
+npm install
+npm run dev
+```
+
+### Supabase
+
+1. Crea proyecto en https://supabase.com  
+2. Ejecuta en orden: `frontend/supabase/schema.sql` y migrations `002`…`006`  
+3. Crea buckets `gallery` y `avatars` (o usa `004_storage_gallery.sql`)  
+4. (Opcional) `npm run seed:demo` con service role  
+
+Guía de admin diario: **`ADMIN-GUIDE.md`**.
+
+---
+
+## Scripts
+
+```bash
+npm run dev           # desarrollo
+npm run build         # build producción
+npm run test          # unit tests
+npm run test:ci       # unit + coverage thresholds
+npm run test:e2e      # Playwright smoke
+npm run type-check    # tsc --noEmit
+npm run seed:demo     # datos demo
+npm run health        # GET /api/health
+npm run backup-check  # checklist backups PITR
+```
+
+---
+
+## Flujo de negocio
+
+1. Provider completa wizard → `providers.status = pending` + fotos en Storage  
+2. Admin revisa en `/admin/proveedores` (preview fotos) → **Aprobar** o **Rechazar** (motivo + email si Resend)  
+3. Aprobado → visible en explorar/perfil público  
+4. Featured: admin flag o pago MP opcional  
+
+---
+
+## Seguridad
+
+- RLS en Supabase; middleware RBAC para `/admin` y `/dashboard`  
+- Headers: CSP, HSTS, X-Frame-Options, nosniff  
+- No secrets en client bundle (service role solo server)  
+- `backend/.env` legacy eliminado del tree activo  
+
+---
+
+## Deploy
+
+- Vercel apunta a monorepo root con build del frontend (`vercel.json`)  
+- **Solo `main`** debe ser production (CI lo documenta)  
+- Variables en Vercel: las de `.env.example`  
+
+---
+
+## Docs
+
+| Archivo | Contenido |
+|---------|-----------|
+| `ARCHITECTURE-DECISION.md` | Por qué Supabase-first |
+| `AUDIT-REPORT.md` | Auditoría forense baseline |
+| `ADMIN-GUIDE.md` | Operación diaria (10 min) |
+| `archive/2026-legacy/` | Docs y backend históricos |
+
+---
+
+## Licencia
+
+MIT — ver `LICENSE`.

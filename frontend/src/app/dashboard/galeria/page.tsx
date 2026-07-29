@@ -48,6 +48,14 @@ export default function DashboardGaleriaPage() {
     const files = e.target.files
     if (!files?.length) return
 
+    const { validateUploadBatch } = await import('@/lib/uploadValidation')
+    const batch = validateUploadBatch(files)
+    if (!batch.ok) {
+      toast.error('Archivo inválido', batch.message || 'Revisa tipo y tamaño')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
     try {
       for (let i = 0; i < files.length; i++) {
         await uploadFile.mutateAsync({

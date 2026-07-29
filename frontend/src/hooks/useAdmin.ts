@@ -82,17 +82,41 @@ export function useUpdateProvider() {
     mutationFn: async ({
       id,
       updates,
+      notify,
     }: {
       id: string
       updates: Record<string, unknown>
+      notify?: {
+        type: 'provider_approved' | 'provider_rejected'
+        email?: string
+        displayName?: string
+        reason?: string
+      }
     }) => {
       const supabase = getSupabaseClient()
-      const { error } = await supabase.from('providers').update(updates).eq('id', id)
+      const payload = {
+        ...updates,
+        moderated_at: new Date().toISOString(),
+      }
+      const { error } = await supabase.from('providers').update(payload).eq('id', id)
       if (error) throw error
+
+      if (notify?.email) {
+        try {
+          await fetch('/api/notify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(notify),
+          })
+        } catch {
+          /* email is best-effort */
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.providers() })
       queryClient.invalidateQueries({ queryKey: ['providers'] })
+      queryClient.invalidateQueries({ queryKey: adminKeys.stats() })
     },
   })
 }

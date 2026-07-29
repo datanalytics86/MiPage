@@ -72,11 +72,13 @@ export default function PrivacidadPage() {
             </p>
           </section>
 
-          <section className="mb-8">
+          <section id="derechos" className="mb-8">
             <h2 className="font-display text-2xl font-semibold text-foreground mb-4">
-              5. Tus Derechos
+              5. Tus Derechos (Ley 19.628)
             </h2>
-            <p>Tienes derecho a:</p>
+            <p>
+              Conforme a la legislación chilena sobre protección de la vida privada, tienes derecho a:
+            </p>
             <ul className="list-disc pl-6 mt-4 space-y-2">
               <li>Acceder a tu información personal</li>
               <li>Corregir datos inexactos</li>
@@ -84,6 +86,11 @@ export default function PrivacidadPage() {
               <li>Oponerte al procesamiento de tus datos</li>
               <li>Portabilidad de datos</li>
             </ul>
+            <p className="mt-4">
+              Para solicitar eliminación de cuenta y datos, inicia sesión y envía un POST autenticado a{' '}
+              <code className="text-sm bg-muted px-1 rounded">/api/account/delete-request</code>{' '}
+              o escribe a privacidad@mipage.cl. Las solicitudes se procesan manualmente por el administrador.
+            </p>
           </section>
 
           <section className="mb-8">
@@ -124,8 +131,8 @@ export default function PrivacidadPage() {
             </h2>
             <p>
               Para ejercer tus derechos o consultas sobre privacidad, contáctanos en:{' '}
-              <a href="mailto:privacidad@luxeservices.com" className="text-gold hover:underline">
-                privacidad@luxeservices.com
+              <a href="mailto:privacidad@mipage.cl" className="text-gold hover:underline">
+                privacidad@mipage.cl
               </a>
             </p>
           </section>

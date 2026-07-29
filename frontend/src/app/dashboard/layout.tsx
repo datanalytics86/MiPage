@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  PlusCircle,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -22,6 +23,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Publicar aviso', href: '/dashboard/avisos/nuevo', icon: PlusCircle },
   { name: 'Mi Perfil', href: '/dashboard/perfil', icon: User },
   { name: 'Mis Servicios', href: '/dashboard/servicios', icon: Briefcase },
   { name: 'Mi Galería', href: '/dashboard/galeria', icon: Image },

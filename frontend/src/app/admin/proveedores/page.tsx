@@ -37,10 +37,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatDate, formatPrice } from '@/lib/utils'
-import { useAdminProviders, useUpdateProvider } from '@/hooks/useAdmin'
+import { useAdminProviders, useUpdateProvider, type AdminProviderRow } from '@/hooks/useAdmin'
 import { getProviderImage } from '@/lib/providers'
 import { useToast } from '@/stores/uiStore'
 import type { ProviderStatus } from '@/types/database'
+import { Textarea } from '@/components/ui/textarea'
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning/10 text-warning',
@@ -63,14 +64,45 @@ export default function AdminProveedoresPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [preview, setPreview] = useState<AdminProviderRow | null>(null)
+  const [rejectTarget, setRejectTarget] = useState<AdminProviderRow | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
 
-  const mutate = async (id: string, updates: Record<string, unknown>, message: string) => {
+  const mutate = async (
+    id: string,
+    updates: Record<string, unknown>,
+    message: string,
+    notify?: {
+      type: 'provider_approved' | 'provider_rejected'
+      email?: string
+      displayName?: string
+      reason?: string
+    }
+  ) => {
     try {
-      await updateProvider.mutateAsync({ id, updates })
+      await updateProvider.mutateAsync({ id, updates, notify })
       toast.success(message)
     } catch {
       toast.error('Error', 'No se pudo actualizar el proveedor')
     }
+  }
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return
+    const reason = rejectReason.trim() || 'No cumple políticas de contenido'
+    await mutate(
+      rejectTarget.id,
+      { status: 'rejected', rejection_reason: reason },
+      'Proveedor rechazado',
+      {
+        type: 'provider_rejected',
+        email: rejectTarget.email,
+        displayName: rejectTarget.display_name,
+        reason,
+      }
+    )
+    setRejectTarget(null)
+    setRejectReason('')
   }
 
   const filteredProviders = providers.filter((provider) => {
@@ -84,7 +116,7 @@ export default function AdminProveedoresPage() {
     return matchesSearch && matchesStatus && matchesCategory
   })
 
-  const categories = [...new Set(providers.map((p) => p.category))]
+  const categories = Array.from(new Set(providers.map((p) => p.category)))
 
   if (error) {
     return (
@@ -236,12 +268,25 @@ export default function AdminProveedoresPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setPreview(provider)}>
+                        <Eye className="h-4 w-4 mr-1" />
+                        Fotos
+                      </Button>
                       {provider.status === 'pending' && (
                         <>
                           <Button
                             size="sm"
                             onClick={() =>
-                              mutate(provider.id, { status: 'approved' }, 'Proveedor aprobado')
+                              mutate(
+                                provider.id,
+                                { status: 'approved', rejection_reason: null },
+                                'Proveedor aprobado',
+                                {
+                                  type: 'provider_approved',
+                                  email: provider.email,
+                                  displayName: provider.display_name,
+                                }
+                              )
                             }
                             className="bg-success hover:bg-success/90"
                           >
@@ -251,9 +296,10 @@ export default function AdminProveedoresPage() {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() =>
-                              mutate(provider.id, { status: 'rejected' }, 'Proveedor rechazado')
-                            }
+                            onClick={() => {
+                              setRejectTarget(provider)
+                              setRejectReason('')
+                            }}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Rechazar
@@ -346,6 +392,103 @@ export default function AdminProveedoresPage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {preview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-display text-xl font-semibold">{preview.display_name}</h3>
+                  <p className="text-sm text-foreground-muted">
+                    {preview.category} · {preview.city} · {preview.email}
+                  </p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setPreview(null)}>
+                  Cerrar
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {(preview.photos?.length
+                  ? preview.photos
+                  : preview.cover_photo
+                    ? [preview.cover_photo]
+                    : []
+                ).map((url) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={url}
+                    src={url}
+                    alt=""
+                    className="rounded-lg object-cover aspect-square w-full border"
+                  />
+                ))}
+                {!preview.photos?.length && !preview.cover_photo && (
+                  <p className="text-sm text-foreground-muted col-span-full">Sin fotos</p>
+                )}
+              </div>
+              {preview.status === 'pending' && (
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    className="bg-success hover:bg-success/90"
+                    onClick={async () => {
+                      await mutate(
+                        preview.id,
+                        { status: 'approved', rejection_reason: null },
+                        'Proveedor aprobado',
+                        {
+                          type: 'provider_approved',
+                          email: preview.email,
+                          displayName: preview.display_name,
+                        }
+                      )
+                      setPreview(null)
+                    }}
+                  >
+                    Aprobar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setRejectTarget(preview)
+                      setPreview(null)
+                    }}
+                  >
+                    Rechazar
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {rejectTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 space-y-4">
+              <h3 className="font-semibold text-lg">Rechazar {rejectTarget.display_name}</h3>
+              <p className="text-sm text-foreground-muted">
+                El publisher recibirá un email/notificación con el motivo (si Resend está configurado).
+              </p>
+              <Textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Motivo del rechazo (fotos, bio, política…)"
+                rows={4}
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setRejectTarget(null)}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={confirmReject}>
+                  Confirmar rechazo
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   )

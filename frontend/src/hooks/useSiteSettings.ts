@@ -74,11 +74,12 @@ export function useSiteSettings() {
 
       if (error) throw error
 
-      const settings = { ...defaults }
+      const settings: SiteSettings = { ...defaults }
       for (const row of data || []) {
         const key = row.key as keyof SiteSettings
-        if (key in settings) {
-          settings[key] = { ...settings[key], ...(row.value as object) }
+        if (key in settings && row.value && typeof row.value === 'object') {
+          // merge partial CMS blobs from site_settings rows
+          Object.assign(settings[key] as object, row.value as object)
         }
       }
       return settings
