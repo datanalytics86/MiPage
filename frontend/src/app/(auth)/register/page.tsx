@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
-import { filterCities } from '@/lib/mockProviders'
+import { filterCities } from '@/lib/filters'
 import type { ProviderCategory } from '@/types'
 
 const REGISTER_CITIES = filterCities.filter((city) => city !== 'Todas')

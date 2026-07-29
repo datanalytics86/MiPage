@@ -156,8 +156,10 @@ No hay cutover de datos Express (temp-db no era prod). Live = Supabase. Si exist
 ## Criterio de “hecho” arquitectónico
 
 - [x] Decisión documentada
-- [ ] `backend/` fuera del path activo (archive)
-- [ ] Root package solo frontend
-- [ ] Env examples solo Supabase + opcionales
-- [ ] CI solo frontend + tests
-- [ ] README honesto refleja este ADR
+- [x] `backend/` fuera del path activo (`archive/2026-legacy/backend/`)
+- [x] Root package solo scripts → frontend (sin workspaces Express)
+- [x] Env examples solo Supabase + opcionales
+- [x] CI solo frontend + tests (Vitest + type-check + build)
+- [x] README honesto refleja este ADR
+
+**Actualizado:** 2026-07-29 (re-auditoría Agente 0 + cleanup residual).

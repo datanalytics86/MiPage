@@ -1,457 +1,263 @@
 # AUDIT-REPORT — MiPage (Agente 0 · Auditor Forense)
 
-**Fecha de auditoría:** 2026-07-28  
+**Fecha re-auditoría:** 2026-07-29  
 **Repositorio:** `datanalytics86/MiPage`  
-**Branch auditado (default):** `claude/marketplace-services-app-011CUqB4gip6N34maEABp5TW`  
-**HEAD:** `3576437` — *feat: registro automatico de proveedores pendientes y seed demo*  
-**Live actual (declarado):** https://mi-page-lake.vercel.app  
-**Método:** clone fresco + inventario recursivo + cruce de imports/deps + revisión de secrets trackeados + PRs abiertas  
-**Alcance:** estado real del default branch. Features de PRs no mergeadas se marcan como *fuera de HEAD*.
+**Branch auditado:** `feat/tier1-supabase-consolidation`  
+**HEAD al momento del escaneo:** `cc6a887` — *feat: tier-1 production ready + hard QAQC + cleanup*  
+**Default branch remoto:** `claude/marketplace-services-app-011CUqB4gip6N34maEABp5TW` (`3576437`)  
+**Live:** https://mi-page-lake.vercel.app  
+**Método:** inventario recursivo del working tree + cruce imports/deps + secrets trackeados + type-check + Vitest + gap vs criterios Tier-1 del megaprompt  
+**Alcance:** estado **actual consolidado** (post cleanup parcial). Baseline histórico del default branch se resume en §0.A.
 
 ---
 
 ## 0. Resumen ejecutivo (estado honesto)
 
-| Dimensión | Estado real en HEAD | Overclaim en docs |
-|-----------|---------------------|-------------------|
-| Stack de producción en Vercel | **Solo frontend Next.js** (`vercel.json` → `frontend/`) | README describe dual Express+Prisma+Socket.io “completo” |
-| Datos en runtime frontend | **Supabase-first** (hooks + Auth + RLS) con **fallback mock** | “100% completo”, “listo para producción” |
-| Backend Express | **Código legacy no consumido por frontend** | “Backend 100% funcional” |
-| Persistencia backend | **`temp-db.json` + TempPrismaClient**, no Prisma real en controllers | “PostgreSQL + Prisma” |
-| Upload de imágenes | **Parcial:** `useUploadGalleryFile` + Storage SQL; validación client débil; sin malware scan | Cloudinary en README/env como si fuera el path principal |
-| Listings / moderación de avisos | **No existe** en HEAD (`/dashboard/avisos`, `/admin/avisos` ausentes). Está en **PR #11** (otra branch) | README: “Publisher crea servicio → PENDING → Admin aprueba” |
-| Metadata dinámica | **Solo en backend Prisma** (controllers). **Cero** tablas/UI Supabase de metadata | FASE-* y SISTEMA-METADATA como “implementado” |
-| Tests duros | **Backend:** 1 suite auth + Jest. **Frontend:** 0 tests, 0 Playwright | “Tests configurados”, CI con `test:ci` / `type-check` inexistentes |
-| Seguridad | `backend/.env` **commiteado** con `JWT_SECRET`; UI imports rotos; CORS backend “permitir todo” | Helmet/JWT “seguro” |
-| Docs | **33 Markdown**, ~335 KB, muchos overclaims | — |
-| PRs abiertas | **8** (#2, #4, #5, #6, #8, #9, #10, #11) | — |
+| Dimensión | Estado real (branch Tier-1) | Gap vs objetivo Tier-1 |
+|-----------|-----------------------------|-------------------------|
+| Stack de producción | **Solo frontend Next.js** + Supabase | OK |
+| Backend Express | **Archivado** en `archive/2026-legacy/backend/` | OK (no en path activo) |
+| Secrets en tree activo | **Ningún `.env` trackeado** (solo examples) | Historial git aún puede contener `backend/.env` viejo |
+| Docs overclaiming | Archivados; README honesto | Falta `DESIGN-SYSTEM.md` |
+| UI base | Dropdown/Select/Label presentes; build type-check OK | **Sin design system élite** |
+| Tema | **Light luxury** (cream/gold) | Megaprompt exige **dark premium** |
+| Componentes foto | `ProviderCard` + galería en perfil | Falta PhotoGrid/Masonry, skeletons, empty states, gallery modal reutilizable |
+| Publisher wizard | `/dashboard/avisos/nuevo` multi-step | Existe; pulible |
+| Admin moderación | `/admin/proveedores` + preview/reject | Existe; UX mejorable |
+| Tests | 24 unit (Vitest) verdes; smoke E2E Playwright | No cubre 5 flujos E2E completos sin credenciales |
+| Lint | **Sin config ESLint** → `next lint` interactivo / roto | P0 residual |
+| Root `package-lock.json` | **Stale** (workspaces backend + `luxeservices`) | P0 residual |
+| Dual architecture en FE | **0** referencias Express/Prisma/API_URL | OK |
+| Lighthouse ≥ 92 | **No medido** en esta pasada | Pendiente Agente 5 |
 
-**Veredicto forense:** el default branch es un **frontend Supabase en progreso** con un **backend Express fantasma** y un **vertedero documental**. No es Tier-1. No es autosustentable sin cleanup + features críticas + QAQC.
+**Veredicto forense 2026-07-29:** el branch de consolidación **sí avanzó** respecto al default (archive backend, docs honestas, wizard, admin, tests unitarios, headers, migrations 006). **No es Tier-1 visual ni dark-premium.** Residual de higiene (ESLint, lockfile root, design system) debe cerrarse antes de llamar “listo”.
+
+### 0.A Baseline del default branch (contexto)
+
+En default (`3576437`) existía:
+
+- Dual stack fantasma (Express + `temp-db.json` no consumido por FE)
+- `backend/.env` commiteado con JWT predecible
+- 25+ MD overclaiming “100% completo”
+- UI rotas (`dropdown-menu` / `select` ausentes)
+- Sin wizard listings ni tests FE
+
+Eso **ya se abordó** en `cc6a887`. Este informe no repite la auditoría baseline como si fuera el estado actual.
 
 ---
 
-## 1. Inventario de estructura (HEAD)
+## 1. Inventario de estructura (branch actual)
 
 ```
 MiPage/
-├── frontend/          # Next.js 14 + Supabase (ÚNICO path de producto real)
-├── backend/           # Express + temp-db + Prisma schema (LEGACY / no cableado al FE)
-├── docs/              # 7 guías (parcialmente obsoletas)
-├── public/            # solo manifest.json huérfano (root)
-├── .github/workflows/ # CI roto / desalineado
-├── 25+ *.md en root   # FASE-*, PROYECTO-COMPLETO, SOLUCION-*, CODESPACES_*, etc.
-├── vercel.json        # deploy solo frontend
-├── package.json       # workspaces frontend+backend; scripts solo frontend
-└── package-lock.json  # root (no hay lockfiles en frontend/ ni backend/)
+├── frontend/                 # ÚNICO path de producto
+│   ├── src/                  # ~93 archivos, ~11.4k LOC
+│   ├── supabase/             # schema + migrations 002–006
+│   ├── e2e/                  # smoke Playwright
+│   ├── scripts/              # seed, health, backup-check, validate-env
+│   └── package.json          # name: mipage
+├── archive/2026-legacy/      # backend + docs overclaim + scripts Codespaces
+├── .github/workflows/ci-cd.yml
+├── AUDIT-REPORT.md / ARCHITECTURE-DECISION.md / ADMIN-GUIDE.md / README.md
+├── package.json              # scripts root → frontend (sin workspaces)
+└── package-lock.json         # ⚠ STALE monorepo (ver §6)
 ```
 
-**Conteos aproximados**
-
-| Área | Archivos | LOC (aprox.) |
-|------|----------|--------------|
-| `frontend/src` | 76 | ~9,420 |
-| `backend/src` | 23 | ~4,559 |
-| Markdown total | 33 | ~335 KB |
-| `backend/temp-db.json` | 1 | ~14 KB |
-
-**Nombre inconsistente:** `frontend/package.json` → `"name": "luxeservices"` (rebrand incompleto).
+**No existe** `backend/` en root. **No existe** `DESIGN-SYSTEM.md`.
 
 ---
 
-## 2. Dualidad de clientes (Supabase vs Prisma/Express) — HALLAZGO CRÍTICO
-
-### 2.1 Qué usa el frontend HOY
+## 2. Arquitectura real (Supabase-first)
 
 | Capa | Tecnología real |
 |------|-----------------|
-| Auth | Supabase Auth (`AuthContext`, middleware) |
-| DB | Supabase client (`from('providers'|'profiles'|…)` ) |
-| Storage | Supabase Storage bucket `gallery` (`useGallery.ts`) |
-| API propia Next | Solo `POST /api/contact` (route handler Next, no Express) |
-| Estado UI | Zustand + React Query |
-| Fallback sin env | `mockProviders.ts` en home y explorar |
+| Auth | Supabase Auth + middleware RBAC |
+| DB | Supabase Postgres + RLS |
+| Storage | bucket `gallery` (+ policies 004) |
+| API propia | Route handlers: contact, health, notify, payments/featured, account/delete-request |
+| UI state | Zustand + React Query |
+| Fallback sin env | `mockProviders` en home/explorar |
+| Express/Prisma | Solo en archive — **0 imports en `frontend/src`** |
 
-**Cruce forense:** búsquedas de `NEXT_PUBLIC_API_URL`, `localhost:3001`, `/api/services`, `/api/auth` en `frontend/src` → **sin consumo del backend Express**. El único `fetch` API relevante es `/api/contact` (Next).
-
-### 2.2 Qué es el backend HOY
-
-| Capa | Realidad |
-|------|----------|
-| Framework | Express + Socket.io montado |
-| “ORM” en controllers | `TempPrismaClient` desde `backend/src/utils/tempDB.js` → **`temp-db.json`** |
-| Prisma real | `schema.prisma` (SQLite) + seed + **tests** importan `@prisma/client`; **controllers de app no** |
-| Auth | JWT + bcrypt locales (paralelo a Supabase Auth) |
-| Cloudinary | en `package.json` y `.env` — **0 requires en `backend/src`** |
-| SendGrid | en package.json — **0 requires en src** (export ExcelJS sí en userManagement) |
-| Swagger | solo en development |
-
-### 2.3 Modelos de dominio **incompatibles**
-
-| Concepto | Backend Prisma | Frontend Supabase |
-|----------|----------------|-------------------|
-| Roles | `USER` / `PUBLISHER` / `ADMIN` | `user` / `provider` / `admin` |
-| Unidad publicable | `Service` (listing con status PENDING/APPROVED/…) | `providers` (perfil con status) + `services` (menú de precios del perfil) |
-| Moderación | Aprobar **servicios** | Aprobar **proveedores** |
-| Metadata fields | `MetadataField`, `CustomFieldValue`, `UserMetadata` | **No existe en schema.sql** |
-| Favoritos / reviews | Modelos Prisma | Tablas Supabase + store |
-| Auth identity | email/password en tabla User | `auth.users` + `profiles` |
-
-**Conclusión arquitectónica (input para Agente 1):** no hay “dual stack” operativo; hay **un stack vivo (Supabase)** y **un stack muerto (Express/temp-db/Prisma schema)**. Consolidar = **Supabase-first** y aislar/eliminar `backend/`.
+**Dominio de producto:** el “listing/aviso” es el **perfil de proveedor** (`providers.status`: pending → approved/rejected) + gallery + services menú + metadata.
 
 ---
 
-## 3. Secrets y superficie de seguridad
+## 3. Secrets y seguridad
 
-### 3.1 Archivos sensibles trackeados por git
+### 3.1 Tracked (activo)
 
-| Path | Tracked | Riesgo |
-|------|---------|--------|
-| `backend/.env` | **SÍ** | **CRÍTICO** — JWT y config de entorno en historial |
-| `backend/temp-db.json` | **SÍ** | Alto — hashes bcrypt + datos demo; credenciales de prueba |
-| `.env.example` | Sí (OK) | Bajo — placeholders |
-| `backend/.env.example` | Sí (OK) | Bajo |
-| `frontend/.env.local.example` | Sí (OK) | Bajo — menciona DEMO_SEED_PASSWORD ejemplo |
+| Path | Riesgo |
+|------|--------|
+| `.env.example` / `frontend/.env.local.example` | Bajo (placeholders) |
+| `archive/**/.env` | **No presentes** en tree |
+| `backend/.env` | **Eliminado** del tree activo (histórico en git) |
 
-### 3.2 Contenido relevante de `backend/.env` (valores de desarrollo, pero **no deben estar en git**)
+### 3.2 Historial
 
-- `JWT_SECRET="mipage-secret-key-development-testing-2024"` (**predecible**)
-- `DATABASE_URL="file:./dev.db"`
-- Cloudinary demo placeholders
-- `FRONTEND_URL` apuntando a un Codespaces GitHub dev URL
-- `PORT=3001`, `NODE_ENV=development`
+- `git log -- backend/.env` muestra commits antiguos. **Rotar** cualquier secreto reutilizado (JWT demo, Cloudinary).
+- Recomendación: `git filter-repo` o BFG **solo si** hubo keys reales de prod (evidencia actual: secrets de desarrollo).
 
-### 3.3 `.gitignore` insuficiente
+### 3.3 Headers / middleware
 
-- Ignora `.env` genérico, pero **`backend/.env` ya está tracked** → el ignore no lo saca del índice.
-- No ignora explícitamente `backend/temp-db.json`, `*.db`, `dev.db` (solo `backend/prisma/dev.db`).
-- No hay política clara de `supabase/.temp`, coverage frontend, etc.
+- HSTS + CSP + XFO + nosniff presentes en `next.config.js`.
+- CSP `font-src 'self' data:` **no incluye** `fonts.gstatic.com` / `fonts.googleapis.com` → tipografía Google puede romperse bajo CSP estricto.
+- Middleware: en prod sin env Supabase → 503 en `/admin` y `/dashboard` (correcto). Dev sin env = no-op (aceptable con mocks).
 
-### 3.4 Backend CORS / Helmet
+### 3.4 Upload
 
-- `server.js`: en práctica **permite cualquier origin** (`callback(null, true)` en else).
-- CSP de Helmet **desactivado**.
-- No aplica al deploy Vercel actual (backend no se despliega), pero es deuda peligrosa si alguien lo levanta.
-
-### 3.5 Frontend security headers
-
-`next.config.js` tiene X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy. **Falta HSTS y CSP** (no hay CSP estricto).
-
-### 3.6 Middleware RBAC
-
-- Protege `/dashboard` y `/admin` **solo si** `hasSupabaseEnv()`.
-- Si faltan env vars: **middleware no-op** → rutas admin/dashboard accesibles sin auth a nivel edge (las páginas client pueden fallar, pero la puerta está abierta).
+- `uploadValidation.ts` + tests: mime allowlist, size, bloqueo extensiones peligrosas.
+- Sin malware scan de terceros (aceptable para Tier-1 early; documentar).
 
 ---
 
-## 4. Código muerto / legacy / roto
+## 4. Código muerto / residual / higiene
 
-### 4.1 P0 — Rompe build o es secreto en repo (eliminar o arreglar YA)
+### 4.1 P0 — Cerrar en este pase Agente 0
 
-| Ítem | Justificación | Acción recomendada |
-|------|---------------|--------------------|
-| `backend/.env` | Secret/config en git | **Eliminar del tree + rotar JWT**; purge history si hubo keys reales |
-| Missing `frontend/src/components/ui/dropdown-menu.tsx` | Importado por `Header.tsx`, `admin/proveedores`, `admin/usuarios` | **Crear componente o quitar imports** — build TypeScript/Next falla |
-| Missing `frontend/src/components/ui/select.tsx` | Importado por admin pages + comentarios | Idem |
-| `backend/` completo (si se elige Supabase-first) | Frontend no lo consume; dualidad de dominio | **Archivar o borrar** tras decisión Agente 1 |
-| `backend/temp-db.json` + `tempDB.js` + `create-db.js` + `scripts/regenerate-temp-db.js` | Shim JSON, no producción | Eliminar / archivar con backend |
-| Root `.env.example` con `NEXT_PUBLIC_API_URL` / Socket / Cloudinary como path principal | Documenta stack muerto | Reescribir a Supabase-only |
+| Ítem | Acción |
+|------|--------|
+| Sin `.eslintrc*` / eslint config | Crear config Next Strict no-interactiva |
+| Root `package-lock.json` workspaces backend/`luxeservices` | Eliminar o regenerar vacío/simple; CI usa `frontend/package-lock.json` |
+| CSP fonts incompleta | Ampliar `font-src` / `style-src` para Google Fonts **o** self-host fonts |
+| `filterCities` / `sortOptions` dentro de `mockProviders.ts` | Extraer a `lib/filters.ts` (utilidades productivas vs demo data) |
 
-### 4.2 P1 — Legacy / docs overclaiming (archivar, no borrar a ciegas)
+### 4.2 P1 — Design / producto (Agentes 2–3)
 
-Mover a `/archive/2026-legacy/` (preserva historia de decisiones):
+| Ítem | Estado |
+|------|--------|
+| Dark theme premium | **Ausente** (tema light cream) |
+| Design tokens documentados | Solo parcial en Tailwind |
+| PhotoGrid / Masonry | No |
+| EmptyState / Skeleton / ErrorState reutilizables | No (loading strings ad-hoc) |
+| Gallery modal full-screen reutilizable | Parcial en `ProviderProfileClient` |
+| Toast premium | Toaster básico existe |
+| Page transitions | Framer en cards; no page-level |
 
-| Archivo / carpeta | Motivo |
-|-------------------|--------|
-| `PROYECTO-COMPLETO.md` | Título “100% COMPLETO”; inventa SWR, Socket.io client, rutas `/services/new` que no existen en HEAD |
-| `FASE-2-COMPLETADA.md` … `FASE-6-COMPLETADA.md` | “COMPLETADO AL 100%”; Backend 100% + Frontend 100% — falso respecto a product gaps |
-| `AUDITORIA-CALIDAD-2024-11-05.md` | Auditoría vieja con scores 100% y estructura desactualizada |
-| `QUALITY-SUMMARY.md` | “Listo para producción” |
-| `RESUMEN_FINAL.md`, `SESION_COMPLETADA.md` | Narrativa de sesión/fase cerrada |
-| `SOLUCION-ACCESO-ADMIN.md`, `SOLUCION-ERROR-404.md` | Troubleshooting puntual legacy |
-| `DEPLOY-VERCEL-FIX.md` | Fix one-off; debe subsumirse en docs de deploy honestas |
-| `ACCESO_CODESPACES.md`, `CODESPACES_SETUP.md` | Codespaces-centric; no es runbook de prod |
-| `CLAUDE_CODE_TEMPLATES.md`, `PROMPT.md` | Meta-prompts de agentes; no producto |
-| `SISTEMA-METADATA-IMPLEMENTACION.md` | Metadata solo en backend legacy |
-| `START-HERE.md`, `INICIO-RAPIDO.md`, `QUICK_START.md`, `GUIA-USO-COMPLETA.md` | Duplican README con claims del stack Express |
-| `architecture.md` (root) | Describe Prisma/Express como core; desalineado del live |
-| `docs/API.md`, `docs/DEPLOYMENT.md`, `docs/MANAGEMENT-GUIDE.md`, etc. | Parcialmente Express-era; revisar uno a uno |
-| `public/manifest.json` (root) | Huérfano; el FE usa `frontend/public/site.webmanifest` |
-| `start-dev.sh`, `stop-dev.sh` | Probablemente orquestan dual-stack Codespaces |
+### 4.3 P2 — Mantener temporalmente
 
-### 4.3 P2 — Código frontend sospechoso / residual
+| Ítem | Por qué |
+|------|---------|
+| `mockProviders` | Fallback demo sin Supabase env |
+| `archive/2026-legacy/**` | Historia + referencia Prisma metadata |
+| Cloudinary en `remotePatterns` | Imágenes legacy/Unsplash path; bajo costo mantener |
+| `continue-on-error` en npm audit CI | Debe volverse blocking cuando audit limpio |
 
-| Ítem | Evidencia | Acción |
-|------|-----------|--------|
-| `frontend/src/lib/mockProviders.ts` | Usado activamente como fallback en `page.tsx` y `ExplorarContent.tsx` | **No borrar aún**: es fallback de demo. Post-Tier-1: acotar a `NODE_ENV=development` o seed real únicamente |
-| `filterCities` / `sortOptions` en mock file | Mezcla utilidades reales con mocks | Extraer utilidades a `lib/filters.ts`; dejar mocks solo en demo |
-| `ProviderProfileClient.tsx` | Existe y se usa vía perfil; revisar si hay dead exports | Mantener si el perfil lo importa |
-| Nombre package `luxeservices` | Branding viejo | Renombrar a `mipage` / `mi-page` |
-| Cloudinary en `next.config.js` remotePatterns | Path legacy; Storage Supabase es el actual | Mantener solo si se usa CDN externo; si no, limpiar o documentar |
+### 4.4 Archive (no borrar)
 
-### 4.4 P3 — Backend internals (si se elimina backend, todo va junto)
-
-| Path | Notas |
-|------|-------|
-| `backend/src/controllers/*` | Toda la lógica de negocio Express |
-| `backend/src/routes/*` | Admin, auth, metadata, publisher, etc. |
-| `backend/prisma/*` | Schema rico (metadata, approvals) **no migrado a Supabase** — **extraer ideas antes de borrar** |
-| `backend/__tests__/auth.test.js` | Única suite; depende de PrismaClient real, no TempDB |
-| `backend/package.json` deps: cloudinary (0 uso), socket.io (stub events), swagger, multer (parcial) | Dead/overkill deps |
+Todo `archive/2026-legacy/` se conserva: backend Express, temp-db demo, docs FASE-*, PROYECTO-COMPLETO, Codespaces scripts. Ver `archive/2026-legacy/README.md`.
 
 ---
 
-## 5. Imports / componentes / rutas muertas o rotas
+## 5. Rutas de producto (estado real)
 
-### 5.1 Componentes UI faltantes (imports rotos)
+**Públicas:** `/`, `/explorar`, `/explorar/[category]`, `/favoritos`, `/perfil/[slug]`, `/perfil/[slug]/comentarios`, `/ayuda`, `/contacto`, `/privacidad`, `/terminos`, `/sobre-nosotros`  
+
+**Auth:** `/login`, `/register`  
+
+**Dashboard:** `/dashboard`, `/perfil`, `/servicios`, `/galeria`, `/resenas`, **`/avisos/nuevo`** (wizard)  
+
+**Admin:** `/admin`, `/proveedores`, `/usuarios`, `/reportes`, `/configuracion`, `/metadata`  
+
+**API:** `/api/contact`, `/health`, `/notify`, `/payments/featured`, `/account/delete-request`
+
+**Ausentes (OK / fuera de scope):** chat, app móvil, i18n, geo avanzada, `/admin/avisos` separado (moderación unificada en proveedores).
+
+---
+
+## 6. Dependencias
+
+### Frontend (en uso)
+
+next, react, supabase, tanstack query, zustand, zod, framer-motion, lucide, radix (slot, avatar, dropdown, select, label), cva/clsx/tailwind-merge.
+
+### Dev
+
+vitest + coverage, playwright, typescript, eslint-config-next (presente en package pero **sin archivo config**).
+
+### Root lockfile
 
 ```
-@/components/ui/dropdown-menu  → Header, admin/proveedores, admin/usuarios
-@/components/ui/select         → admin/proveedores, admin/usuarios, admin/reportes, perfil/.../comentarios
+package-lock.json → workspaces: backend + luxeservices  (OBSOLETO)
 ```
 
-UI real presente: `avatar`, `badge`, `button`, `card`, `input`, `Toaster` únicamente.
-
-### 5.2 Rutas de producto (HEAD)
-
-**Existen:**
-
-- Público: `/`, `/explorar`, `/explorar/[category]`, `/favoritos`, `/perfil/[slug]`, `/perfil/[slug]/comentarios`, `/ayuda`, `/contacto`, `/privacidad`, `/terminos`, `/sobre-nosotros`
-- Auth: `/login`, `/register`
-- Dashboard provider: `/dashboard`, `/dashboard/perfil`, `/dashboard/servicios`, `/dashboard/galeria`, `/dashboard/resenas`
-- Admin: `/admin`, `/admin/proveedores`, `/admin/usuarios`, `/admin/reportes`, `/admin/configuracion`
-- API: `/api/contact`
-
-**NO existen en HEAD (pero docs/PR las asumen):**
-
-- `/dashboard/avisos`, `/dashboard/avisos/nuevo` (PR #11)
-- `/admin/avisos` moderación de listings (PR #11)
-- `/services/new` (README — redirect a explorar para `/services`)
-
-**Redirects legacy** en `next.config.js`: `/services` → `/explorar`, `/auth/*` → `/login|/register`.
-
-### 5.3 Rutas backend (muertas respecto al FE)
-
-Todas bajo `/api/*` Express: auth, services, reviews, users, posts, admin, metadata-fields, service-types, publisher — **sin cliente en frontend HEAD**.
+**Acción:** borrar root lock o regenerar sin workspaces. No usarlo en CI.
 
 ---
 
-## 6. Dependencias no usadas / inconsistentes
+## 7. Features vs megaprompt
 
-### 6.1 Frontend (`frontend/package.json`)
-
-| Dependencia | Uso en `src` | Veredicto |
-|-------------|--------------|-----------|
-| `@radix-ui/react-slot` | `button.tsx` | KEEP |
-| `@radix-ui/react-avatar` | `avatar.tsx` | KEEP |
-| `@radix-ui/react-dropdown-menu` | package ok, **falta wrapper** | KEEP (después de crear UI) |
-| `@radix-ui/react-select` | package ok, **falta wrapper** | KEEP (después de crear UI) |
-| `@radix-ui/react-dialog` | **0 imports** | CANDIDATE REMOVE (o implementar UI) |
-| `@radix-ui/react-tabs` | 0 | REMOVE |
-| `@radix-ui/react-checkbox` | 0 | REMOVE |
-| `@radix-ui/react-separator` | 0 | REMOVE |
-| `@radix-ui/react-scroll-area` | 0 | REMOVE |
-| `@radix-ui/react-switch` | 0 | REMOVE |
-| `@radix-ui/react-slider` | 0 | REMOVE |
-| `@radix-ui/react-label` | 0 | REMOVE |
-| `@radix-ui/react-toast` | 0 (usa Toaster custom + zustand) | REMOVE |
-| `react-hook-form` | 0 | REMOVE (o usar en wizard listing) |
-| `@hookform/resolvers` | 0 | REMOVE (idem) |
-| `zod` | solo `api/contact` | KEEP |
-| `framer-motion`, `lucide-react`, `clsx`, `tailwind-merge`, `cva`, tanstack, zustand, supabase | en uso | KEEP |
-
-**Nota:** `depcheck` no se ejecutó en CI (no hay node_modules en clone fresco). Esta lista es estática por grep de imports.
-
-### 6.2 Backend
-
-| Dependencia | Uso real | Veredicto (si se mantiene backend) |
-|-------------|----------|-------------------------------------|
-| `cloudinary` | 0 en src | REMOVE |
-| `@sendgrid/mail` | 0 en src | REMOVE o implementar |
-| `exceljs` | export admin | KEEP si se mantiene admin Express |
-| `socket.io` | connection stub | REMOVE o implementar notificaciones reales |
-| `swagger-*` | dev only | optional |
-| `@prisma/client` | tests/seed; app usa TempDB | inconsistente — **arreglar o borrar** |
-
-### 6.3 Root / workspaces / CI
-
-- Root `package.json` declara workspaces `frontend` + `backend` y `install:all`.
-- **No hay** `frontend/package-lock.json` ni `backend/package-lock.json`.
-- CI hace `npm ci` con `cache-dependency-path: frontend/package-lock.json` y `backend/package-lock.json` → **fallará**.
-- CI corre `npm run type-check` y `npm run test:ci` en frontend → **scripts no existen**.
-- CI escucha `main`/`develop`; default branch del repo es la de Claude → **desalineación**.
-- Deploy jobs son **echo placeholders**, no deploy real.
-- Root `package-lock.json` (~560 KB) puede estar desincronizado con monorepo real.
-
-### 6.4 Scripts ausentes vs megaprompt
-
-| Esperado (ops) | Existe hoy |
-|----------------|------------|
-| `npm run seed:demo` | Sí en frontend |
-| `npm run health` | No |
-| `npm run backup-check` | No |
-| `type-check` / `test` frontend | No |
-| Playwright / Vitest | No |
+| Feature | Estado |
+|---------|--------|
+| Upload real + validación | Parcial–bueno |
+| Wizard multi-step publish | Implementado |
+| Admin approve/reject + fotos | Implementado |
+| Metadata dinámica | Admin UI + migration 006 + defaults locales |
+| Emails (Resend) | Route handler opcional |
+| Mercado Pago featured | Route handler opcional (501 sin token) |
+| Favoritos / reseñas / reportes | Implementado (UI) |
+| Solo-admin guide | `ADMIN-GUIDE.md` |
+| Design system élite | **Falta** |
+| Dark theme | **Falta** |
+| E2E 5 flujos + RBAC E2E | Smoke solo; RBAC unitario |
+| Lighthouse ≥ 92 | No verificado |
+| Sentry | Env opcional; wiring mínimo/ausente |
 
 ---
 
-## 7. Features críticas — gap real vs marketing
+## 8. PRs abiertas (contexto remoto)
 
-| Feature (prioridad Agente 3) | Estado en HEAD | Notas |
-|------------------------------|----------------|-------|
-| 1. Upload real de imágenes | **Parcial** | `useUploadGalleryFile` + migration 004; validación mime/size principalmente en Storage policy; UI acepta files sin hard-check client robusto; sin antivirus |
-| 2. Wizard listing multi-step + PENDING | **Ausente en HEAD** | En PR #11 (`claude/project-status-review-5Q2dS`); modelo de “avisos” no está en Supabase schema actual |
-| 3. Admin cola moderación + preview fotos | **Parcial (providers)** | `/admin/proveedores` approve/reject; **no** cola de listings; depende de dropdown/select rotos |
-| 4. Metadata fields dinámicos | **Solo backend legacy** | No migrado a Supabase |
-| 5. Emails transaccionales | **No** | Sin Resend/SendGrid cableado en FE; backend package sin uso |
-| 6. Mercado Pago featured | **No** | — |
-| Chat / móvil / i18n / geo | Fuera de scope | Correcto no implementar aún |
+8 PRs abiertas (#2–#11). **#11** (listings + moderación) es la más relevante; lógica portada/adaptada a Supabase en este branch — **no mergear ciegas** PRs Express (#10) sobre este path.
 
-### 7.1 Chile compliance (muestra)
-
-| Requisito | Estado |
-|-----------|--------|
-| Consentimiento explícito Ley 19.628 en registro | **Revisar:** registro tiene UI; no auditado como checkbox legal formal en este pase (probable gap) |
-| Política privacidad / términos | Páginas estáticas existen; fecha “Enero 2025”; genéricas |
-| Flujo eliminación de datos | **No** endpoint/self-service obvio |
-| Moderación contenido sensible documentada | **No** en docs honestas |
-
-### 7.2 Observabilidad
-
-- Sin Sentry en frontend HEAD.
-- Sin health check en Next (backend tiene `/health` no desplegado).
-- Sin logging estructurado product-side.
+| PR | Acción recomendada |
+|----|--------------------|
+| #11 | Cerrar o rebasar tras merge de este branch |
+| #10 y Express-era | Cerrar como superseded por Supabase-first |
+| UI antiguas #2–#6 | Cherry-pick visual selectivo solo si aporta |
 
 ---
 
-## 8. PRs abiertas (contexto, no mergeadas en HEAD)
+## 9. Checklist post-cleanup residual (Agente 0)
 
-| PR | Título corto | Head branch | Relevancia cleanup |
-|----|--------------|-------------|--------------------|
-| **#11** | Listings + admin moderation + provider profiles | `claude/project-status-review-5Q2dS` | **Máxima** — features críticas faltantes |
-| **#10** | Env validation, Prisma real, readiness, frontend hardening | `codex/continue-improvements-for-operability-wiqd9h` | Ops; parte ya solapada/obsoleta vs Supabase |
-| #9 | Placeholder Codex | `codex/continue-improvements-for-operability` | Superada por #10 |
-| #8 | Review remaining improvements | `claude/review-remaining-improvements-1DmDa` | Revisar cherry-picks |
-| #6 | UI rediseño marketplace | `claude/improve-service-site-b8jUf` | Posible solapamiento visual |
-| #5 | Catalog UI + inline admin | `codex/improve-performance-and-elevate-quality` | — |
-| #4 | Landing gallery minimalism | `codex/develop-web-platform-for-modeling-services` | — |
-| #2 | Preview services fallback | `codex/improve-repository-design-for-modern-appeal-8f0khx` | Mocks — solapado con mockProviders |
-
-**Riesgo:** 8 PRs divergentes sobre la misma base → merge caos. Cleanup debe ocurrir en una **branch de consolidación** con decisión Supabase-first, y cherry-pick selectivo de #11 (adaptado a schema Supabase, no Express).
+- [x] Backend fuera del path activo (archive)
+- [x] Docs overclaiming archivados
+- [x] Sin `.env` secrets en tree activo
+- [x] TypeScript `tsc --noEmit` OK
+- [x] Vitest 24/24 OK
+- [x] ESLint no-interactivo (`.eslintrc.json` Next core-web-vitals)
+- [x] Root lockfile stale eliminado (CI usa `frontend/package-lock.json`)
+- [x] Utils de filtros extraídas a `lib/filters.ts`
+- [x] CSP fonts (Google Fonts permitido)
+- [x] Dual stack residual en FE (ya limpio)
 
 ---
 
-## 9. Lista priorizada de eliminación / archivo (para Agente 2)
+## 10. Recomendación al Agente 1
 
-### Prioridad 0 — Seguridad / build (hacer primero)
-
-1. **Quitar del índice git** `backend/.env` (y rotar cualquier secreto reutilizado).
-2. **Arreglar o stubear** `dropdown-menu.tsx` + `select.tsx` (si no se arregla, no hay build verde).
-3. Endurecer `.gitignore` para `.env`, `temp-db.json`, `*.db`.
-
-### Prioridad 1 — Dual-stack (post decisión Agente 1)
-
-4. Si Supabase-first (recomendado):
-   - Eliminar o mover a `archive/2026-legacy/backend/` toda la carpeta `backend/`.
-   - Eliminar workspace backend del root `package.json`.
-   - Reescribir `.env.example` y README stack section.
-   - Actualizar CI: solo frontend + supabase checks.
-5. **Antes de borrar Prisma schema:** exportar inventario de modelos útiles (metadata, approval flow, rejectionReason) a backlog Supabase migrations.
-
-### Prioridad 2 — Documentación overclaiming
-
-6. Archivar a `archive/2026-legacy/docs/` la lista §4.2.
-7. Dejar en root solo: `README.md` (honesto), `LICENSE`, `CONTRIBUTING.md` (si se actualiza), y docs nuevas del megaprompt (`ARCHITECTURE-DECISION.md`, `ADMIN-GUIDE.md`, este `AUDIT-REPORT.md`).
-
-### Prioridad 3 — Dependencias y basura
-
-8. Podar Radix/react-hook-form no usados **o** usarlos en features Agente 3.
-9. Borrar `public/manifest.json` root si no se usa.
-10. Alinear nombre package `luxeservices` → MiPage.
-11. Limpiar `package-lock` monorepo / generar lockfiles coherentes con CI.
-
-### Prioridad 4 — Mocks residuales (después de seed real estable)
-
-12. Restringir `mockProviders` a demo/dev.
-13. Eliminar comentarios TODO muertos y shims `hasSupabaseEnv` paths que enmascaran misconfig en prod.
+**Mantener Supabase-first estricto** (ya documentado en `ARCHITECTURE-DECISION.md`). Actualizar checkboxes de “hecho” tras este cleanup residual. **No** reintroducir Express.
 
 ---
 
-## 10. Justificación de no-eliminación (qué NO tocar todavía)
+## 11. Recomendación al Agente 2 (prioridad máxima)
 
-| Activo | Por qué mantener |
-|--------|------------------|
-| `frontend/supabase/schema.sql` + migrations 002–005 | Fuente de verdad DB actual |
-| Hooks Supabase (`useAdmin`, `useGallery`, …) | Producto real |
-| Páginas admin/dashboard/explorar/auth | Core UX |
-| `mockProviders` (temporal) | Evita home vacía sin env; quitar solo tras seed/prod data |
-| Contenido conceptual de Prisma metadata / approval | Reimplementar en Supabase, no descartar ideas |
-| PR #11 diff | Fuente de wizard/moderación a portar |
+1. Invertir a **dark premium** (tokens + globals + componentes).
+2. Crear `DESIGN-SYSTEM.md` + tokens de motion/spacing.
+3. Implementar: `PhotoGrid`, `ServiceCard` (alias ProviderCard elite), `EmptyState`, `Skeleton`, `ErrorState`, `GalleryLightbox`, micro-interacciones.
+4. Mobile-first + aspect ratios de fotografía como producto principal.
 
 ---
 
-## 11. Checklist de verificación post-cleanup (preview Agente 2/4)
-
-- [ ] `git ls-files | findstr /i "\.env$"` → vacío salvo examples
-- [ ] No existe `temp-db.json` en tree de trabajo principal
-- [ ] `npx tsc --noEmit` en frontend sin error
-- [ ] `next build` exit 0
-- [ ] Cero imports a Express / `NEXT_PUBLIC_API_URL` en runtime FE
-- [ ] `npx depcheck` limpio (o allowlist justificada)
-- [ ] Docs root sin “100% completo” / “listo para producción” sin evidencia
-- [ ] CI scripts = scripts reales en package.json
-
----
-
-## 12. Recomendación al Agente 1 (Arquitecto)
-
-**Decisión recomendada: Supabase-first estricto.**
-
-Razones forenses (no opinión de producto abstracta):
-
-1. Vercel solo despliega `frontend/`.
-2. Todo el data path de HEAD ya es Supabase (auth, RLS, storage, hooks).
-3. Express no tiene consumidores en el FE.
-4. Operar un solo admin humano (Nicolás) es más realista con Supabase Dashboard + RLS + Edge Functions que con Express + Prisma + Railway + Cloudinary + JWT propio.
-5. El backend actual **ni siquiera usa Prisma en runtime** (TempDB).
-
-**Plan de consolidación sugerido:**
-
-```
-[Browser] → Next.js 14 (Vercel)
-              ├─ Supabase Auth + RLS
-              ├─ Supabase Postgres (providers, services, gallery, reviews, reports, site_settings)
-              ├─ Supabase Storage (gallery, avatars)
-              ├─ Edge Functions / Route Handlers (emails, Mercado Pago webhooks, contact)
-              └─ (opcional) cron jobs externos solo si hay trabajo pesado
-```
-
-**NO** mantener dual write FE↔Express.
-
----
-
-## 13. Riesgos si se ignora este informe
-
-1. Seguir mergeando PRs sobre Express (#10/#11 backend) **aumenta** la deuda dual-stack.
-2. Secretos en git siguen en historial aunque se “arregle” el working tree.
-3. Docs “100%” inducen a deploy prematuro sin pagos, emails, tests ni compliance.
-4. Build roto por UI faltante puede estar enmascarado si nadie corre `next build` local con strict TS.
-
----
-
-## 14. Entregables del Agente 0
+## 12. Entregables Agente 0
 
 | Entregable | Estado |
 |------------|--------|
-| Escaneo recursivo del repo | Hecho |
-| Lista priorizada de eliminación + justificación | Este documento §4–§9 |
-| Mapa dualidad Supabase vs Prisma | §2 |
-| Secrets trackeados | §3 |
-| Deps no usadas (estático) | §6 |
-| Archivo | `AUDIT-REPORT.md` (este archivo) |
+| Escaneo recursivo | Hecho |
+| Secrets / dual stack / dead code | Este documento |
+| Cleanup residual ejecutado | Commit de este pase |
+| `AUDIT-REPORT.md` | Este archivo (re-auditoría 2026-07-29) |
 
-**Siguiente paso (orden obligatorio):**  
-**Agente 1 — Arquitecto & Consolidator** → producir `ARCHITECTURE-DECISION.md` y plan de movimiento de lógica a Supabase, **sin cleanup agresivo hasta que este informe sea aceptado**.
+**Siguiente:** Agente 1 (ADR checkboxes) → Agente 2 (Design System Tier-1).
 
 ---
 
-*Generado por Agente 0 — Auditor Forense. No inventa features no presentes en HEAD. Cualquier claim de “listo” posterior debe contrastarse con este baseline.*
+*Agente 0 — Auditor Forense. No inventa features. Claims de “Tier-1 complete” deben contrastarse con §0 y §7.*
