@@ -16,6 +16,7 @@ export default defineConfig({
         'src/lib/moderation.ts',
         'src/lib/rateLimit.ts',
         'src/lib/filters.ts',
+        'src/lib/whatsapp.ts',
         'src/lib/supabase/env.ts',
       ],
       thresholds: {

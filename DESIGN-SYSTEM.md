@@ -27,9 +27,9 @@
 | `background-secondary` / `card` | `#141416` | Superficies |
 | `background-elevated` | `#1C1C20` | Dropdowns, modals |
 | `foreground` | `#F5F0E8` | Texto principal |
-| `foreground-secondary` | `#A8A29E` | Texto secundario |
-| `foreground-muted` | `#6B6560` | Hints |
-| `gold` | `#C9A962` | CTA, acentos, precio |
+| `foreground-secondary` | `#C4BEB8` | Texto secundario (AA) |
+| `foreground-muted` | `#9A948E` | Hints (AA) |
+| `gold` | `#D4B56A` | CTA, acentos, precio (AA con texto `#0A0A0B`) |
 | `gold-light` / `gold-dark` | `#E5D4A1` / `#A88B3D` | Hover / deep |
 | `rose` | `#D4A5A5` | Masajes / soft accent |
 | `sage` | `#9CAF88` | Verificado / success soft |
@@ -78,7 +78,7 @@ Escala: `text-xs` → `text-sm` → `base` → `lg` → display `2xl–6xl`.
 | `GalleryLightbox` | `components/ui/GalleryLightbox.tsx` | Full-screen gallery |
 | `EmptyState` | `components/ui/EmptyState.tsx` | Vacío accionable |
 | `ErrorState` | `components/ui/ErrorState.tsx` | Error + retry |
-| `Skeleton` / `ProviderCardSkeleton` | `components/ui/Skeleton.tsx` | Loading sin CLS |
+| `Skeleton` / `ProviderCardSkeleton` / `ProviderGridSkeleton` / `ListRowSkeleton` | `components/ui/Skeleton.tsx` | Loading unificado (home, explorar, admin, favoritos) |
 | `Toaster` | `components/ui/Toaster.tsx` | Feedback toast |
 | Primitives | `button`, `input`, `badge`, `card`, `select`, `dropdown` | Base |
 

@@ -147,7 +147,7 @@ export default function DashboardServiciosPage() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-20 bg-muted animate-pulse rounded-xl" />
+            <div key={i} className="h-20 rounded-xl bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
           ))}
         </div>
       ) : (

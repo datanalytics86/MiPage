@@ -87,7 +87,7 @@ export function Header() {
 
           <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
             {isLoading ? (
-              <div className="h-10 w-24 bg-muted animate-pulse rounded-lg" />
+              <div className="h-10 w-24 rounded-lg bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
             ) : isAuthenticated && profile ? (
               <>
                 <Link href="/favoritos">

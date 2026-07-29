@@ -98,7 +98,7 @@ export default function AdminReportesPage() {
       </Card>
 
       {isLoading ? (
-        <div className="h-32 bg-muted animate-pulse rounded-xl" />
+        <div className="h-32 rounded-xl bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
       ) : (
         <div className="space-y-4">
           {filteredReports.map((report) => (

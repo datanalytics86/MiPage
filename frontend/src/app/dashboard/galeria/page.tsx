@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useRef, useState } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Trash2,
@@ -25,6 +26,8 @@ import {
   useAddGalleryUrl,
 } from '@/hooks/useGallery'
 import { useToast } from '@/stores/uiStore'
+import { DARK_BLUR_DATA_URL_CLIENT } from '@/lib/image'
+import { DashboardBlockSkeleton } from '@/components/ui/Skeleton'
 
 export default function DashboardGaleriaPage() {
   const toast = useToast()
@@ -151,7 +154,7 @@ export default function DashboardGaleriaPage() {
       </AnimatePresence>
 
       {isLoading ? (
-        <div className="h-48 bg-muted animate-pulse rounded-xl" />
+        <DashboardBlockSkeleton />
       ) : gallery.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
@@ -173,7 +176,16 @@ export default function DashboardGaleriaPage() {
                 Foto de portada
               </h3>
               <div className="relative aspect-[16/9] rounded-xl overflow-hidden group">
-                <img src={coverImage.url} alt="Portada" className="w-full h-full object-cover" />
+                <Image
+                  src={coverImage.url}
+                  alt="Portada"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  sizes="(max-width: 1024px) 100vw, 800px"
+                  priority
+                  placeholder="blur"
+                  blurDataURL={DARK_BLUR_DATA_URL_CLIENT}
+                />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button variant="secondary" size="icon" onClick={() => setPreviewImage(coverImage.url)}>
                     <Eye className="h-4 w-4" />
@@ -199,7 +211,15 @@ export default function DashboardGaleriaPage() {
                     {item.type === 'video' ? (
                       <video src={item.url} className="w-full h-full object-cover" muted />
                     ) : (
-                      <img src={item.url} alt="" className="w-full h-full object-cover" />
+                      <Image
+                        src={item.url}
+                        alt="Foto de galería"
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        placeholder="blur"
+                        blurDataURL={DARK_BLUR_DATA_URL_CLIENT}
+                      />
                     )}
                     {item.type === 'video' && (
                       <Badge className="absolute top-2 left-2 bg-black/60 text-white">
@@ -238,7 +258,19 @@ export default function DashboardGaleriaPage() {
             <button className="absolute top-4 right-4 text-white" onClick={() => setPreviewImage(null)}>
               <X className="h-6 w-6" />
             </button>
-            <img src={previewImage} alt="Preview" className="max-w-full max-h-[90vh] object-contain rounded-lg" onClick={(e) => e.stopPropagation()} />
+            <div
+              className="relative w-full max-w-5xl h-[70vh] md:h-[80vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Image
+                src={previewImage}
+                alt="Preview"
+                fill
+                className="object-contain rounded-lg"
+                sizes="100vw"
+                priority
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

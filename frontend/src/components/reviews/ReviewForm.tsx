@@ -1,12 +1,14 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StarRating } from './StarRating'
 import { cn } from '@/lib/utils'
+import { DARK_BLUR_DATA_URL_CLIENT } from '@/lib/image'
 
 interface ReviewFormProps {
   providerName: string
@@ -110,11 +112,17 @@ export function ReviewForm({
                   {/* Provider Info */}
                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                     {providerPhoto && (
-                      <img
-                        src={providerPhoto}
-                        alt={providerName}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
+                      <div className="relative h-12 w-12 rounded-full overflow-hidden shrink-0">
+                        <Image
+                          src={providerPhoto}
+                          alt={providerName}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                          placeholder="blur"
+                          blurDataURL={DARK_BLUR_DATA_URL_CLIENT}
+                        />
+                      </div>
                     )}
                     <div>
                       <p className="text-sm text-foreground-muted">Reseña para</p>

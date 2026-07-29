@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useRef, useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
@@ -449,18 +450,28 @@ export default function NuevoAvisoWizardPage() {
               {errors.photos && <p className="text-sm text-error">{errors.photos}</p>}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {previews.map((src, i) => (
-                  <div key={src} className="relative aspect-square rounded-xl overflow-hidden border">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="object-cover w-full h-full" />
+                  <div
+                    key={src}
+                    className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group"
+                  >
+                    <Image
+                      src={src}
+                      alt={`Vista previa ${i + 1}`}
+                      fill
+                      unoptimized
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, 200px"
+                    />
                     {i === 0 && (
-                      <Badge className="absolute top-2 left-2" variant="gold">
+                      <Badge className="absolute top-2 left-2 z-10" variant="gold">
                         Portada
                       </Badge>
                     )}
                     <button
                       type="button"
-                      className="absolute top-2 right-2 rounded-full bg-black/60 p-1 text-white"
+                      className="absolute top-2 right-2 z-10 rounded-full bg-black/60 p-1 text-white"
                       onClick={() => removeFile(i)}
+                      aria-label={`Quitar foto ${i + 1}`}
                     >
                       <X className="h-3 w-3" />
                     </button>

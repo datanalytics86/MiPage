@@ -24,6 +24,7 @@ import { cn, formatPrice, formatDate, getInitials } from '@/lib/utils'
 import { useProvider } from '@/hooks/useProviders'
 import { useFavorites } from '@/hooks/useFavorites'
 import { getProviderImage, normalizeCategory } from '@/lib/providers'
+import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 import type { ProviderFull } from '@/types/database'
 
@@ -143,9 +144,9 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
       <div className="container-luxury py-8">
         <PhotoGridSkeleton count={5} />
         <div className="mt-8 space-y-3 max-w-xl">
-          <div className="h-8 w-64 bg-muted animate-pulse rounded-xl" />
-          <div className="h-4 w-full bg-muted animate-pulse rounded-lg" />
-          <div className="h-4 w-3/4 bg-muted animate-pulse rounded-lg" />
+          <div className="h-8 w-64 rounded-xl bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
+          <div className="h-4 w-full rounded-lg bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
+          <div className="h-4 w-3/4 rounded-lg bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
         </div>
       </div>
     )
@@ -169,11 +170,10 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
       ? Math.min(...provider.services.map((s) => s.price))
       : 0
 
-  const whatsappLink = provider.whatsapp
-    ? `https://wa.me/${provider.whatsapp}?text=${encodeURIComponent(
-        `Hola ${provider.display_name}, vi tu perfil en MiPage y me gustaría agendar una cita.`
-      )}`
-    : '#'
+  const whatsappLink =
+    buildWhatsAppLink(provider.whatsapp, provider.display_name, {
+      source: 'MiPage',
+    }) || '#'
 
   const galleryPhotos = provider.media.map((m) => ({
     id: m.id,

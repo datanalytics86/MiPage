@@ -49,6 +49,7 @@ export function PhotoGrid({
             onClick={() => onSelect?.(index)}
             className={cn(
               'photo-frame group relative w-full text-left focus-visible:ring-2 focus-visible:ring-gold/50',
+              'transition-shadow duration-base hover:shadow-glow',
               isFeatured
                 ? 'col-span-2 row-span-2 aspect-[4/3] md:aspect-auto md:min-h-[360px]'
                 : 'aspect-portrait'
@@ -59,7 +60,7 @@ export function PhotoGrid({
               src={photo.url}
               alt={photo.alt || `Foto ${index + 1}`}
               fill
-              className="object-cover transition-transform duration-500 ease-premium group-hover:scale-105"
+              className="object-cover transition-transform duration-500 ease-premium group-hover:scale-[1.04]"
               sizes={
                 isFeatured
                   ? '(max-width: 768px) 100vw, 66vw'

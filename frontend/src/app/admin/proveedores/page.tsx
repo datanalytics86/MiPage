@@ -2,6 +2,7 @@
 
 import React, { Suspense, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
   Search,
@@ -47,6 +48,8 @@ import {
   moderationRiskScore,
   type ModerationFlag,
 } from '@/lib/moderation'
+import { DARK_BLUR_DATA_URL_CLIENT } from '@/lib/image'
+import { ListRowSkeleton } from '@/components/ui/Skeleton'
 import { useSearchParams } from 'next/navigation'
 
 const statusColors: Record<string, string> = {
@@ -63,12 +66,13 @@ const statusLabels: Record<string, string> = {
   suspended: 'Suspendido',
 }
 
+/** Empathetic rejection copy: what to fix, not punishment. */
 const REJECT_REASONS = [
-  'Fotos de baja calidad o borrosas',
-  'Contenido no permitido por la política del sitio',
-  'Datos de contacto spam o engañosos',
-  'Categoría o ubicación incorrecta',
-  'Perfil incompleto o bio insuficiente',
+  'Las fotos están un poco borrosas o poco nítidas. ¿Puedes subir al menos 3 imágenes claras del servicio y de ti?',
+  'Parte del contenido no encaja con la política de MiPage. Revisa las normas y vuelve a enviar con fotos y texto apropiados.',
+  'Detectamos datos de contacto o enlaces que parecen spam. Usa los campos de WhatsApp/Instagram y deja la bio limpia.',
+  'La categoría o la ciudad no coinciden con el perfil. Corrige esos datos y reenvía para revisión.',
+  'El perfil está incompleto (bio corta o sin precio). Completa la información y las fotos; con gusto lo revisamos de nuevo.',
 ] as const
 
 function AdminProveedoresInner() {
@@ -360,11 +364,7 @@ function AdminProveedoresInner() {
       </Card>
 
       {isLoading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 rounded-xl bg-muted animate-pulse" />
-          ))}
-        </div>
+        <ListRowSkeleton count={4} />
       ) : (
         <div className="space-y-4">
           {filteredProviders.map((provider, index) => (
@@ -602,13 +602,20 @@ function AdminProveedoresInner() {
                     ? [preview.cover_photo]
                     : []
                 ).map((url) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <div
                     key={url}
-                    src={url}
-                    alt={`Foto de ${preview.display_name}`}
-                    className="rounded-xl object-cover aspect-portrait w-full border border-white/10 shadow-soft"
-                  />
+                    className="relative aspect-portrait rounded-xl overflow-hidden border border-white/10 shadow-soft"
+                  >
+                    <Image
+                      src={url}
+                      alt={`Foto de ${preview.display_name}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 50vw, 200px"
+                      placeholder="blur"
+                      blurDataURL={DARK_BLUR_DATA_URL_CLIENT}
+                    />
+                  </div>
                 ))}
                 {!preview.photos?.length && !preview.cover_photo && (
                   <p className="text-sm text-foreground-muted col-span-full">Sin fotos</p>
@@ -654,9 +661,12 @@ function AdminProveedoresInner() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <Card className="w-full max-w-md">
             <CardContent className="p-6 space-y-4">
-              <h3 className="font-semibold text-lg">Rechazar {rejectTarget.display_name}</h3>
+              <h3 className="font-semibold text-lg">
+                Ayudar a {rejectTarget.display_name} a mejorar
+              </h3>
               <p className="text-sm text-foreground-muted">
-                El publisher recibirá un email/notificación con el motivo (si Resend está configurado).
+                Elige un motivo claro: se lo enviaremos para que pueda corregir y volver a enviar.
+                (Email si Resend está configurado.)
               </p>
               <div className="flex flex-wrap gap-2">
                 {REJECT_REASONS.map((reason) => (
@@ -699,15 +709,7 @@ function AdminProveedoresInner() {
 
 export default function AdminProveedoresPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 rounded-xl bg-muted animate-pulse" />
-          ))}
-        </div>
-      }
-    >
+    <Suspense fallback={<ListRowSkeleton count={4} />}>
       <AdminProveedoresInner />
     </Suspense>
   )

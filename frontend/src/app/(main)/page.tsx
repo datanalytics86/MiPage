@@ -11,6 +11,7 @@ import {
   MapPin,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ProviderGridSkeleton } from '@/components/ui/Skeleton'
 import { HomeSearch } from '@/components/home/HomeSearch'
 import { siteConfig } from '@/lib/site'
 
@@ -18,13 +19,7 @@ const FeaturedProviders = dynamic(
   () =>
     import('@/components/home/FeaturedProviders').then((m) => m.FeaturedProviders),
   {
-    loading: () => (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" aria-hidden>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="aspect-portrait rounded-2xl bg-muted animate-pulse" />
-        ))}
-      </div>
-    ),
+    loading: () => <ProviderGridSkeleton count={4} />,
   }
 )
 

@@ -70,3 +70,34 @@ export function PhotoGridSkeleton({ count = 6 }: { count?: number }) {
     </div>
   )
 }
+
+/** Admin / dashboard list rows */
+export function ListRowSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <div className="space-y-4" role="status" aria-label="Cargando lista">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-4 p-4 rounded-xl border border-white/[0.06] bg-card"
+        >
+          <Skeleton className="h-16 w-16 rounded-full shrink-0" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-3 w-1/2" />
+          </div>
+          <Skeleton className="h-9 w-24 rounded-lg hidden sm:block" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function DashboardBlockSkeleton({ className }: SkeletonProps) {
+  return (
+    <div className={cn('space-y-3', className)} role="status" aria-label="Cargando">
+      <Skeleton className="h-8 w-48" />
+      <Skeleton className="h-32 w-full rounded-2xl" />
+      <Skeleton className="h-4 w-2/3" />
+    </div>
+  )
+}

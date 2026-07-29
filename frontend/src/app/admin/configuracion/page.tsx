@@ -133,7 +133,9 @@ export default function AdminConfiguracionPage() {
   }
 
   if (isLoading) {
-    return <div className="h-64 bg-muted animate-pulse rounded-xl" />
+    return (
+      <div className="h-64 rounded-xl bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
+    )
   }
 
   return (

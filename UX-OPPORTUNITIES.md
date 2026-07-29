@@ -18,8 +18,8 @@ Tono objetivo: **luxury calmado** — claro, corto, sin hype vacío.
 | 4 | Admin “cola del día” CTA | Alto | Bajo | **Quick win** ✅ (Grupo C) |
 | 5 | Preview fotos ordenable drag-drop en wizard | Medio | Medio | Medio plazo |
 | 6 | Onboarding tour 3 pasos (spotlight) | Medio | Medio | Medio plazo |
-| 7 | Favoritos empty con grid skeleton premium | Medio | Bajo | Medio plazo |
-| 8 | Contacto WhatsApp prefill desde perfil | Alto | Bajo | Medio plazo |
+| 7 | Favoritos empty premium | Medio | Bajo | **Quick win** ✅ |
+| 8 | Contacto WhatsApp prefill desde perfil | Alto | Bajo | **Quick win** ✅ (`lib/whatsapp.ts`) |
 | 9 | Filtros explorar como chips mobile | Medio | Medio | Medio plazo |
 | 10 | i18n ES formal / informal | Bajo | Alto | Backlog |
 

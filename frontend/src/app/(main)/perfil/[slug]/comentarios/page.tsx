@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -25,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DARK_BLUR_DATA_URL_CLIENT } from '@/lib/image'
 
 interface Review {
   id: string
@@ -248,11 +250,17 @@ export default function ComentariosPage() {
             <CardContent className="p-6">
               {/* Provider Info */}
               <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border">
-                <img
-                  src={mockProvider.photo}
-                  alt={mockProvider.name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
+                <div className="relative h-16 w-16 rounded-full overflow-hidden shrink-0">
+                  <Image
+                    src={mockProvider.photo}
+                    alt={mockProvider.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                    placeholder="blur"
+                    blurDataURL={DARK_BLUR_DATA_URL_CLIENT}
+                  />
+                </div>
                 <div>
                   <h2 className="font-display text-lg font-semibold text-foreground">
                     {mockProvider.name}
