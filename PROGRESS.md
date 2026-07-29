@@ -12,8 +12,8 @@
 |----------|--------|
 | Dark premium en toda la app | **Sí** (`html.dark`, tokens Lust, dashboard/admin sin `bg-white`) |
 | Componentes foto elite + uso | **Sí** PhotoGrid, GalleryLightbox, Skeleton, Empty/Error; blur placeholders |
-| Lighthouse ≥ 92 (4 categorías) | **Desktop local: 98 / 100 / 96 / 100**. Live (prev): 96/98/96/100. **Mobile local P~83** (throttling CPU 4× + localhost); re-medir post-deploy Vercel `main` |
-| E2E 5 flujos críticos | Suite `e2e/critical-flows.spec.ts` + smoke (auth full opcional con env E2E_*) |
+| Lighthouse ≥ 92 (4 categorías) | **Desktop local final: 97 / 100 / 100 / 100** ✅. Live prev: 96/98/96/100 ✅. Mobile local thr. ~81 (CPU 4× localhost) — **revalidar en edge tras Vercel Production=`main`** |
+| E2E 5 flujos críticos | **36 passed**, 4 skipped (auth creds) ✅ |
 | Panel Admin solo-admin | **Sí** moderación + preview + reject presets + metadata + settings |
 | ADMIN-GUIDE práctico | **Sí** |
 | PR #12 mergeada + main + default | **Sí** |
@@ -51,13 +51,15 @@
 - Lighthouse mobile local Performance < 92 (revalidar en edge)  
 - E2E suite añadida  
 
-## FASE 4 — Pendiente ops
+## FASE 4 — Ops (tú / Vercel Dashboard)
 
-1. Vercel: Production Branch = `main`  
-2. Supabase: aplicar migrations 002–006  
-3. Env en Vercel  
-4. Redeploy + Lighthouse live  
-5. Tag release  
+1. [ ] Vercel → Project Settings → Git → **Production Branch = `main`** (no hay token CLI en este entorno)
+2. [ ] Supabase SQL: migrations `002`…`006` en prod  
+3. [ ] Env Vercel: `NEXT_PUBLIC_SUPABASE_*`, service role server-only, Resend opcional  
+4. [ ] Redeploy production + Lighthouse mobile live  
+5. [x] Tag release `v1.1.0-tier1` + GitHub Release  
+
+**Release:** https://github.com/datanalytics86/MiPage/releases/tag/v1.1.0-tier1
 
 ---
 
