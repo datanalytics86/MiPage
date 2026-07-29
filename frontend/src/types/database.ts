@@ -70,6 +70,11 @@ export interface Database {
           height: number | null
           weight: number | null
           view_count: number
+          rejection_reason: string | null
+          submitted_at: string | null
+          moderated_at: string | null
+          moderated_by: string | null
+          metadata: Record<string, unknown> | null
           created_at: string
           updated_at: string
         }
@@ -97,6 +102,11 @@ export interface Database {
           height?: number | null
           weight?: number | null
           view_count?: number
+          rejection_reason?: string | null
+          submitted_at?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          metadata?: Record<string, unknown> | null
           created_at?: string
           updated_at?: string
         }
@@ -122,6 +132,11 @@ export interface Database {
           height?: number | null
           weight?: number | null
           view_count?: number
+          rejection_reason?: string | null
+          submitted_at?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
+          metadata?: Record<string, unknown> | null
           updated_at?: string
         }
       }

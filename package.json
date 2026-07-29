@@ -1,15 +1,22 @@
 {
   "name": "mipage-root",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
-    "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "start": "cd frontend && npm start",
-    "install:all": "cd frontend && npm install && cd ../backend && npm install"
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "lint": "npm --prefix frontend run lint",
+    "type-check": "npm --prefix frontend run type-check",
+    "test": "npm --prefix frontend run test",
+    "test:ci": "npm --prefix frontend run test:ci",
+    "test:e2e": "npm --prefix frontend run test:e2e",
+    "seed:demo": "npm --prefix frontend run seed:demo",
+    "health": "npm --prefix frontend run health",
+    "backup-check": "npm --prefix frontend run backup-check",
+    "install:all": "npm --prefix frontend install"
   },
-  "workspaces": [
-    "frontend",
-    "backend"
-  ]
+  "engines": {
+    "node": ">=20.0.0"
+  }
 }

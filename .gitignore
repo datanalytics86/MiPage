@@ -5,15 +5,16 @@ node_modules/
 
 # Testing
 /coverage
+frontend/coverage
+frontend/playwright-report
+frontend/test-results
+**/blob-report/
 
 # Next.js
 .next/
 out/
 build/
 dist/
-
-# Production
-/build
 
 # Misc
 .DS_Store
@@ -25,8 +26,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# Local env files
+# Local env files — never commit secrets
 .env
+.env.*
+!.env.example
+!**/.env.example
+!**/.env.local.example
 .env*.local
 .env.local
 .env.development.local
@@ -40,8 +45,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Prisma
-prisma/migrations/
+# Prisma / SQLite leftovers
+**/*.db
+**/*.db-journal
+**/temp-db.json
 
 # IDE
 .vscode/
@@ -60,4 +67,6 @@ Thumbs.db
 .frontend.pid
 backend.log
 frontend.log
-backend/prisma/dev.db
+
+# Archive secrets (if any reappear)
+archive/**/.env

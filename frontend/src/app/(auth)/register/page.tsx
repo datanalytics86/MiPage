@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
-import { filterCities } from '@/lib/mockProviders'
+import { filterCities } from '@/lib/filters'
 import type { ProviderCategory } from '@/types'
 
 const REGISTER_CITIES = filterCities.filter((city) => city !== 'Todas')
@@ -66,7 +66,8 @@ function RegisterForm() {
     }
 
     if (!formData.acceptTerms) {
-      newErrors.acceptTerms = 'Debes aceptar los términos'
+      newErrors.acceptTerms =
+        'Debes aceptar términos, privacidad y tratamiento de datos (Ley 19.628)'
     }
 
     setErrors(newErrors)
@@ -366,10 +367,15 @@ function RegisterForm() {
                 Acepto los{' '}
                 <Link href="/terminos" className="text-gold hover:underline">
                   términos de servicio
-                </Link>{' '}
-                y la{' '}
+                </Link>
+                , la{' '}
                 <Link href="/privacidad" className="text-gold hover:underline">
                   política de privacidad
+                </Link>{' '}
+                y el tratamiento de mis datos personales conforme a la{' '}
+                <strong>Ley 19.628</strong> (Chile). Puedo solicitar eliminación en{' '}
+                <Link href="/privacidad#derechos" className="text-gold hover:underline">
+                  mis derechos
                 </Link>
               </span>
             </label>

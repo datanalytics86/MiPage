@@ -34,15 +34,19 @@ const navigation = [
     icon: Users,
   },
   {
-    name: 'Proveedores',
+    name: 'Moderación',
     href: '/admin/proveedores',
     icon: UserCheck,
+  },
+  {
+    name: 'Metadata',
+    href: '/admin/metadata',
+    icon: Settings,
   },
   {
     name: 'Reportes',
     href: '/admin/reportes',
     icon: Flag,
-    badge: 3,
   },
   {
     name: 'Configuración',
@@ -122,11 +126,6 @@ export default function AdminLayout({
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
                   <span className="flex-1">{item.name}</span>
-                  {item.badge && (
-                    <Badge variant="destructive" className="h-5 min-w-5 px-1.5">
-                      {item.badge}
-                    </Badge>
-                  )}
                   {isActive && (
                     <motion.div
                       layoutId="admin-nav-indicator"

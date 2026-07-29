@@ -4,7 +4,10 @@ import type { Provider } from '@/types/database'
 const PLACEHOLDER_IMAGE =
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600'
 
-export function getProviderImage(provider: Provider): string {
+export function getProviderImage(provider: {
+  cover_photo?: string | null
+  photos?: string[] | null
+}): string {
   return provider.cover_photo || provider.photos?.[0] || PLACEHOLDER_IMAGE
 }
 

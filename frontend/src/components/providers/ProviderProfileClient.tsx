@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   Star,
   Heart,
@@ -12,18 +11,15 @@ import {
   Phone,
   Instagram,
   Clock,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Flag,
-  MessageCircle,
-  Share2,
   Grid3X3,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { PhotoGridSkeleton } from '@/components/ui/Skeleton'
+import { GalleryLightbox } from '@/components/ui/GalleryLightbox'
 import { cn, formatPrice, formatDate, getInitials } from '@/lib/utils'
 import { useProvider } from '@/hooks/useProviders'
 import { useFavorites } from '@/hooks/useFavorites'
@@ -132,38 +128,38 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
 
   if (!hasSupabaseEnv()) {
     return (
-      <div className="container-luxury py-16 text-center">
-        <p className="text-foreground-secondary">
-          Conecta Supabase para ver perfiles en vivo.
-        </p>
-        <Link href="/explorar">
-          <Button className="mt-4">Volver a explorar</Button>
-        </Link>
-      </div>
+      <EmptyState
+        title="Supabase no configurado"
+        description="Conecta Supabase para ver perfiles en vivo con fotos optimizadas."
+        actionLabel="Volver a explorar"
+        actionHref="/explorar"
+        className="min-h-[50vh]"
+      />
     )
   }
 
   if (isLoading) {
     return (
-      <div className="container-luxury py-16">
-        <div className="h-[400px] rounded-2xl bg-muted animate-pulse mb-8" />
-        <div className="h-8 w-64 bg-muted animate-pulse rounded mb-4" />
-        <div className="h-4 w-full max-w-xl bg-muted animate-pulse rounded" />
+      <div className="container-luxury py-8">
+        <PhotoGridSkeleton count={5} />
+        <div className="mt-8 space-y-3 max-w-xl">
+          <div className="h-8 w-64 bg-muted animate-pulse rounded-xl" />
+          <div className="h-4 w-full bg-muted animate-pulse rounded-lg" />
+          <div className="h-4 w-3/4 bg-muted animate-pulse rounded-lg" />
+        </div>
       </div>
     )
   }
 
   if (error || !provider) {
     return (
-      <div className="container-luxury py-16 text-center">
-        <h1 className="font-display text-2xl font-semibold mb-2">Perfil no encontrado</h1>
-        <p className="text-foreground-secondary mb-6">
-          Este profesional no existe o aún no está publicado.
-        </p>
-        <Link href="/explorar">
-          <Button>Explorar profesionales</Button>
-        </Link>
-      </div>
+      <EmptyState
+        title="Perfil no encontrado"
+        description="Este profesional no existe o aún no está publicado."
+        actionLabel="Explorar profesionales"
+        actionHref="/explorar"
+        className="min-h-[50vh]"
+      />
     )
   }
 
@@ -219,10 +215,11 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
               </div>
             ))}
             <button
+              type="button"
               onClick={() => setIsGalleryOpen(true)}
-              className="absolute bottom-4 right-4 bg-white text-foreground px-4 py-2 rounded-lg font-medium shadow-lg flex items-center gap-2"
+              className="absolute bottom-4 right-4 glass-strong text-foreground px-4 py-2 rounded-xl font-medium shadow-soft-lg flex items-center gap-2 hover:bg-white/15 transition-colors"
             >
-              <Grid3X3 className="h-4 w-4" />
+              <Grid3X3 className="h-4 w-4 text-gold" />
               Ver todas las fotos
             </button>
           </div>
@@ -397,48 +394,16 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
         </div>
       </section>
 
-      <AnimatePresence>
-        {isGalleryOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black"
-          >
-            <button
-              onClick={() => setIsGalleryOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 text-white"
-            >
-              <X className="h-8 w-8" />
-            </button>
-            <div className="h-full flex items-center justify-center p-16">
-              <Image
-                src={provider.media[currentImageIndex]?.url || ''}
-                alt=""
-                width={1200}
-                height={800}
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-            {currentImageIndex > 0 && (
-              <button
-                onClick={() => setCurrentImageIndex((i) => i - 1)}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-white"
-              >
-                <ChevronLeft className="h-10 w-10" />
-              </button>
-            )}
-            {currentImageIndex < provider.media.length - 1 && (
-              <button
-                onClick={() => setCurrentImageIndex((i) => i + 1)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white"
-              >
-                <ChevronRight className="h-10 w-10" />
-              </button>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <GalleryLightbox
+        photos={provider.media.map((m) => ({
+          id: m.id,
+          url: m.url,
+          alt: provider.display_name,
+        }))}
+        index={isGalleryOpen ? currentImageIndex : null}
+        onClose={() => setIsGalleryOpen(false)}
+        onChange={setCurrentImageIndex}
+      />
     </div>
   )
 }

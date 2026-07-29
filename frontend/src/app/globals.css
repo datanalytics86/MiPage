@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,87 +6,123 @@
 
 @layer base {
   :root {
-    /* Fondos */
-    --bg-primary: #FAF7F2;
-    --bg-secondary: #FFFFFF;
-    --bg-dark: #1A1A1A;
+    /* Dark premium (Lust) — default */
+    --bg-primary: #0a0a0b;
+    --bg-secondary: #141416;
+    --bg-elevated: #1c1c20;
 
-    /* Textos */
-    --text-primary: #1A1A1A;
-    --text-secondary: #525252;
-    --text-muted: #A3A3A3;
+    --text-primary: #f5f0e8;
+    --text-secondary: #a8a29e;
+    --text-muted: #6b6560;
 
-    /* Acentos */
-    --accent-gold: #C9A962;
-    --accent-gold-light: #E5D4A1;
-    --accent-rose: #D4A5A5;
-    --accent-sage: #9CAF88;
+    --accent-gold: #c9a962;
+    --accent-gold-light: #e5d4a1;
+    --accent-rose: #d4a5a5;
+    --accent-sage: #9caf88;
 
-    /* Estados */
-    --success: #4A7C59;
-    --warning: #D4A051;
-    --error: #C45C5C;
+    --success: #6b9b7a;
+    --warning: #d4a051;
+    --error: #d07070;
 
-    --background: 45 38% 96%;
-    --foreground: 0 0% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --background: 240 6% 4%;
+    --foreground: 36 33% 94%;
+    --card: 240 5% 8%;
+    --card-foreground: 36 33% 94%;
+    --popover: 240 6% 11%;
+    --popover-foreground: 36 33% 94%;
     --primary: 43 47% 59%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 45 38% 96%;
-    --secondary-foreground: 0 0% 10%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 45 38% 96%;
-    --accent-foreground: 0 0% 10%;
-    --destructive: 0 45% 56%;
+    --primary-foreground: 240 6% 4%;
+    --secondary: 240 6% 11%;
+    --secondary-foreground: 36 33% 94%;
+    --muted: 240 6% 11%;
+    --muted-foreground: 30 5% 65%;
+    --accent: 43 47% 59%;
+    --accent-foreground: 36 33% 94%;
+    --destructive: 0 45% 63%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.1;
     --ring: 43 47% 59%;
     --radius: 0.75rem;
+
+    --duration-fast: 150ms;
+    --duration-base: 250ms;
+    --duration-slow: 400ms;
+    --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   * {
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-body antialiased;
+  html {
+    color-scheme: dark;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 169, 98, 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(212, 165, 165, 0.04), transparent);
+    background-attachment: fixed;
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display tracking-tight;
+  }
+
+  ::selection {
+    background: rgba(201, 169, 98, 0.35);
+    color: #f5f0e8;
+  }
+
+  /* Focus visible for a11y */
+  :focus-visible {
+    @apply outline-none ring-2 ring-gold/50 ring-offset-2 ring-offset-background;
   }
 }
 
 @layer components {
   .btn-gold {
-    @apply bg-gold text-white font-medium px-6 py-3 rounded-xl
-           hover:bg-gold-dark transition-all duration-300
+    @apply bg-gold text-background font-medium px-6 py-3 rounded-xl
+           hover:bg-gold-dark transition-all duration-base ease-premium
            shadow-soft hover:shadow-gold;
   }
 
   .btn-outline {
-    @apply border-2 border-gold text-gold font-medium px-6 py-3 rounded-xl
-           hover:bg-gold hover:text-white transition-all duration-300;
+    @apply border border-gold/60 text-gold font-medium px-6 py-3 rounded-xl
+           hover:bg-gold hover:text-background transition-all duration-base ease-premium;
   }
 
   .card-luxury {
-    @apply bg-white rounded-2xl shadow-soft hover:shadow-soft-lg
-           transition-all duration-300;
+    @apply bg-card rounded-2xl shadow-soft border border-white/[0.06]
+           hover:border-gold/20 hover:shadow-soft-lg
+           transition-all duration-base ease-premium;
+  }
+
+  .glass {
+    @apply bg-white/[0.04] backdrop-blur-md border border-white/[0.08];
+  }
+
+  .glass-strong {
+    @apply bg-background-elevated/90 backdrop-blur-xl border border-white/[0.1];
   }
 
   .input-luxury {
-    @apply w-full px-4 py-3 rounded-xl border border-border bg-white
-           focus:outline-none focus:ring-2 focus:ring-gold/20 focus:border-gold
+    @apply w-full px-4 py-3 rounded-xl border border-border bg-background-secondary
+           text-foreground placeholder:text-foreground-muted
+           focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-gold/50
            transition-all duration-200 font-body;
   }
 
   .text-gradient-gold {
-    @apply bg-gradient-to-r from-gold to-gold-light bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-gold-light via-gold to-gold-dark bg-clip-text text-transparent;
   }
 
   .section-padding {
@@ -95,6 +131,14 @@
 
   .container-luxury {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .scrim-bottom {
+    @apply absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent;
+  }
+
+  .photo-frame {
+    @apply relative overflow-hidden rounded-2xl bg-muted;
   }
 }
 
@@ -109,5 +153,13 @@
 
   .aspect-portrait {
     aspect-ratio: 3 / 4;
+  }
+
+  .aspect-hero {
+    aspect-ratio: 16 / 9;
+  }
+
+  .safe-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }

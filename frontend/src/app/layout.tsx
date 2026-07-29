@@ -5,7 +5,7 @@ import { absoluteUrl, siteConfig } from '@/lib/site'
 import './globals.css'
 
 export const viewport: Viewport = {
-  themeColor: '#0f172a',
+  themeColor: '#0A0A0B',
   width: 'device-width',
   initialScale: 1,
 }
@@ -61,7 +61,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    <html lang="es" className="dark">
       <body className="min-h-screen bg-background font-body antialiased">
         <Providers>
           {children}

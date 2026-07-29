@@ -13,7 +13,7 @@ const required = [
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
 ]
 
-const recommended = ['NEXT_PUBLIC_APP_URL', 'NEXT_PUBLIC_API_URL']
+const recommended = ['NEXT_PUBLIC_APP_URL']
 
 const missing = required.filter((key) => !process.env[key]?.trim())
 const missingRecommended = recommended.filter((key) => !process.env[key]?.trim())

@@ -4,7 +4,22 @@ import { createServerClient } from '@supabase/ssr'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 
 export async function middleware(request: NextRequest) {
+  const isProd = process.env.NODE_ENV === 'production'
   if (!hasSupabaseEnv()) {
+    // In production, never silently open protected routes without auth env
+    if (isProd) {
+      const { pathname } = request.nextUrl
+      if (
+        pathname.startsWith('/admin') ||
+        pathname.startsWith('/dashboard') ||
+        pathname.startsWith('/api/account')
+      ) {
+        return NextResponse.json(
+          { error: 'Auth not configured' },
+          { status: 503 }
+        )
+      }
+    }
     return NextResponse.next()
   }
 
