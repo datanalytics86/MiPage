@@ -2,7 +2,8 @@
 
 **Fecha:** 2026-07-31  
 **Repo:** `datanalytics86/MiPage`  
-**Ejecutado sobre:** `main` @ `324df318af6fc37c74eef75fda50f1a9bba69958`  
+**Tip `main` al cerrar limpieza:** `324df31` → reporte commit `192c8eb`  
+**Re-verificación (Agentes 1–5):** 2026-07-31 — `main` @ `192c8ebfe62d172ed23d1a28ba81375fabe463df`  
 **Default branch (origin HEAD):** `main` ✅  
 **Tags preservados:** `v1.1.0-tier1` (NO tocado)
 
@@ -162,8 +163,33 @@ Quedará cuando se complete el checklist Vercel y se borre:
 
 | Rama | Motivo de presencia |
 |------|---------------------|
-| `main` | Canónica; tip `324df31` |
-| `claude/marketplace-services-app-011CUqB4gip6N34maEABp5TW` | **Retenida por riesgo de Production Vercel** (tip `3576437` = prod histórica documentada). Contenido ya en `main`. |
+| `main` | Canónica; tip `192c8eb` (incluye este reporte) |
+| `claude/marketplace-services-app-011CUqB4gip6N34maEABp5TW` | **Retenida por riesgo de Production Vercel** (tip `3576437` = prod histórica). Contenido ya en `main` (+0 ahead). |
+
+---
+
+## Criterios de éxito
+
+| Criterio | Estado |
+|----------|--------|
+| `main` intacta (sin force-push) | ✅ |
+| Tags intactos (`v1.1.0-tier1`) | ✅ |
+| Ramas Claude/Codex/feat obsoletas eliminadas | ✅ (12/12) |
+| Rama retenida por Vercel si aplica | ✅ (1 retenida) |
+| `BRANCH-CLEANUP-REPORT.md` creado | ✅ |
+| Trabajo único not-merged documentado (sin pérdida silenciosa) | ✅ (superseded; 0 cherry-picks) |
+
+---
+
+## Comando — estado final
+
+```bash
+git fetch --all --prune
+git branch -a
+git tag -l
+git remote show origin | grep "HEAD branch"
+# Esperado: main + origin/claude/marketplace-services-app-011CUqB4gip6N34maEABp5TW + tag v1.1.0-tier1
+```
 
 ---
 
@@ -171,9 +197,25 @@ Quedará cuando se complete el checklist Vercel y se borre:
 
 1. Confirmar/cambiar Production Branch a `main` en Vercel.  
 2. Redeploy production.  
-3. Verificar `/explorar` y `/login` en live.  
-4. Borrar la rama Claude retenida.  
+3. Verificar `/explorar` y `/login` en live (hoy `mi-page-lake.vercel.app/explorar` sigue **404** → prod aún no es tip de `main`).  
+4. Solo entonces borrar la rama Claude retenida:
+
+```bash
+git push origin --delete claude/marketplace-services-app-011CUqB4gip6N34maEABp5TW
+git fetch --all --prune
+```
+
 5. Actualizar este reporte marcando § Seguridad Vercel como hecho.
+
+---
+
+## Re-verificación 2026-07-31 (orden multiagente)
+
+1. **Agente 1 — Inventario:** 2 remotas; tabla ahead/behind actual: solo retenida `+0 / -13 MERGED`.  
+2. **Agente 2 — Valor:** `git log main..<retenida>` vacío; sin cherry-picks pendientes.  
+3. **Agente 3 — Vercel:** default git = `main`; CLI sin credenciales; live `/explorar` = 404 → **no borrar** retenida.  
+4. **Agente 4 — Delete:** sin acción adicional (borrados ya aplicados en pasada anterior).  
+5. **Agente 5 — Reporte:** este archivo + criterios de éxito ✅.
 
 ---
 
