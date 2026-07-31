@@ -1,7 +1,19 @@
 # PROGRESS — MiPage
 
-**Última actualización:** 2026-07-29 (cierre Fase 0–3 residual)  
+**Última actualización:** 2026-07-31 (route audit + Vercel category 404 fix)  
 **Branch:** `main`  
+
+---
+
+## FASE Route Audit (2026-07-31)
+
+1. [x] Root cause `/explorar/[category]` 404 en Vercel (`vercel.json` routes catch-all)  
+2. [x] `generateStaticParams` masajes/modelaje  
+3. [x] `/forgot-password` page (link login ya no 404)  
+4. [x] `register?role=` → `type=` consistency  
+5. [x] `ROUTE-AUDIT-REPORT.md`  
+6. [ ] Revalidar preview Vercel tras deploy: `/explorar/modelaje` = 200  
+7. [ ] Production Branch = `main` + smoke live  
 
 ---
 
@@ -10,7 +22,7 @@
 1. [ ] Vercel → **Production Branch = `main`** + redeploy  
 2. [ ] Env Production: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`  
 3. [ ] Migrations `002`–`006` en Supabase  
-4. [ ] Verificar live: `html.dark`, `/explorar`, `/api/health`  
+4. [ ] Verificar live: `html.dark`, `/explorar`, `/explorar/modelaje`, `/api/health`  
 5. [ ] (Opc.) Lighthouse mobile en dominio público  
 
 ---

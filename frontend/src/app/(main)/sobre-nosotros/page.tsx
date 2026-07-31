@@ -146,7 +146,7 @@ export default function SobreNosotrosPage() {
                   Explorar servicios
                 </Button>
               </Link>
-              <Link href="/register?role=provider">
+              <Link href="/register?type=provider">
                 <Button size="lg" variant="outline">
                   Unirte como profesional
                 </Button>

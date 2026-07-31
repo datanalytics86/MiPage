@@ -25,6 +25,24 @@ test.describe('public smoke', () => {
     await expect(page.locator('body')).toBeVisible()
   })
 
+  test('explorar category masajes returns 200', async ({ page }) => {
+    const res = await page.goto('/explorar/masajes')
+    expect(res?.status()).toBe(200)
+    await expect(page.locator('body')).toBeVisible()
+  })
+
+  test('explorar category modelaje returns 200', async ({ page }) => {
+    const res = await page.goto('/explorar/modelaje')
+    expect(res?.status()).toBe(200)
+    await expect(page.locator('body')).toBeVisible()
+  })
+
+  test('forgot-password page loads', async ({ page }) => {
+    const res = await page.goto('/forgot-password')
+    expect(res?.status()).toBe(200)
+    await expect(page.getByText(/recuperar|contraseña|email/i).first()).toBeVisible()
+  })
+
   test('dark theme root class', async ({ page }) => {
     await page.goto('/')
     await expect(page.locator('html')).toHaveClass(/dark/)

@@ -52,6 +52,8 @@ const nextConfig = {
       { source: '/services/:path*', destination: '/explorar/:path*', permanent: true },
       { source: '/auth/login', destination: '/login', permanent: true },
       { source: '/auth/register', destination: '/register', permanent: true },
+      // Legacy query aliases
+      { source: '/register', has: [{ type: 'query', key: 'role', value: 'provider' }], destination: '/register?type=provider', permanent: false },
     ]
   },
   async headers() {
