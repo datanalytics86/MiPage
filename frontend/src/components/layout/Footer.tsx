@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { Instagram, Mail, MapPin } from 'lucide-react'
+import { Instagram, Mail } from 'lucide-react'
 import { siteConfig } from '@/lib/site'
 
 export function Footer() {
@@ -40,6 +40,11 @@ export function Footer() {
                   Ver todos
                 </Link>
               </li>
+              <li>
+                <Link href="/sobre-nosotros" className="text-white/60 hover:text-gold transition-colors text-sm">
+                  Sobre nosotros
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -53,7 +58,10 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="text-white/60 hover:text-gold transition-colors text-sm">
+                <Link
+                  href="/login?redirect=/dashboard"
+                  className="text-white/60 hover:text-gold transition-colors text-sm"
+                >
                   Panel de control
                 </Link>
               </li>

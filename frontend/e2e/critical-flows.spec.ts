@@ -45,6 +45,21 @@ test.describe('1) Public surface + dark premium', () => {
     await page.goto('/register')
     await expect(page.getByText(/Ley 19\.628/i)).toBeVisible()
   })
+
+  test('category routes masajes + modelaje are live', async ({ page }) => {
+    for (const path of ['/explorar/masajes', '/explorar/modelaje']) {
+      const res = await page.goto(path, { waitUntil: 'domcontentloaded' })
+      expect(res?.status(), path).toBe(200)
+      await expect(page.locator('body')).toBeVisible()
+    }
+  })
+
+  test('register?type=provider lands on form', async ({ page }) => {
+    const res = await page.goto('/register?type=provider')
+    expect(res?.status()).toBe(200)
+    await expect(page.locator('form').first()).toBeVisible()
+    await expect(page.getByText(/profesional/i).first()).toBeVisible()
+  })
 })
 
 test.describe('2) RBAC gates (escalation must fail)', () => {
@@ -145,7 +160,7 @@ test.describe('5) Favorites + health + public profile path', () => {
     await page.goto('/favoritos', { waitUntil: 'domcontentloaded' })
     await expect(page.locator('body')).toBeVisible()
     await expect(
-      page.getByRole('heading').or(page.getByText(/favorito|sesión|iniciar/i)).first()
+      page.getByRole('heading', { name: /favorito|esperan|lista/i }).first()
     ).toBeVisible({ timeout: 15000 })
   })
 

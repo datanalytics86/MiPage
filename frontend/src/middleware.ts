@@ -20,18 +20,12 @@ function isPublicMarketingPath(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  const isProd = process.env.NODE_ENV === 'production'
   const { pathname } = request.nextUrl
 
   if (!hasSupabaseEnv()) {
-    if (isProd) {
-      if (
-        pathname.startsWith('/admin') ||
-        pathname.startsWith('/dashboard') ||
-        pathname.startsWith('/api/account')
-      ) {
-        return NextResponse.json({ error: 'Auth not configured' }, { status: 503 })
-      }
+    // Privileged APIs only — page shells use client AuthGate for a clear UX.
+    if (pathname.startsWith('/api/account')) {
+      return NextResponse.json({ error: 'Auth not configured' }, { status: 503 })
     }
     return NextResponse.next()
   }

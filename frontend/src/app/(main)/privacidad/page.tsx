@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { siteConfig } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad',
@@ -89,7 +90,7 @@ export default function PrivacidadPage() {
             <p className="mt-4">
               Para solicitar eliminación de cuenta y datos, inicia sesión y envía un POST autenticado a{' '}
               <code className="text-sm bg-muted px-1 rounded">/api/account/delete-request</code>{' '}
-              o escribe a privacidad@mipage.cl. Las solicitudes se procesan manualmente por el administrador.
+              o escribe a {siteConfig.emails.privacy}. Las solicitudes se procesan manualmente por el administrador.
             </p>
           </section>
 
@@ -131,8 +132,8 @@ export default function PrivacidadPage() {
             </h2>
             <p>
               Para ejercer tus derechos o consultas sobre privacidad, contáctanos en:{' '}
-              <a href="mailto:privacidad@mipage.cl" className="text-gold hover:underline">
-                privacidad@mipage.cl
+              <a href={`mailto:${siteConfig.emails.privacy}`} className="text-gold hover:underline">
+                {siteConfig.emails.privacy}
               </a>
             </p>
           </section>

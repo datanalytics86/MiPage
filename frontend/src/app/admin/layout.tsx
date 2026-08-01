@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { AuthGate } from '@/components/auth/AuthGate'
 import { cn } from '@/lib/utils'
 
 const navigation = [
@@ -64,6 +65,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
+    <AuthGate allowRoles={['admin']} areaLabel="el panel de administración">
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar backdrop */}
       <AnimatePresence>
@@ -196,5 +198,6 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
+    </AuthGate>
   )
 }

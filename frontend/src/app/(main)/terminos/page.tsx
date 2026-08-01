@@ -1,4 +1,5 @@
 import { Metadata } from 'next'
+import { siteConfig } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Términos de Servicio',
@@ -118,8 +119,8 @@ export default function TerminosPage() {
             </h2>
             <p>
               Si tienes preguntas sobre estos términos, contáctanos en:{' '}
-              <a href="mailto:legal@luxeservices.com" className="text-gold hover:underline">
-                legal@luxeservices.com
+              <a href={`mailto:${siteConfig.emails.legal}`} className="text-gold hover:underline">
+                {siteConfig.emails.legal}
               </a>
             </p>
           </section>

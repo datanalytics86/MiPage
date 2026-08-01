@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { AuthGate } from '@/components/auth/AuthGate'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -47,6 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = provider?.status === 'approved'
 
   return (
+    <AuthGate allowRoles={['provider', 'admin']} areaLabel="el panel de profesional">
     <div className="min-h-screen bg-background">
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -154,5 +156,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="p-4 lg:p-8">{children}</main>
       </div>
     </div>
+    </AuthGate>
   )
 }
