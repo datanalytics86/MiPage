@@ -3,7 +3,7 @@
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { Star, Heart, MapPin, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatPrice } from '@/lib/utils'
@@ -17,10 +17,11 @@ interface ProviderCardProps {
   priority?: boolean
 }
 
-/** Premium service / provider card — photography-first. */
+/** Photo is the product. Lift communicates selectability; scale stays quiet. */
 export function ProviderCard({ provider, className, priority }: ProviderCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites()
   const favorited = isFavorite(provider.id)
+  const reduceMotion = useReducedMotion()
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -32,14 +33,18 @@ export function ProviderCard({ provider, className, priority }: ProviderCardProp
     <Link href={`/perfil/${provider.slug}`} className="block h-full">
       <motion.article
         className={cn(
-          'group relative h-full bg-card rounded-2xl overflow-hidden',
+          'group relative h-full bg-card overflow-hidden rounded-photo',
           'border border-white/[0.06] shadow-soft',
-          'hover:border-gold/25 hover:shadow-soft-lg hover:shadow-glow',
+          'hover:border-gold/30 hover:shadow-soft-lg',
           'transition-colors duration-base',
           className
         )}
-        whileHover={{ y: -4 }}
-        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        whileHover={reduceMotion ? undefined : { y: -3 }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : { type: 'spring', stiffness: 380, damping: 28 }
+        }
       >
         <div className="relative aspect-portrait overflow-hidden bg-muted">
           <Image
@@ -49,7 +54,7 @@ export function ProviderCard({ provider, className, priority }: ProviderCardProp
             }
             alt={provider.display_name}
             fill
-            className="object-cover transition-transform duration-500 ease-premium group-hover:scale-105"
+            className="object-cover transition-transform duration-slow ease-premium motion-safe:group-hover:scale-[1.03]"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             priority={priority}
             placeholder="blur"
@@ -57,10 +62,11 @@ export function ProviderCard({ provider, className, priority }: ProviderCardProp
           />
 
           <div className="scrim-bottom" />
+          <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/[0.08]" />
 
           {provider.is_featured && (
             <div className="absolute top-3 left-3">
-              <Badge variant="gold" className="shadow-gold">
+              <Badge variant="gold" className="rounded-tight shadow-gold">
                 Destacado
               </Badge>
             </div>
@@ -123,6 +129,7 @@ export function ProviderCard({ provider, className, priority }: ProviderCardProp
           <div className="flex items-center justify-between gap-2">
             <Badge
               variant={provider.category === 'masajes' ? 'default' : 'secondary'}
+              className="rounded-tight"
             >
               {provider.category === 'masajes' ? 'Masajes' : 'Modelaje'}
             </Badge>

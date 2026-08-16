@@ -24,9 +24,38 @@ const FeaturedProviders = dynamic(
   }
 )
 
+function MarkMasajes() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden fill="none">
+      <path
+        d="M3 12c2.4-3.2 4.2-3.2 6.6 0 2.4 3.2 4.2 3.2 6.6 0"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 8c1.6-2 2.8-2 4.4 0"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        opacity="0.65"
+      />
+    </svg>
+  )
+}
+
+function MarkModelaje() {
+  return (
+    <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden fill="none">
+      <rect x="3.2" y="4.2" width="13.6" height="11.6" rx="1.2" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="10" cy="10" r="2.1" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  )
+}
+
 const categories = [
-  { name: 'Masajes', slug: 'masajes', icon: '💆', color: 'bg-rose/20 text-rose hover:bg-rose/30' },
-  { name: 'Modelaje', slug: 'modelaje', icon: '📸', color: 'bg-gold/20 text-gold hover:bg-gold/30' },
+  { name: 'Masajes', slug: 'masajes', Mark: MarkMasajes },
+  { name: 'Modelaje', slug: 'modelaje', Mark: MarkModelaje },
 ]
 
 const steps = [
@@ -58,58 +87,48 @@ const trustBadges = [
 export default function HomePage() {
   return (
     <div>
-      <section className="relative min-h-[620px] lg:min-h-[720px] flex items-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-gold/5" />
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 20% 30%, rgba(201,169,98,0.12) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(212,165,165,0.08) 0%, transparent 50%)',
-          }}
-        />
-        <div className="absolute top-20 left-10 w-72 h-72 bg-gold/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-rose/10 rounded-full blur-3xl" />
-
+      <section className="relative min-h-[580px] lg:min-h-[680px] flex items-center overflow-hidden">
         <div className="container-luxury relative z-10 py-16 lg:py-24">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-2 rounded-full text-sm font-medium mb-6 border border-gold/20">
-              <Shield className="h-4 w-4" aria-hidden />
-              {siteConfig.name} — masajes y modelaje en Chile
-            </div>
+          <div className="max-w-2xl lg:pl-6 lg:border-l lg:border-gold/25">
+            <p className="reveal text-[11px] uppercase tracking-[0.22em] text-gold mb-5">
+              Chile · masajes y modelaje
+            </p>
 
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6">
-              Descubre servicios{' '}
-              <span className="text-gold">profesionales</span> de confianza
+            <h1 className="reveal reveal-2 font-display text-4xl md:text-5xl lg:text-[3.4rem] font-semibold text-foreground leading-[1.08] mb-6">
+              Servicios{' '}
+              <span className="text-gold italic font-medium">profesionales</span>
+              <br className="hidden sm:block" />{' '}
+              de confianza
             </h1>
 
-            <p className="text-lg text-foreground-secondary mb-8 max-w-2xl mx-auto">
+            <p className="reveal reveal-3 text-lg text-foreground-secondary mb-8 max-w-xl">
               {siteConfig.description}
             </p>
 
-            <HomeSearch />
+            <div className="reveal reveal-3 mb-8">
+              <HomeSearch />
+            </div>
 
-            <div className="flex flex-wrap justify-center gap-3 mb-10">
+            <div className="reveal reveal-4 flex flex-wrap gap-3 mb-10">
               {categories.map((category) => (
                 <Link
                   key={category.slug}
                   href={`/explorar/${category.slug}`}
-                  className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 ${category.color}`}
+                  className="chip-tactile"
                 >
-                  <span className="text-xl" aria-hidden>
-                    {category.icon}
-                  </span>
+                  <category.Mark />
                   {category.name}
                 </Link>
               ))}
             </div>
 
-            <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
+            <div className="reveal reveal-4 flex flex-wrap gap-x-5 gap-y-3">
               {trustBadges.map((badge) => (
                 <div
                   key={badge.label}
                   className="flex items-center gap-2 text-sm text-foreground-secondary"
                 >
-                  <badge.icon className="h-4 w-4 text-gold" aria-hidden />
+                  <badge.icon className="h-3.5 w-3.5 text-gold" aria-hidden />
                   {badge.label}
                 </div>
               ))}
@@ -122,8 +141,9 @@ export default function HomePage() {
 
       <section className="section-padding bg-background-secondary">
         <div className="container-luxury">
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-end justify-between mb-10 gap-6">
             <div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-gold mb-2">Selección</p>
               <h2 className="font-display text-3xl font-semibold text-foreground mb-2">
                 Profesionales destacados
               </h2>
@@ -154,21 +174,20 @@ export default function HomePage() {
 
       <section className="section-padding">
         <div className="container-luxury">
-          <div className="text-center mb-12">
+          <div className="max-w-xl mb-12">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-gold mb-2">Ritual</p>
             <h2 className="font-display text-3xl font-semibold text-foreground mb-4">
               Cómo funciona
             </h2>
-            <p className="text-foreground-secondary max-w-2xl mx-auto">
-              Encuentra al profesional perfecto en tres simples pasos
+            <p className="text-foreground-secondary">
+              Tres pasos. Sin chat interno. Sin intermediario.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {steps.map((step) => (
-              <div key={step.title} className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gold/10 text-gold mb-6">
-                  <step.icon className="h-8 w-8" aria-hidden />
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+            {steps.map((step, i) => (
+              <div key={step.title} className="md:pr-4">
+                <p className="font-display text-3xl text-gold/40 mb-3">0{i + 1}</p>
                 <h3 className="font-display text-xl font-semibold text-foreground mb-3">
                   {step.title}
                 </h3>
@@ -181,11 +200,11 @@ export default function HomePage() {
 
       <section className="section-padding bg-background-dark">
         <div className="container-luxury">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display text-3xl md:text-4xl font-semibold text-white mb-4">
+          <div className="max-w-2xl">
+            <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground mb-4">
               ¿Ofreces servicios profesionales?
             </h2>
-            <p className="text-white/70 mb-8 text-lg">
+            <p className="text-foreground-secondary mb-8 text-lg">
               Publica tu aviso con fotos, espera una revisión humana y aparece en
               Explorar. El contacto llega por WhatsApp.
             </p>
