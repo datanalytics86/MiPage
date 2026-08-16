@@ -1,15 +1,6 @@
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import {
-  Search,
-  ArrowRight,
-  Sparkles,
-  Shield,
-  MessageCircle,
-  Star,
-  Users,
-  MapPin,
-} from 'lucide-react'
+import { ArrowRight, Shield, Star, Users, MapPin } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ProviderGridSkeleton } from '@/components/ui/Skeleton'
 import { HomeSearch } from '@/components/home/HomeSearch'
@@ -60,17 +51,14 @@ const categories = [
 
 const steps = [
   {
-    icon: Search,
     title: 'Explora perfiles',
     description: 'Mira fotos, ciudad, precios y reseñas de profesionales de masajes y modelaje.',
   },
   {
-    icon: MessageCircle,
     title: 'Lee reseñas',
     description: 'Las reseñas las escriben clientes con cuenta. Si no hay, se muestra —.',
   },
   {
-    icon: Sparkles,
     title: 'Contacta por WhatsApp',
     description: 'Escribes directo al profesional. MiPage no intermedia el chat.',
   },
@@ -175,7 +163,7 @@ export default function HomePage() {
       <section className="section-padding">
         <div className="container-luxury">
           <div className="max-w-xl mb-12">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-gold mb-2">Ritual</p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-gold mb-2">Proceso</p>
             <h2 className="font-display text-3xl font-semibold text-foreground mb-4">
               Cómo funciona
             </h2>
