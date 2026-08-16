@@ -19,7 +19,7 @@ Si no entras: Supabase → Table Editor → `profiles` → `role = admin`.
 
 | Min | Tarea | Dónde | ☐ |
 |-----|--------|--------|---|
-| 0:00 | Leer **Cola del día** | `/admin` | |
+| 0:00 | Leer **Cola del día** + badge **Pendientes** (siempre visible) | `/admin` o header | |
 | 0:30 | Ir a pendientes | Botón “Revisar N pendientes” o `/admin/proveedores?status=pending` | |
 | 1:00 | Priorizar badges **Revisar primero** / flags rojos | Lista | |
 | 2:00 | **Fotos** en cada caso dudoso | Preview grande | |
@@ -70,8 +70,13 @@ Emails: si `RESEND_API_KEY` está en Vercel, el publisher recibe aviso. Si no, e
 
 ## Destacar (featured)
 
-Moderación → ⋮ → **Destacar**  
-Opcional: pago Mercado Pago (`/api/payments/featured`).
+Moderación → ⋮ → **Destacar**. El badge y el orden se ven en `/explorar`.
+
+El provider aprobado ve en el dashboard qué significa Destacado. Si `MERCADOPAGO_ACCESS_TOKEN` está en Vercel, puede iniciar pago; si no, el API responde **501** con mensaje claro y tú lo marcas a mano.
+
+## Aviso de nuevos PENDING
+
+Si `RESEND_API_KEY` + `ADMIN_NOTIFY_EMAIL` están en Vercel, cada wizard enviado te manda un mail con link a `/admin/proveedores?status=pending`. Sin esas keys, el aviso igual queda PENDING (mira la **Cola del día**).
 
 ---
 

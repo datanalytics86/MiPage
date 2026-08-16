@@ -14,13 +14,13 @@ import {
   Menu,
   X,
   Shield,
-  Bell,
-  ChevronDown
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { AuthGate } from '@/components/auth/AuthGate'
+import { useAdminProviders } from '@/hooks/useAdmin'
+import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 
 const navigation = [
@@ -63,6 +63,11 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { profile, user } = useAuth()
+  const { data: adminProviders = [] } = useAdminProviders()
+  const pendingCount = adminProviders.filter((p) => p.status === 'pending').length
+  const adminLabel = profile?.name || user?.email || 'Admin'
+  const adminEmail = user?.email || profile?.email || ''
 
   return (
     <AuthGate allowRoles={['admin']} areaLabel="el panel de administración">
@@ -128,6 +133,11 @@ export default function AdminLayout({
                 >
                   <item.icon className="h-5 w-5 shrink-0" />
                   <span className="flex-1">{item.name}</span>
+                  {item.href === '/admin/proveedores' && pendingCount > 0 && (
+                    <Badge variant="warning" className="ml-auto">
+                      {pendingCount}
+                    </Badge>
+                  )}
                   {isActive && (
                     <motion.div
                       layoutId="admin-nav-indicator"
@@ -143,15 +153,15 @@ export default function AdminLayout({
           <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
               <Avatar className="h-10 w-10">
-                <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100" />
-                <AvatarFallback>AD</AvatarFallback>
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback>{adminLabel.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-foreground truncate">
-                  Admin User
+                  {adminLabel}
                 </p>
                 <p className="text-xs text-foreground-muted truncate">
-                  admin@mipage.cl
+                  {adminEmail || 'Sesión admin'}
                 </p>
               </div>
             </div>
@@ -183,10 +193,15 @@ export default function AdminLayout({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-error rounded-full" />
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/admin/proveedores?status=pending">
+                  Pendientes
+                  {pendingCount > 0 && (
+                    <Badge variant="warning" className="ml-2">
+                      {pendingCount}
+                    </Badge>
+                  )}
+                </Link>
               </Button>
             </div>
           </div>

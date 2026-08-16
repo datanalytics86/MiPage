@@ -170,10 +170,9 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
       ? Math.min(...provider.services.map((s) => s.price))
       : 0
 
-  const whatsappLink =
-    buildWhatsAppLink(provider.whatsapp, provider.display_name, {
-      source: 'MiPage',
-    }) || '#'
+  const whatsappLink = buildWhatsAppLink(provider.whatsapp, provider.display_name, {
+    source: 'MiPage',
+  })
 
   const galleryPhotos = provider.media.map((m) => ({
     id: m.id,
@@ -335,7 +334,7 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
                       Desde {formatPrice(minPrice)}
                     </p>
                   )}
-                  {provider.whatsapp && (
+                  {whatsappLink && (
                     <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
                       <Button className="w-full mb-3" size="lg">
                         <Phone className="h-5 w-5 mr-2" />

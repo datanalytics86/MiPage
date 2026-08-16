@@ -7,6 +7,7 @@ export type EmailTemplate =
   | 'provider_approved'
   | 'provider_rejected'
   | 'provider_pending'
+  | 'admin_new_pending'
   | 'invitation'
   | 'generic'
 
@@ -48,6 +49,20 @@ export function buildRejectionEmail(
       <p><strong>Motivo:</strong> ${escapeHtml(reason || 'No especificado')}</p>
       <p>Puedes actualizar tu información y volver a enviarlo desde el dashboard.</p>
       <p><a href="${escapeHtml(appUrl)}/dashboard">Ir al dashboard</a></p>
+    `,
+  }
+}
+
+export function buildAdminPendingEmail(
+  displayName: string,
+  appUrl: string
+): { subject: string; html: string } {
+  return {
+    subject: `Nuevo aviso PENDING: ${displayName}`,
+    html: `
+      <p>Hay un aviso nuevo en revisión.</p>
+      <p><strong>Proveedor:</strong> ${escapeHtml(displayName)}</p>
+      <p><a href="${escapeHtml(appUrl)}/admin/proveedores?status=pending">Abrir cola de pendientes</a></p>
     `,
   }
 }

@@ -92,27 +92,12 @@ Breve descripción de los cambios
 **Ejecutar tests:**
 
 ```bash
-# Backend
-cd backend
-npm test
-npm run test:coverage
-
-# Frontend
 cd frontend
 npm test
+npm run type-check
 ```
 
-**Agregar nuevos tests:**
-
-```javascript
-// backend/__tests__/mi-feature.test.js
-describe('Mi Feature', () => {
-  it('debe hacer algo', async () => {
-    // Test aquí
-    expect(resultado).toBe(esperado);
-  });
-});
-```
+El backend Express/Prisma está archivado en `archive/2026-legacy/`. No lo uses ni lo testees para el producto.
 
 **Coverage mínimo:** 80%
 

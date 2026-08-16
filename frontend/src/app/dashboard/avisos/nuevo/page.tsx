@@ -249,7 +249,7 @@ export default function NuevoAvisoWizardPage() {
         })
       }
 
-      // fire-and-forget notification
+      // fire-and-forget: provider confirmation + admin cola ping
       try {
         await fetch('/api/notify', {
           method: 'POST',
@@ -257,6 +257,14 @@ export default function NuevoAvisoWizardPage() {
           body: JSON.stringify({
             type: 'provider_pending',
             email: profile?.email,
+            displayName: form.display_name,
+          }),
+        })
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'admin_new_pending',
             displayName: form.display_name,
           }),
         })

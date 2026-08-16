@@ -10,6 +10,15 @@ test.describe('public smoke', () => {
     await expect(page.locator('body')).toBeVisible()
   })
 
+  test('home has honest positioning, no luxury overclaim', async ({ page }) => {
+    await page.goto('/')
+    const body = await page.locator('body').innerText()
+    expect(body).toMatch(/servicios profesionales/i)
+    expect(body).not.toMatch(/neurosensorial/i)
+    expect(body).not.toMatch(/500\+/)
+    expect(body).not.toMatch(/10\.000\+|10,000\+/)
+  })
+
   test('login page loads', async ({ page }) => {
     await page.goto('/login')
     await expect(page.getByRole('heading', { name: /iniciar|entrar|login/i }).or(page.locator('form'))).toBeVisible()

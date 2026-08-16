@@ -45,6 +45,7 @@ import type { ProviderStatus } from '@/types/database'
 import { Textarea } from '@/components/ui/textarea'
 import {
   analyzeProviderFlags,
+  comparePendingForQueue,
   moderationRiskScore,
   type ModerationFlag,
 } from '@/lib/moderation'
@@ -163,6 +164,20 @@ function AdminProveedoresInner() {
     }
     return map
   }, [filteredProviders])
+
+  const sortedProviders = useMemo(() => {
+    return [...filteredProviders].sort((a, b) => {
+      const pendingDelta = Number(b.status === 'pending') - Number(a.status === 'pending')
+      if (pendingDelta !== 0) return pendingDelta
+      if (a.status === 'pending' && b.status === 'pending') {
+        return comparePendingForQueue(
+          { ...a, flags: flagsById.get(a.id) },
+          { ...b, flags: flagsById.get(b.id) }
+        )
+      }
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
+  }, [filteredProviders, flagsById])
 
   const categories = Array.from(new Set(providers.map((p) => p.category)))
 
@@ -367,7 +382,7 @@ function AdminProveedoresInner() {
         <ListRowSkeleton count={4} />
       ) : (
         <div className="space-y-4">
-          {filteredProviders.map((provider, index) => (
+          {sortedProviders.map((provider, index) => (
             <motion.div
               key={provider.id}
               initial={{ opacity: 0, y: 10 }}
@@ -577,7 +592,7 @@ function AdminProveedoresInner() {
         </div>
       )}
 
-      {filteredProviders.length === 0 && !isLoading && (
+      {sortedProviders.length === 0 && !isLoading && (
         <Card>
           <CardContent className="py-12 text-center">
             <User className="h-12 w-12 mx-auto text-foreground-muted mb-4" />

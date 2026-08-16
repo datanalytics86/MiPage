@@ -4,7 +4,7 @@ Marketplace web de servicios de **modelaje** y **masajes** (Chile), centrado en 
 
 **Live:** https://mi-page-lake.vercel.app  
 
-> **Estado honesto (2026-07-29):** Supabase-first consolidado + **design system dark premium** (`DESIGN-SYSTEM.md`). Flujo publish → moderate → public en código. **No** es “100% completo”: faltan chat, app móvil, i18n, geo avanzada; Lighthouse ≥ 92 no medido en live; migration `006` + env de prod deben estar aplicados. Ver `AUDIT-REPORT.md`.
+> **Estado honesto (2026-08-16):** el código de `main` está listo para vender contactos (wizard → PENDING → admin → Explorar → WhatsApp). **Producción sigue desfasada** (landing “neurosensorial”, `/explorar` 404). El dueño debe poner Production Branch = `main`. Checklist: `DEPLOY.md`.
 
 ---
 
@@ -46,7 +46,7 @@ El backend Express/Prisma/temp-db fue **archivado** en `archive/2026-legacy/back
 | Lighthouse ≥ 92 | **Desktop local 98/100/100/100** ✅ · Mobile lab local Perf~81 (CPU 4×) · Live histórico 96/98/96/100 · Preview `main` deploy **success** (auth wall Vercel) |
 | npm audit 0 high (Next 14) | Parcheado a `14.2.35`; cierre total exige Next 16 (breaking) |
 | Default branch | **`main`** (PR #12 mergeada) |
-| Vercel Production Branch | **Acción manual:** apuntar a `main` (prod aún en `3576437`) |
+| Vercel Production Branch | **Bloqueado en ops:** dueño debe apuntar a `main` + Root Directory `frontend`. Ver `DEPLOY.md` |
 
 ---
 
@@ -122,6 +122,7 @@ npm run backup-check  # checklist backups PITR
 | `AUDIT-REPORT.md` | Auditoría forense (re-audit 2026-07-29) |
 | `DESIGN-SYSTEM.md` | Tokens dark premium + componentes foto-first |
 | `ADMIN-GUIDE.md` | Operación diaria (10 min) |
+| `DEPLOY.md` | Checklist Vercel / env / migrations |
 | `archive/2026-legacy/` | Docs y backend históricos |
 
 ---

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
+  buildAdminPendingEmail,
   buildApprovalEmail,
   buildRejectionEmail,
   escapeHtml,
@@ -22,6 +23,13 @@ describe('email templates', () => {
     expect(m.subject).toMatch(/aprobado/i)
     expect(m.html).not.toContain('<script>')
     expect(m.html).toContain('https://example.com')
+  })
+
+  it('builds admin pending ping', () => {
+    const m = buildAdminPendingEmail('Ana <x>', 'https://app.test')
+    expect(m.subject).toMatch(/PENDING/)
+    expect(m.html).toContain('/admin/proveedores?status=pending')
+    expect(m.html).not.toContain('<x>')
   })
 
   it('builds rejection with reason', () => {

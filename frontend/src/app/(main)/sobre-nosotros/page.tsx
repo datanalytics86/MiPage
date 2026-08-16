@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Shield, Heart, Star, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { HomeStats } from '@/components/home/HomeStats'
 
 export const metadata: Metadata = {
   title: 'Sobre Nosotros',
@@ -12,13 +13,13 @@ export const metadata: Metadata = {
 const values = [
   {
     icon: Shield,
-    title: 'Confianza y Seguridad',
-    description: 'Verificamos a todos nuestros proveedores para garantizar la mejor experiencia.',
+    title: 'Revisión humana',
+    description: 'Cada aviso pasa por un administrador antes de publicarse. No hay auto-aprobación.',
   },
   {
     icon: Star,
-    title: 'Calidad Premium',
-    description: 'Solo trabajamos con profesionales que cumplen con los más altos estándares.',
+    title: 'Fotos primero',
+    description: 'El perfil se entiende por las fotos, la ciudad y el precio. Sin humo.',
   },
   {
     icon: Heart,
@@ -30,13 +31,6 @@ const values = [
     title: 'Comunidad',
     description: 'Creamos conexiones significativas entre clientes y profesionales.',
   },
-]
-
-const stats = [
-  { value: '500+', label: 'Profesionales verificados' },
-  { value: '10,000+', label: 'Clientes satisfechos' },
-  { value: '4.9', label: 'Calificación promedio' },
-  { value: '50+', label: 'Ciudades en Chile' },
 ]
 
 export default function SobreNosotrosPage() {
@@ -58,21 +52,7 @@ export default function SobreNosotrosPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 border-b border-border">
-        <div className="container-luxury">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="font-display text-4xl font-semibold text-gold mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-foreground-secondary">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeStats />
 
       {/* Story Section */}
       <section className="py-16">
@@ -93,10 +73,9 @@ export default function SobreNosotrosPage() {
                 la experiencia premium que ambos merecían.
               </p>
               <p>
-                Hoy, MiPage es la plataforma líder en Chile para conectar con
-                profesionales verificados en masajes terapéuticos, modelaje y servicios
-                relacionados. Cada perfil es cuidadosamente revisado para garantizar
-                autenticidad y calidad.
+                Hoy MiPage publica avisos de masajes y modelaje en Chile. Cada perfil
+                lo revisa una persona antes de aparecer en Explorar. El contacto es
+                directo por WhatsApp.
               </p>
             </div>
           </div>

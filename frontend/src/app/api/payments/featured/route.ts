@@ -18,7 +18,8 @@ export async function POST(req: NextRequest) {
       {
         error: 'Mercado Pago not configured',
         configured: false,
-        message: 'Set MERCADOPAGO_ACCESS_TOKEN to enable featured payments',
+        message:
+          'El pago de Destacado no está configurado. Un administrador puede marcar tu perfil como Destacado desde el panel. Para activar cobros, añade MERCADOPAGO_ACCESS_TOKEN en Vercel.',
       },
       { status: 501 }
     )

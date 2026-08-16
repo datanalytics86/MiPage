@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { ProviderGridSkeleton } from '@/components/ui/Skeleton'
 import { HomeSearch } from '@/components/home/HomeSearch'
+import { HomeStats } from '@/components/home/HomeStats'
 import { siteConfig } from '@/lib/site'
 
 const FeaturedProviders = dynamic(
@@ -32,25 +33,25 @@ const steps = [
   {
     icon: Search,
     title: 'Explora perfiles',
-    description: 'Descubre profesionales verificados con fotos, servicios y reseñas reales.',
+    description: 'Mira fotos, ciudad, precios y reseñas de profesionales de masajes y modelaje.',
   },
   {
     icon: MessageCircle,
     title: 'Lee reseñas',
-    description: 'Conoce las experiencias de otros clientes antes de decidir.',
+    description: 'Las reseñas las escriben clientes con cuenta. Si no hay, se muestra —.',
   },
   {
     icon: Sparkles,
-    title: 'Contacta directo',
-    description: 'Comunícate por WhatsApp y coordina tu cita de forma segura.',
+    title: 'Contacta por WhatsApp',
+    description: 'Escribes directo al profesional. MiPage no intermedia el chat.',
   },
 ]
 
 const trustBadges = [
-  { icon: Shield, label: 'Perfiles verificados' },
-  { icon: Star, label: 'Reseñas reales' },
-  { icon: Users, label: 'Comunidad activa' },
-  { icon: MapPin, label: 'Cobertura nacional' },
+  { icon: Shield, label: 'Revisión humana antes de publicar' },
+  { icon: Star, label: 'Reseñas de clientes' },
+  { icon: Users, label: 'Un operador, sin bots de aprobación' },
+  { icon: MapPin, label: 'Chile' },
 ]
 
 /** Server Component home — hero HTML is in the first HTML byte stream (LCP). */
@@ -73,7 +74,7 @@ export default function HomePage() {
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-gold/10 text-gold px-4 py-2 rounded-full text-sm font-medium mb-6 border border-gold/20">
               <Shield className="h-4 w-4" aria-hidden />
-              {siteConfig.name} — marketplace verificado en Chile
+              {siteConfig.name} — masajes y modelaje en Chile
             </div>
 
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6">
@@ -117,20 +118,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-border bg-background-secondary/60">
-        <div className="container-luxury py-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {siteConfig.stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="font-display text-3xl md:text-4xl font-semibold text-gold mb-1">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-foreground-secondary">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeStats />
 
       <section className="section-padding bg-background-secondary">
         <div className="container-luxury">
@@ -140,7 +128,7 @@ export default function HomePage() {
                 Profesionales destacados
               </h2>
               <p className="text-foreground-secondary">
-                Los mejor valorados por nuestra comunidad
+                Perfiles con badge Destacado. Si aún no hay, verás un vacío honesto.
               </p>
             </div>
             <Button variant="ghost" className="hidden sm:inline-flex" asChild>
@@ -198,8 +186,8 @@ export default function HomePage() {
               ¿Ofreces servicios profesionales?
             </h2>
             <p className="text-white/70 mb-8 text-lg">
-              Únete a nuestra comunidad de profesionales verificados y conecta con
-              clientes que buscan calidad.
+              Publica tu aviso con fotos, espera una revisión humana y aparece en
+              Explorar. El contacto llega por WhatsApp.
             </p>
             <Button size="lg" asChild>
               <Link href="/register?type=provider">

@@ -1,7 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Eye, Star, MessageSquare, TrendingUp, AlertCircle, ArrowRight } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,14 +11,59 @@ import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { useProviderReviews } from '@/hooks/useReviews'
+import { FeaturedUpgradeCard } from '@/components/dashboard/FeaturedUpgradeCard'
+
+function FeaturedPaymentNotice() {
+  const params = useSearchParams()
+  const featured = params.get('featured')
+  if (featured === 'success') {
+    return (
+      <p className="text-sm text-success bg-success/10 rounded-lg p-3">
+        Pago de Destacado recibido. El badge aparece cuando el admin lo confirma.
+      </p>
+    )
+  }
+  if (featured === 'failure') {
+    return (
+      <p className="text-sm text-error bg-error/10 rounded-lg p-3">
+        El pago de Destacado no se completó. Puedes reintentar o pedirle al admin que te marque.
+      </p>
+    )
+  }
+  if (featured === 'pending') {
+    return (
+      <p className="text-sm text-foreground-secondary bg-muted/50 rounded-lg p-3">
+        Pago de Destacado pendiente de confirmación en Mercado Pago.
+      </p>
+    )
+  }
+  return null
+}
 
 export default function DashboardOverviewPage() {
+  return (
+    <Suspense fallback={<p className="text-foreground-muted">Cargando dashboard…</p>}>
+      <DashboardOverviewInner />
+    </Suspense>
+  )
+}
+
+function DashboardOverviewInner() {
   const { provider } = useAuth()
   const { data: reviews = [] } = useProviderReviews(provider?.id || '', 5)
 
   if (!provider) {
     return (
-      <p className="text-foreground-secondary">Completa tu perfil de proveedor para ver estadísticas.</p>
+      <Card>
+        <CardContent className="p-6 space-y-3">
+          <p className="text-foreground-secondary">
+            Aún no tienes un aviso. Publica fotos y un precio para entrar en revisión.
+          </p>
+          <Button asChild>
+            <Link href="/dashboard/avisos/nuevo">Publicar aviso</Link>
+          </Button>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -36,6 +82,7 @@ export default function DashboardOverviewPage() {
 
   return (
     <div className="space-y-8">
+      <FeaturedPaymentNotice />
       {pendingResponses > 0 && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -88,6 +135,10 @@ export default function DashboardOverviewPage() {
         </Card>
       )}
 
+      {provider.status === 'approved' && (
+        <FeaturedUpgradeCard providerId={provider.id} isFeatured={!!provider.is_featured} />
+      )}
+
       {provider.status !== 'approved' && provider.status !== 'pending' && (
         <Card className="border-warning/40 bg-warning/5">
           <CardContent className="p-4 text-sm text-foreground-secondary">
@@ -95,8 +146,12 @@ export default function DashboardOverviewPage() {
             {provider.status === 'rejected' && (
               <>
                 {' '}
-                Revisa el motivo de rechazo, corrige fotos o datos y vuelve a enviar desde el
-                wizard. Estamos para ayudarte a publicarte bien.
+                Revisa el motivo, corrige fotos o datos y vuelve a enviar desde el wizard.
+                {provider.rejection_reason && (
+                  <span className="block mt-2 text-foreground">
+                    Motivo: {provider.rejection_reason}
+                  </span>
+                )}
               </>
             )}
             {provider.status === 'suspended' && (

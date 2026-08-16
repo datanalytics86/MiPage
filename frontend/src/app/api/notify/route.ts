@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
+  buildAdminPendingEmail,
   buildApprovalEmail,
   buildRejectionEmail,
   sendTransactionalEmail,
@@ -8,7 +9,14 @@ import { clientIpFromRequest, rateLimit } from '@/lib/rateLimit'
 import { z } from 'zod'
 
 const schema = z.object({
-  type: z.enum(['provider_approved', 'provider_rejected', 'provider_pending', 'invitation', 'generic']),
+  type: z.enum([
+    'provider_approved',
+    'provider_rejected',
+    'provider_pending',
+    'admin_new_pending',
+    'invitation',
+    'generic',
+  ]),
   email: z.string().email().optional(),
   displayName: z.string().max(200).optional(),
   reason: z.string().max(1000).optional(),
@@ -42,12 +50,16 @@ export async function POST(req: NextRequest) {
   }
 
   const { type, email, displayName, reason, subject, html } = parsed.data
-  if (!email) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'no_email' })
-  }
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mi-page-lake.vercel.app'
   const name = displayName || 'Usuario'
+
+  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL?.trim()
+  const to =
+    type === 'admin_new_pending' ? adminEmail || email : email
+
+  if (!to) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'no_email' })
+  }
 
   let mail: { subject: string; html: string }
   switch (type) {
@@ -63,6 +75,9 @@ export async function POST(req: NextRequest) {
         html: `<p>Hola ${name},</p><p>Tu aviso está en revisión (PENDING). Te avisaremos al aprobarlo o rechazarlo.</p>`,
       }
       break
+    case 'admin_new_pending':
+      mail = buildAdminPendingEmail(name, appUrl)
+      break
     case 'invitation':
     case 'generic':
       mail = {
@@ -73,7 +88,7 @@ export async function POST(req: NextRequest) {
   }
 
   const result = await sendTransactionalEmail({
-    to: email,
+    to,
     subject: mail.subject,
     html: mail.html,
     template: type,

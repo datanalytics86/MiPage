@@ -12,6 +12,8 @@ interface EmptyStateProps {
   actionLabel?: string
   actionHref?: string
   onAction?: () => void
+  secondaryActionLabel?: string
+  secondaryActionHref?: string
   className?: string
   children?: React.ReactNode
 }
@@ -23,6 +25,8 @@ export function EmptyState({
   actionLabel,
   actionHref,
   onAction,
+  secondaryActionLabel,
+  secondaryActionHref,
   className,
   children,
 }: EmptyStateProps) {
@@ -46,17 +50,24 @@ export function EmptyState({
         </p>
       )}
       {children}
-      {(actionLabel && actionHref) || (actionLabel && onAction) ? (
-        <div className="mt-2">
-          {actionHref ? (
+      {(actionLabel && actionHref) ||
+      (actionLabel && onAction) ||
+      (secondaryActionLabel && secondaryActionHref) ? (
+        <div className="mt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+          {actionLabel && actionHref ? (
             <Button asChild>
               <Link href={actionHref}>{actionLabel}</Link>
             </Button>
-          ) : (
+          ) : actionLabel && onAction ? (
             <Button type="button" onClick={onAction}>
               {actionLabel}
             </Button>
-          )}
+          ) : null}
+          {secondaryActionLabel && secondaryActionHref ? (
+            <Button variant="outline" asChild>
+              <Link href={secondaryActionHref}>{secondaryActionLabel}</Link>
+            </Button>
+          ) : null}
         </div>
       ) : null}
     </div>

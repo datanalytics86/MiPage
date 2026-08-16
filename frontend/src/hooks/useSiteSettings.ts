@@ -53,10 +53,10 @@ const defaults: SiteSettings = {
     minWithdrawal: 50000,
   },
   stats: {
-    professionals: '500+',
-    reviews: '10.000+',
-    rating: '4.8',
-    cities: '15+',
+    professionals: '—',
+    reviews: '—',
+    rating: '—',
+    cities: '—',
   },
 }
 

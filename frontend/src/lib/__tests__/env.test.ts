@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { hasSupabaseEnv } from '@/lib/supabase/env'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { allowMockCatalog, hasSupabaseEnv } from '@/lib/supabase/env'
 
 const keys = [
   'NEXT_PUBLIC_SUPABASE_URL',
@@ -43,5 +43,22 @@ describe('hasSupabaseEnv', () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSJ9.sig'
     expect(hasSupabaseEnv()).toBe(true)
+  })
+
+  it('never allows mock catalog when supabase is configured', () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://abcdefgh.supabase.co'
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSJ9.sig'
+    expect(allowMockCatalog()).toBe(false)
+  })
+
+  it('allows mock catalog only in development without supabase', () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    vi.stubEnv('NODE_ENV', 'development')
+    expect(allowMockCatalog()).toBe(true)
+    vi.stubEnv('NODE_ENV', 'production')
+    expect(allowMockCatalog()).toBe(false)
+    vi.unstubAllEnvs()
   })
 })

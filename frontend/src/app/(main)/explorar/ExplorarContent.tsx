@@ -14,7 +14,7 @@ import { useProviders } from '@/hooks/useProviders'
 import { mockProviders } from '@/lib/mockProviders'
 import { filterCities, sortOptions } from '@/lib/filters'
 import { toProviderCardData } from '@/lib/providers'
-import { hasSupabaseEnv } from '@/lib/supabase/env'
+import { allowMockCatalog } from '@/lib/supabase/env'
 import { cn } from '@/lib/utils'
 import type { FilterOptions, ProviderCategory } from '@/types'
 
@@ -124,7 +124,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
   }, [filters, searchQuery, visibleCount])
 
   const { data: dbData, isLoading } = useProviders(providerFilters)
-  const useMock = !hasSupabaseEnv()
+  const useMock = allowMockCatalog()
 
   const mockFiltered = useMemo(() => {
     const filtered = mockProviders.filter((provider) => {
@@ -441,14 +441,12 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
           <EmptyState
             icon={Search}
             title="Nadie por aquí todavía"
-            description="Prueba otra ciudad o categoría. Si eres profesional, publica tu aviso y aparece aquí tras la moderación."
+            description="Prueba otra ciudad o categoría, o limpia los filtros. Si ofreces el servicio, publica tu aviso: queda en revisión y luego aparece aquí."
             actionLabel="Limpiar filtros"
             onAction={clearFilters}
-          >
-            <p className="text-sm text-foreground-muted mb-4">
-              Tip: en Santiago y Viña del Mar suele haber más perfiles de modelaje y masajes.
-            </p>
-          </EmptyState>
+            secondaryActionLabel="Publicar mi aviso"
+            secondaryActionHref="/register?type=provider"
+          />
         )}
 
         {hasMore && (

@@ -28,3 +28,12 @@ export function hasSupabaseEnv(): boolean {
 
   return true
 }
+
+/**
+ * Demo catalog (mockProviders) is allowed only in local development
+ * when Supabase is not configured. Production never shows invented profiles.
+ */
+export function allowMockCatalog(): boolean {
+  if (hasSupabaseEnv()) return false
+  return process.env.NODE_ENV === 'development'
+}

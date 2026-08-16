@@ -42,7 +42,7 @@ const faqs = [
   {
     question: '¿Qué significa el sello verificado?',
     answer:
-      'Indica que el profesional pasó una revisión de identidad y cumple con los estándares de calidad de MiPage.',
+      'Es una marca que el administrador pone a mano cuando revisó identidad o calidad extra. Un perfil publicado (aprobado) no siempre tiene sello; el sello no es automático.',
   },
 ]
 
