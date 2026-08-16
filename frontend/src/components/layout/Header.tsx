@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
-import { siteConfig } from '@/lib/site'
+import { BrandMark } from '@/components/layout/BrandMark'
 
 const navLinks = [
   { href: '/explorar', label: 'Explorar', match: (path: string) => path === '/explorar' },
@@ -46,21 +46,18 @@ export function Header() {
 
   const navLinkClass = (isActive: boolean) =>
     cn(
-      'transition-colors duration-200 font-medium relative py-1',
+      'transition-colors duration-base ease-premium font-medium relative py-1',
       isActive
-        ? 'text-gold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-gold after:rounded-full'
+        ? 'text-gold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gold'
         : 'text-foreground-secondary hover:text-gold'
     )
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border/50">
+    <header className="sticky top-0 z-50 w-full bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/75 border-b border-white/[0.05]">
       <div className="container-luxury">
         <div className="flex h-16 items-center justify-between gap-4">
-          <Link href="/" className="flex items-center space-x-2 flex-shrink-0">
-            <span className="font-display text-2xl font-semibold text-foreground">
-              {siteConfig.name.slice(0, 2)}
-              <span className="text-gold">{siteConfig.name.slice(2)}</span>
-            </span>
+          <Link href="/" className="flex-shrink-0" aria-label="MiPage inicio">
+            <BrandMark />
           </Link>
 
           <nav className="hidden lg:flex items-center space-x-8">
@@ -81,13 +78,13 @@ export function Header() {
               placeholder="Buscar..."
               value={headerSearch}
               onChange={(e) => setHeaderSearch(e.target.value)}
-              className="pl-9 h-9 text-sm rounded-xl bg-muted/50 border-transparent focus-visible:border-gold/30"
+              className="pl-9 h-9 text-sm rounded-control bg-muted/50 border-transparent focus-visible:border-gold/30"
             />
           </form>
 
           <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
             {isLoading ? (
-              <div className="h-10 w-24 rounded-lg bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
+              <div className="h-10 w-24 rounded-control bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
             ) : isAuthenticated && profile ? (
               <>
                 <Link href="/favoritos">
@@ -183,7 +180,7 @@ export function Header() {
                   placeholder="Buscar profesionales..."
                   value={headerSearch}
                   onChange={(e) => setHeaderSearch(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 rounded-control"
                   aria-label="Buscar profesionales"
                 />
               </form>
@@ -192,7 +189,7 @@ export function Header() {
                   key={link.href}
                   href={link.href}
                   className={cn(
-                    'block px-4 py-2 rounded-lg transition-colors',
+                    'block px-4 py-2 rounded-control transition-colors',
                     link.match(pathname)
                       ? 'text-gold bg-gold/10 font-medium'
                       : 'text-foreground-secondary hover:text-gold hover:bg-muted'
