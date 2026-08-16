@@ -1,71 +1,75 @@
 # DESIGN-SYSTEM — MiPage Tier-1
 
-**Tema:** Dark premium (Lust) · **Producto principal:** fotografía  
-**Stack UI:** Tailwind + CSS variables + Radix primitives + Framer Motion  
-**Fecha:** 2026-07-29
+**Tema:** Tactile Sensory Precision · Dark Lust  
+**Producto principal:** fotografía  
+**Stack UI:** Tailwind + OKLCH tokens + Radix + Framer Motion  
+**Fecha:** 2026-08-16
 
 ---
 
-## Principios
+## Dirección (Aesthetic Director)
 
-1. **La foto es el producto** — aspect ratios correctos, lazy load, blur placeholders, hover sutil.
-2. **Dark first** — fondos `#0A0A0B` / surfaces elevadas; nunca blanco plano en UI principal.
-3. **Jerarquía tipográfica** — Display (Cormorant Garamond) + Body (DM Sans).
-4. **Estados hermosos** — loading / empty / error / success siempre con acción clara.
-5. **Mobile-first** — touch targets ≥ 44px; grids 1→2→3→4.
-6. **Motion con propósito** — 150–300ms, easings suaves; no decoración sin feedback.
+Elegida: **B. Tactile Sensory Precision**  
+Emoción: deseo controlado + precisión táctil + discreción.  
+Descartadas: **A. Noir Editorial** (revista, no marketplace) y **C. Velvet Signal** (recae en el live “neurosensorial”).
+
+Principio: la foto es el producto. El metal cálido (gold único) es el acento. El grano vive en el suelo, nunca sobre la foto.
 
 ---
 
 ## Tokens
 
-### Color
+### Color (OKLCH)
 
 | Token | Valor | Uso |
 |-------|-------|-----|
-| `background` | `#0A0A0B` | Página |
-| `background-secondary` / `card` | `#141416` | Superficies |
-| `background-elevated` | `#1C1C20` | Dropdowns, modals |
-| `foreground` | `#F5F0E8` | Texto principal |
-| `foreground-secondary` | `#C4BEB8` | Texto secundario (AA) |
-| `foreground-muted` | `#9A948E` | Hints (AA) |
-| `gold` | `#D4B56A` | CTA, acentos, precio (AA con texto `#0A0A0B`) |
-| `gold-light` / `gold-dark` | `#E5D4A1` / `#A88B3D` | Hover / deep |
-| `rose` | `#D4A5A5` | Masajes / soft accent |
-| `sage` | `#9CAF88` | Verificado / success soft |
-| `success` / `warning` / `error` | verdes/ámbar/rojo muted | Estados |
-| `border` | `rgba(255,255,255,0.08)` | Separadores |
+| `background` | `oklch(0.132 0.005 265)` | Página |
+| `background-secondary` / `card` | `oklch(0.178 0.005 265)` | Superficies |
+| `background-elevated` | `oklch(0.218 0.007 265)` | Dropdowns, modals |
+| `background-dark` | `oklch(0.105 0.004 265)` | Footer / CTA band |
+| `foreground` | `oklch(0.955 0.016 85)` | Texto |
+| `foreground-secondary` | `oklch(0.802 0.014 80)` | Secundario AA |
+| `foreground-muted` | `oklch(0.672 0.014 75)` | Hints |
+| **`gold`** | `oklch(0.78 0.09 88)` | **Única familia.** CTA, precio, acento |
+| `gold-light` / `gold-dark` | relative color desde `--gold` | Hover / pressed |
+| `--gold-soft` / `--gold-line` / `--gold-ring` | `oklch(from var(--gold) … / α)` | Fills y hairlines |
+| `rose` | `oklch(0.78 0.055 18)` | Masajes (suave) |
+| `sage` | `oklch(0.72 0.055 130)` | Verificado |
 
-### Tipografía
+No mezclar `#C9A962` y `#D4B56A`. Un solo gold.
 
-| Rol | Familia | Pesos | Uso |
-|-----|---------|-------|-----|
-| Display | Cormorant Garamond | 400–700 | H1–H3, nombres en cards |
-| Body | DM Sans | 400, 500, 700 | UI, body, labels |
+### Tipo
 
-Escala: `text-xs` → `text-sm` → `base` → `lg` → display `2xl–6xl`.
+| Rol | Familia | Uso |
+|-----|---------|-----|
+| Display | Cormorant Garamond | H1–H3, nombres, italic de acento |
+| Body | DM Sans | UI, labels |
 
-### Espaciado y radio
+### Radio (irregular a propósito)
 
-- Ritmo: `4 / 8 / 12 / 16 / 24 / 32 / 48 / 64`
-- Radios: `sm 0.375rem` · `md 0.5rem` · `lg 0.75rem` · `xl 1rem` · `2xl 1.25rem`
-- Cards de foto: `rounded-2xl` + overflow hidden
-
-### Sombras y glass
-
-- `shadow-soft` — elevación sutil en dark
-- `shadow-gold` — glow en CTA
-- `glass` — `bg-white/5 backdrop-blur-md border border-white/10`
+| Token | Valor | Uso |
+|-------|-------|-----|
+| `--radius-tight` | 5px | Badges |
+| `--radius-control` | 10px | Botones, inputs, chips |
+| `--radius-photo` | 22px | Cards foto |
+| `--radius-panel` | 28px | Paneles grandes |
 
 ### Motion
 
 | Token | Valor |
 |-------|-------|
-| `duration-fast` | 150ms |
-| `duration-base` | 250ms |
-| `duration-slow` | 400ms |
-| `ease-out` | `cubic-bezier(0.16, 1, 0.3, 1)` |
-| Card hover | `y: -4`, scale image `1.05` |
+| `duration-fast / base / slow` | 160 / 280 / 520ms |
+| `ease-premium` | `cubic-bezier(0.16, 1, 0.3, 1)` |
+| Card hover | spring 380/28, `y: -3`, image scale `1.03` |
+| Hero | `.reveal` stagger 80ms + `@starting-style` |
+| Brand | `view-transition-name: brand-mark` |
+| Reduced motion | duraciones → 1ms, view transitions off, `useReducedMotion` |
+
+### Material
+
+- Grain: `feTurbulence` **en el background del `body`**, blend overlay. Nunca `position: fixed` sobre fotos.
+- Hairline gold en hero (borde izquierdo), no orbs.
+- Scrim bottom en cards 3/4.
 
 ---
 
@@ -73,62 +77,41 @@ Escala: `text-xs` → `text-sm` → `base` → `lg` → display `2xl–6xl`.
 
 | Componente | Path | Rol |
 |------------|------|-----|
-| `ProviderCard` | `components/providers/ProviderCard.tsx` | ServiceCard premium |
-| `PhotoGrid` | `components/ui/PhotoGrid.tsx` | Grid / masonry fotos |
-| `GalleryLightbox` | `components/ui/GalleryLightbox.tsx` | Full-screen gallery |
-| `EmptyState` | `components/ui/EmptyState.tsx` | Vacío accionable |
-| `ErrorState` | `components/ui/ErrorState.tsx` | Error + retry |
-| `Skeleton` / `ProviderCardSkeleton` / `ProviderGridSkeleton` / `ListRowSkeleton` | `components/ui/Skeleton.tsx` | Loading unificado (home, explorar, admin, favoritos) |
-| `Toaster` | `components/ui/Toaster.tsx` | Feedback toast |
-| Primitives | `button`, `input`, `badge`, `card`, `select`, `dropdown` | Base |
+| `BrandMark` | `components/layout/BrandMark.tsx` | Página + dog-ear gold |
+| `ProviderCard` | `components/providers/ProviderCard.tsx` | Foto-first, radio photo |
+| `chip-tactile` | `globals.css` | Categorías sin emoji |
+| Primitives | `button`, `badge`, … | `rounded-control` |
 
 ### Photo rules
 
-- Aspect portrait cards: **3/4**
-- Hero / cover: **16/9** o full-bleed con gradient scrim
-- `next/image` + `sizes` correctos + `priority` solo LCP
-- Placeholder: blur o skeleton `bg-muted animate-pulse`
-- Lightbox: teclado Escape / flechas; focus trap simple
-
----
-
-## Patrones de página
-
-```
-Header glass sticky
-→ Hero / título sección
-→ Filtros (surface elevated)
-→ Grid ProviderCard | PhotoGrid
-→ EmptyState si 0 resultados
-→ Footer muted
-```
-
-Admin: misma base dark; cards de moderación con **preview grande** de fotos.
+- Cards: **3/4**, `rounded-photo`, ring inset 8%
+- `next/image` + `sizes` + `priority` solo LCP
+- Hover scale ≤ 1.03 (no 1.05 — menos vitrine)
 
 ---
 
 ## Accesibilidad
 
-- Contraste texto principal ≥ AA sobre dark
-- Focus ring `ring-gold/50`
-- Iconos decorativos `aria-hidden`; botones con `aria-label`
-- No información solo por color (badges + texto)
+- Focus: doble anillo `void` + `--gold-ring`
+- Touch ≥ 44px en chips
+- `prefers-reduced-motion` obligatorio
+- Iconos decorativos `aria-hidden`; logo con `aria-label`
 
 ---
 
 ## Qué no hacer
 
-- Fondos blancos en páginas públicas
-- Imágenes sin aspect-ratio (CLS)
-- Spinners genéricos sin skeleton de layout
-- Docs que digan “visual élite” sin estos tokens aplicados
+- Orbs / blobs blur en hero
+- Emojis en UI principal
+- Radio uniforme 8/12/16 en todo
+- Grano encima de fotografía
+- Gold inconsistente (`#C9A962` vs `#D4B56A`)
+- Copy “neurosensorial” / ritual / concierge
 
 ---
 
 ## Implementación
 
-- Tokens: `frontend/tailwind.config.ts` + `frontend/src/app/globals.css`
-- Tema activo por defecto: **dark** (`html` class / CSS vars en `:root`)
-- Extender componentes en `frontend/src/components/ui/`
-
-*Mantenido por el equipo de producto. Cambios de token = PR con screenshot mobile+desktop.*
+- `frontend/src/app/globals.css` + `frontend/tailwind.config.ts`
+- Critique: `TIER1-CRITIQUE.md`
+- Live: Production Branch debe ser `main` (`DEPLOY.md`)
