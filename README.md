@@ -6,6 +6,8 @@ Marketplace web de servicios de **modelaje** y **masajes** (Chile), centrado en 
 
 > **Estado honesto (2026-08-16):** el código de `main` está listo para vender contactos (wizard → PENDING → admin → Explorar → WhatsApp). **Producción sigue desfasada** (landing “neurosensorial”, `/explorar` 404). El dueño debe poner Production Branch = `main`. Checklist: `DEPLOY.md`.
 
+**Estética (branch `feat/tier1-tactile-sensory`):** dirección *Tactile Sensory Precision* — OKLCH, gold unificado, page-fold mark, grain en el suelo, sin emojis ni orbs. Ver `DESIGN-SYSTEM.md` y `TIER1-CRITIQUE.md`.
+
 ---
 
 ## Stack real
@@ -114,13 +116,25 @@ npm run backup-check  # checklist backups PITR
 
 ---
 
+## Changelog estético (2026-08-16)
+
+- Tokens a OKLCH; gold unificado (`oklch(0.78 0.09 88)`)
+- Radios variables (`tight` / `control` / `photo` / `panel`)
+- Brand: page-fold + dog-ear gold (`BrandMark`)
+- Hero editorial (sin orbs, sin emojis)
+- Motion: spring cards, stagger `.reveal`, View Transition en la marca, `prefers-reduced-motion`
+- Grain en el suelo de la página, nunca sobre fotos
+
+---
+
 ## Docs
 
 | Archivo | Contenido |
 |---------|-----------|
 | `ARCHITECTURE-DECISION.md` | Por qué Supabase-first |
 | `AUDIT-REPORT.md` | Auditoría forense (re-audit 2026-07-29) |
-| `DESIGN-SYSTEM.md` | Tokens dark premium + componentes foto-first |
+| `DESIGN-SYSTEM.md` | Tokens OKLCH + photo-first |
+| `TIER1-CRITIQUE.md` | Rounds de critique estético |
 | `ADMIN-GUIDE.md` | Operación diaria (10 min) |
 | `DEPLOY.md` | Checklist Vercel / env / migrations |
 | `archive/2026-legacy/` | Docs y backend históricos |

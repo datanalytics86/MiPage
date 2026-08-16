@@ -4,23 +4,38 @@
 
 @layer base {
   :root {
-    /* Dark premium (Lust) — default */
-    --bg-primary: #0a0a0b;
-    --bg-secondary: #141416;
-    --bg-elevated: #1c1c20;
+    /*
+     * Tactile Sensory Precision — single gold family (warm metal, not CSS yellow).
+     * Source of truth is OKLCH. Relative colors derive hover/soft/ring from --gold.
+     */
+    --bg-primary: oklch(0.132 0.005 265);
+    --bg-secondary: oklch(0.178 0.005 265);
+    --bg-elevated: oklch(0.218 0.007 265);
+    --bg-void: oklch(0.105 0.004 265);
 
-    --text-primary: #f5f0e8;
-    --text-secondary: #c4beb8;
-    --text-muted: #9a948e;
+    --text-primary: oklch(0.955 0.016 85);
+    --text-secondary: oklch(0.802 0.014 80);
+    --text-muted: oklch(0.672 0.014 75);
 
-    --accent-gold: #c9a962;
-    --accent-gold-light: #e5d4a1;
-    --accent-rose: #d4a5a5;
-    --accent-sage: #9caf88;
+    /* Unified gold — was #C9A962 vs #D4B56A. */
+    --gold: #d4b56a;
+    --gold: oklch(0.78 0.09 88);
+    --gold-light: oklch(0.88 0.055 88);
+    --gold-light: oklch(from var(--gold) calc(l + 0.08) calc(c - 0.03) h);
+    --gold-dark: oklch(0.62 0.1 82);
+    --gold-dark: oklch(from var(--gold) calc(l - 0.14) calc(c + 0.01) calc(h - 6));
+    --gold-soft: oklch(0.78 0.09 88 / 0.14);
+    --gold-soft: oklch(from var(--gold) l c h / 0.14);
+    --gold-line: oklch(0.78 0.09 88 / 0.28);
+    --gold-line: oklch(from var(--gold) l c h / 0.28);
+    --gold-ring: oklch(0.78 0.09 88 / 0.5);
+    --gold-ring: oklch(from var(--gold) l c h / 0.5);
 
-    --success: #6b9b7a;
-    --warning: #d4a051;
-    --error: #d07070;
+    --rose: oklch(0.78 0.055 18);
+    --sage: oklch(0.72 0.055 130);
+    --success: oklch(0.64 0.07 150);
+    --warning: oklch(0.74 0.11 75);
+    --error: oklch(0.64 0.12 22);
 
     --background: 240 6% 4%;
     --foreground: 36 33% 94%;
@@ -28,25 +43,32 @@
     --card-foreground: 36 33% 94%;
     --popover: 240 6% 11%;
     --popover-foreground: 36 33% 94%;
-    --primary: 43 47% 59%;
+    --primary: 43 52% 62%;
     --primary-foreground: 240 6% 4%;
     --secondary: 240 6% 11%;
     --secondary-foreground: 36 33% 94%;
     --muted: 240 6% 11%;
     --muted-foreground: 30 5% 65%;
-    --accent: 43 47% 59%;
+    --accent: 43 52% 62%;
     --accent-foreground: 36 33% 94%;
     --destructive: 0 45% 63%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 100% / 0.08;
     --input: 0 0% 100% / 0.1;
-    --ring: 43 47% 59%;
-    --radius: 0.75rem;
+    --ring: 43 52% 62%;
 
-    --duration-fast: 150ms;
-    --duration-base: 250ms;
-    --duration-slow: 400ms;
+    --radius-tight: 0.3125rem;
+    --radius-control: 0.625rem;
+    --radius-photo: 1.375rem;
+    --radius-panel: 1.75rem;
+    --radius: var(--radius-control);
+
+    --duration-fast: 160ms;
+    --duration-base: 280ms;
+    --duration-slow: 520ms;
     --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.22, 1.2, 0.36, 1);
+    --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
   }
 
   * {
@@ -57,13 +79,28 @@
     color-scheme: dark;
   }
 
+  @supports (view-transition-name: none) {
+    @view-transition {
+      navigation: auto;
+    }
+  }
+
+  .brand-mark {
+    view-transition-name: brand-mark;
+  }
+
   body {
-    @apply bg-background text-foreground font-body antialiased;
-    /* No background-attachment:fixed — hurts mobile LCP/scroll perf */
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201, 169, 98, 0.08), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(212, 165, 165, 0.04), transparent);
+    @apply text-foreground font-body antialiased;
     min-height: 100dvh;
+    background-color: var(--bg-primary);
+    /*
+     * Grain lives IN the page ground, never as a film over photography.
+     * Critique r1: overlay z-70 veiled ProviderCards and killed photo-first.
+     */
+    background-image: var(--grain),
+      linear-gradient(180deg, oklch(0.78 0.09 88 / 0.05) 0%, transparent 28%);
+    background-size: 160px 160px, auto;
+    background-blend-mode: overlay, normal;
   }
 
   h1,
@@ -76,32 +113,56 @@
   }
 
   ::selection {
-    background: rgba(201, 169, 98, 0.35);
-    color: #f5f0e8;
+    background: oklch(0.78 0.09 88 / 0.34);
+    color: var(--text-primary);
   }
 
-  /* Focus visible for a11y */
   :focus-visible {
-    @apply outline-none ring-2 ring-gold/50 ring-offset-2 ring-offset-background;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--gold-ring);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --duration-fast: 1ms;
+      --duration-base: 1ms;
+      --duration-slow: 1ms;
+    }
+
+    @view-transition {
+      navigation: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
   .btn-gold {
-    @apply bg-gold text-background font-medium px-6 py-3 rounded-xl
+    @apply bg-gold text-background font-medium px-6 py-3
            hover:bg-gold-dark transition-all duration-base ease-premium
            shadow-soft hover:shadow-gold;
+    border-radius: var(--radius-control);
   }
 
   .btn-outline {
-    @apply border border-gold/60 text-gold font-medium px-6 py-3 rounded-xl
+    @apply border border-gold/60 text-gold font-medium px-6 py-3
            hover:bg-gold hover:text-background transition-all duration-base ease-premium;
+    border-radius: var(--radius-control);
   }
 
   .card-luxury {
-    @apply bg-card rounded-2xl shadow-soft border border-white/[0.06]
+    @apply bg-card shadow-soft border border-white/[0.06]
            hover:border-gold/20 hover:shadow-soft-lg
            transition-all duration-base ease-premium;
+    border-radius: var(--radius-photo);
   }
 
   .glass {
@@ -113,10 +174,11 @@
   }
 
   .input-luxury {
-    @apply w-full px-4 py-3 rounded-xl border border-border bg-background-secondary
+    @apply w-full px-4 py-3 border border-border bg-background-secondary
            text-foreground placeholder:text-foreground-muted
            focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-gold/50
-           transition-all duration-200 font-body;
+           transition-all duration-base font-body;
+    border-radius: var(--radius-control);
   }
 
   .text-gradient-gold {
@@ -136,7 +198,43 @@
   }
 
   .photo-frame {
-    @apply relative overflow-hidden rounded-2xl bg-muted;
+    @apply relative overflow-hidden bg-muted;
+    border-radius: var(--radius-photo);
+  }
+
+  .hairline {
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold-line), transparent 80%);
+  }
+
+  .chip-tactile {
+    @apply inline-flex items-center gap-2.5 px-5 min-h-[44px] text-sm font-medium
+           border transition-colors duration-base ease-premium;
+    border-radius: var(--radius-control);
+    border-color: var(--gold-line);
+    color: var(--text-primary);
+  }
+
+  .chip-tactile:hover {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .reveal {
+    animation: rise var(--duration-slow) var(--ease-premium) both;
+  }
+
+  .reveal-2 {
+    animation-delay: 80ms;
+  }
+
+  .reveal-3 {
+    animation-delay: 160ms;
+  }
+
+  .reveal-4 {
+    animation-delay: 240ms;
   }
 }
 
@@ -159,5 +257,39 @@
 
   .safe-pb {
     padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .rounded-tight {
+    border-radius: var(--radius-tight);
+  }
+
+  .rounded-control {
+    border-radius: var(--radius-control);
+  }
+
+  .rounded-photo {
+    border-radius: var(--radius-photo);
+  }
+
+  .rounded-panel {
+    border-radius: var(--radius-panel);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@starting-style {
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
   }
 }
