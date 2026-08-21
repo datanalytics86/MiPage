@@ -159,6 +159,7 @@ function AdminProveedoresInner() {
           photos: p.photos,
           cover_photo: p.cover_photo,
           price_min: p.price_min,
+          bio: p.bio,
         })
       )
     }
