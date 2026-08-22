@@ -46,28 +46,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = hasSupabaseEnv() ? getSupabaseClient() : null
 
   // Fetch user profile and provider data
+  // IMPORTANT (MIP-014): always attempt provider fetch by user_id.
+  // An admin can also own a provider row (e.g. Camila rejected).
   const fetchUserData = async (userId: string) => {
     if (!supabase) return { profile: null, provider: null }
     try {
-      // Fetch profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single()
 
-      // Fetch provider if user is a provider
-      let provider = null
-      if (profile?.role === 'provider') {
-        const { data: providerData } = await supabase
-          .from('providers')
-          .select('*')
-          .eq('user_id', userId)
-          .single()
-        provider = providerData
-      }
+      // Always try to load own provider row (RLS allows owner to see any status)
+      const { data: providerData } = await supabase
+        .from('providers')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle()
 
-      return { profile, provider }
+      return { profile, provider: providerData ?? null }
     } catch (error) {
       console.error('Error fetching user data:', error)
       return { profile: null, provider: null }
@@ -185,7 +182,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) return { error }
 
       // Profile y provider los crean los triggers de Supabase (handle_new_user + ensure_provider_profile).
-      // Solo sincronizamos nombre/rol por si el trigger aún no propagó metadata.
       if (authData.user) {
         await supabase
           .from('profiles')
@@ -217,7 +213,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    if (supabase) await supabase.auth.signOut()
+    if (supabase) {
+      // Global scope clears all sessions for this user on this browser (MIP multi-session fix)
+      await supabase.auth.signOut({ scope: 'global' })
+    }
   }
 
   const refreshProfile = async () => {
