@@ -19,12 +19,32 @@ export function normalizeCategory(category: string): ProviderCategory {
   return 'masajes'
 }
 
+/** MIP-022: one rule for «Desde $» — price_min, else min active service price. */
+export function listingFromPrice(
+  priceMin: number | null | undefined,
+  servicePrices?: Array<number | null | undefined>
+): number | null {
+  if (priceMin != null && priceMin > 0) return priceMin
+  const positives = (servicePrices || []).filter(
+    (p): p is number => typeof p === 'number' && Number.isFinite(p) && p > 0
+  )
+  if (positives.length === 0) return null
+  return Math.min(...positives)
+}
+
+export function yearsExperienceFrom(provider: Provider): number | null {
+  const raw = provider.metadata?.years_experience
+  const n = typeof raw === 'number' ? raw : Number(raw)
+  return Number.isFinite(n) && n > 0 ? n : null
+}
+
 export function toProviderCardData(provider: Provider): ProviderCardData {
   return {
     id: provider.id,
     slug: provider.slug,
     display_name: provider.display_name,
-    age: provider.age ?? 0,
+    age: provider.age && provider.age > 0 ? provider.age : 0,
+    years_experience: yearsExperienceFrom(provider),
     city: provider.city,
     commune: provider.address,
     category: normalizeCategory(provider.category),
@@ -32,7 +52,7 @@ export function toProviderCardData(provider: Provider): ProviderCardData {
     is_featured: provider.is_featured,
     average_rating: Number(provider.rating) || 0,
     review_count: provider.review_count,
-    price_from: provider.price_min ?? 0,
+    price_from: listingFromPrice(provider.price_min) ?? 0,
     primary_image: getProviderImage(provider),
   }
 }
