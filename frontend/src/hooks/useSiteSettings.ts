@@ -40,8 +40,8 @@ const defaults: SiteSettings = {
     maintenanceMode: false,
   },
   email: {
-    supportEmail: 'soporte@mipage.cl',
-    adminEmail: 'contacto@mipage.cl',
+    supportEmail: '',
+    adminEmail: '',
   },
   security: {
     requireEmailVerification: true,

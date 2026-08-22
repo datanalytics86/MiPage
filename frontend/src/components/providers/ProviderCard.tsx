@@ -104,8 +104,15 @@ export function ProviderCard({ provider, className, priority }: ProviderCardProp
             </div>
 
             <div className="flex items-center gap-2 text-white/80 text-sm mb-2">
-              <span>{provider.age} años</span>
-              <span className="text-white/40">·</span>
+              {provider.years_experience && provider.years_experience > 0 ? (
+                <span>{provider.years_experience} años</span>
+              ) : provider.age && provider.age > 0 ? (
+                <span>{provider.age} años</span>
+              ) : null}
+              {(provider.years_experience && provider.years_experience > 0) ||
+              (provider.age && provider.age > 0) ? (
+                <span className="text-white/40">·</span>
+              ) : null}
               <MapPin className="h-3.5 w-3.5 flex-shrink-0" aria-hidden />
               <span className="truncate">
                 {provider.commune ? `${provider.commune}, ` : ''}
@@ -133,12 +140,16 @@ export function ProviderCard({ provider, className, priority }: ProviderCardProp
             >
               {provider.category === 'masajes' ? 'Masajes' : 'Modelaje'}
             </Badge>
-            <p className="text-foreground-secondary text-sm font-medium">
-              Desde{' '}
-              <span className="text-gold font-semibold">
-                {formatPrice(provider.price_from)}
-              </span>
-            </p>
+            {provider.price_from > 0 ? (
+              <p className="text-foreground-secondary text-sm font-medium">
+                Desde{' '}
+                <span className="text-gold font-semibold">
+                  {formatPrice(provider.price_from)}
+                </span>
+              </p>
+            ) : (
+              <span />
+            )}
           </div>
         </div>
       </motion.article>

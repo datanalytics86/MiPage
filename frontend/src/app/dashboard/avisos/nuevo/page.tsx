@@ -40,6 +40,7 @@ import {
   type MetadataValues,
 } from '@/lib/metadataFields'
 import { useToast } from '@/stores/uiStore'
+import { isDeadlockError, retryOnDeadlock } from '@/lib/dbRetry'
 
 const cleanText = sanitizePlainText
 
@@ -192,20 +193,30 @@ export default function NuevoAvisoWizardPage() {
       let providerId = provider?.id
 
       if (providerId) {
-        const { error } = await supabase
-          .from('providers')
-          .update(providerPayload)
-          .eq('id', providerId)
-        if (error) throw error
+        await retryOnDeadlock(async () => {
+          const { error } = await supabase
+            .from('providers')
+            .update(providerPayload)
+            .eq('id', providerId)
+          if (error) throw error
+        })
       } else {
-        const { data, error } = await supabase
-          .from('providers')
-          .insert(providerPayload)
-          .select('id')
-          .single()
-        if (error) throw error
-        providerId = data.id
-        await supabase.from('profiles').update({ role: 'provider' }).eq('id', user.id)
+        providerId = await retryOnDeadlock(async () => {
+          const { data, error } = await supabase
+            .from('providers')
+            .insert(providerPayload)
+            .select('id')
+            .single()
+          if (error) throw error
+          return data.id as string
+        })
+        await retryOnDeadlock(async () => {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ role: 'provider' })
+            .eq('id', user.id)
+          if (error) throw error
+        })
       }
 
       // upload photos
@@ -220,32 +231,41 @@ export default function NuevoAvisoWizardPage() {
         if (upErr) throw upErr
         const { data: pub } = supabase.storage.from('gallery').getPublicUrl(path)
         photoUrls.push(pub.publicUrl)
-        await supabase.from('gallery').insert({
-          provider_id: providerId,
-          type: 'image',
-          url: pub.publicUrl,
-          is_cover: i === 0,
-          sort_order: i,
+        await retryOnDeadlock(async () => {
+          const { error } = await supabase.from('gallery').insert({
+            provider_id: providerId,
+            type: 'image',
+            url: pub.publicUrl,
+            is_cover: i === 0,
+            sort_order: i,
+          })
+          if (error) throw error
         })
       }
 
-      await supabase
-        .from('providers')
-        .update({
-          photos: photoUrls,
-          cover_photo: photoUrls[0] || null,
-          status: 'pending',
-        })
-        .eq('id', providerId)
+      await retryOnDeadlock(async () => {
+        const { error } = await supabase
+          .from('providers')
+          .update({
+            photos: photoUrls,
+            cover_photo: photoUrls[0] || null,
+            status: 'pending',
+          })
+          .eq('id', providerId)
+        if (error) throw error
+      })
 
       if (form.service_name && form.service_price) {
-        await supabase.from('services').insert({
-          provider_id: providerId,
-          name: cleanText(form.service_name),
-          price: Number(form.service_price),
-          duration: form.service_duration || null,
-          is_active: true,
-          sort_order: 0,
+        await retryOnDeadlock(async () => {
+          const { error } = await supabase.from('services').insert({
+            provider_id: providerId,
+            name: cleanText(form.service_name),
+            price: Number(form.service_price),
+            duration: form.service_duration || null,
+            is_active: true,
+            sort_order: 0,
+          })
+          if (error) throw error
         })
       }
 
@@ -278,10 +298,14 @@ export default function NuevoAvisoWizardPage() {
       router.refresh()
     } catch (err) {
       console.error(err)
-      toast.error(
-        'Error al publicar',
-        err instanceof Error ? err.message : 'Revisa Storage y permisos RLS'
-      )
+      if (isDeadlockError(err)) {
+        toast.error(
+          'No se pudo guardar',
+          'El servidor está ocupado. Inténtalo de nuevo en unos segundos.'
+        )
+      } else {
+        toast.error('No se pudo publicar', 'Revisa las fotos y vuelve a intentar.')
+      }
     } finally {
       setSubmitting(false)
     }

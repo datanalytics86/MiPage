@@ -23,7 +23,7 @@ import { GalleryLightbox } from '@/components/ui/GalleryLightbox'
 import { cn, formatPrice, formatDate, getInitials } from '@/lib/utils'
 import { useProvider } from '@/hooks/useProviders'
 import { useFavorites } from '@/hooks/useFavorites'
-import { getProviderImage, normalizeCategory } from '@/lib/providers'
+import { getProviderImage, listingFromPrice, normalizeCategory, yearsExperienceFrom } from '@/lib/providers'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 import type { ProviderFull } from '@/types/database'
@@ -50,6 +50,8 @@ interface ProfileView {
   bio: string | null
   category: string
   age: number | null
+  years_experience: number | null
+  price_from: number | null
   city: string
   commune: string | null
   address_hint: string | null
@@ -94,6 +96,11 @@ function buildProfileView(data: ProviderFull): ProfileView {
     bio: data.bio,
     category: normalizeCategory(data.category),
     age: data.age,
+    years_experience: yearsExperienceFrom(data),
+    price_from: listingFromPrice(
+      data.price_min,
+      (data.services || []).map((s) => s.price)
+    ),
     city: data.city,
     commune: data.address,
     address_hint: data.address,
@@ -165,10 +172,7 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
   }
 
   const favorited = isFavorite(provider.id)
-  const minPrice =
-    provider.services.length > 0
-      ? Math.min(...provider.services.map((s) => s.price))
-      : 0
+  const minPrice = provider.price_from
 
   const whatsappLink = buildWhatsAppLink(provider.whatsapp, provider.display_name, {
     source: 'MiPage',
@@ -226,7 +230,11 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-foreground-secondary">
-                {provider.age && <span>{provider.age} años</span>}
+                {provider.years_experience && provider.years_experience > 0 ? (
+                  <span>{provider.years_experience} años</span>
+                ) : provider.age && provider.age > 0 ? (
+                  <span>{provider.age} años</span>
+                ) : null}
                 <span className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />
                   {provider.commune ? `${provider.commune}, ` : ''}
@@ -329,7 +337,7 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
             <div className="sticky top-24">
               <Card className="shadow-soft-lg">
                 <CardContent className="p-6">
-                  {minPrice > 0 && (
+                  {minPrice != null && minPrice > 0 && (
                     <p className="text-2xl font-semibold mb-4">
                       Desde {formatPrice(minPrice)}
                     </p>

@@ -137,8 +137,7 @@ function RegisterForm() {
             <h2 className="font-display text-2xl font-semibold">¡Cuenta creada!</h2>
             {pendingEmailConfirmation ? (
               <p className="text-foreground-secondary text-sm">
-                Revisa tu correo <strong>{formData.email}</strong> y confirma tu cuenta antes de
-                iniciar sesión.
+                Correo no confirmado. No hay mail de confirmación (operador a mano).
               </p>
             ) : (
               <p className="text-foreground-secondary text-sm">
@@ -152,7 +151,7 @@ function RegisterForm() {
                   Siguiente: publica tu aviso
                 </p>
                 <ol className="list-decimal list-inside space-y-1 mt-2">
-                  <li>Confirma tu correo (si te lo pedimos)</li>
+                  <li>Pide al operador que confirme el acceso (no llega un mail)</li>
                   <li>Inicia sesión y abre el dashboard</li>
                   <li>
                     Completa el wizard <strong>Publicar aviso</strong> (fotos + precio)

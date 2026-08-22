@@ -110,6 +110,7 @@ export interface ProviderCardData {
   slug: string
   display_name: string
   age: number
+  years_experience?: number | null
   city: string
   commune: string | null
   category: ProviderCategory

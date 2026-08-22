@@ -118,8 +118,8 @@ function DashboardOverviewInner() {
                 </p>
                 <p className="text-sm text-foreground-secondary leading-relaxed">
                   Recibimos tu aviso y un administrador revisará las fotos y los datos.
-                  No es un error: cuando se apruebe, aparecerás en Explorar. Mientras tanto
-                  puedes seguir editando perfil, galería y servicios.
+                  El estado se ve en el panel, no llega correo. Cuando se apruebe, aparecerás
+                  en Explorar. Mientras tanto puedes seguir editando perfil, galería y servicios.
                 </p>
               </div>
             </div>
@@ -147,11 +147,9 @@ function DashboardOverviewInner() {
               <>
                 {' '}
                 Revisa el motivo, corrige fotos o datos y vuelve a enviar desde el wizard.
-                {provider.rejection_reason && (
-                  <span className="block mt-2 text-foreground">
-                    Motivo: {provider.rejection_reason}
-                  </span>
-                )}
+                <span className="block mt-2 text-foreground">
+                  Motivo: {provider.rejection_reason || 'Sin motivo registrado'}. No mail.
+                </span>
               </>
             )}
             {provider.status === 'suspended' && (

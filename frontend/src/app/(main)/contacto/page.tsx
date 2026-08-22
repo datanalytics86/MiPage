@@ -2,12 +2,11 @@
 
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, MapPin, Phone, Send, MessageSquare, HelpCircle, Flag } from 'lucide-react'
+import { MapPin, Send, MessageSquare, HelpCircle, Flag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { siteConfig } from '@/lib/site'
 
 const contactReasons = [
   { id: 'general', label: 'Consulta general', icon: MessageSquare },
@@ -24,10 +23,12 @@ export default function ContactoPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError('')
 
     try {
       const response = await fetch('/api/contact', {
@@ -37,17 +38,13 @@ export default function ContactoPage() {
       })
 
       if (!response.ok) {
-        throw new Error('No se pudo enviar el mensaje')
+        throw new Error('No se pudo anotar el mensaje')
       }
 
       setSubmitted(true)
       setFormData({ name: '', email: '', reason: 'general', message: '' })
     } catch {
-      window.location.href = `mailto:${siteConfig.emails.contact}?subject=${encodeURIComponent(
-        `Contacto MiPage — ${formData.reason}`
-      )}&body=${encodeURIComponent(
-        `Nombre: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`
-      )}`
+      setError('No se pudo anotar el pedido. Intenta de nuevo.')
     } finally {
       setIsSubmitting(false)
     }
@@ -65,14 +62,12 @@ export default function ContactoPage() {
             <Send className="h-10 w-10 text-success" />
           </div>
           <h1 className="font-display text-3xl font-semibold text-foreground mb-4">
-            ¡Mensaje enviado!
+            Recibido
           </h1>
           <p className="text-foreground-secondary mb-8">
-            Gracias por contactarnos. Te responderemos lo antes posible a tu correo electrónico.
+            Recibido. Queda para el operador. No llega un mail.
           </p>
-          <Button onClick={() => setSubmitted(false)}>
-            Enviar otro mensaje
-          </Button>
+          <Button onClick={() => setSubmitted(false)}>Enviar otro mensaje</Button>
         </motion.div>
       </div>
     )
@@ -81,34 +76,28 @@ export default function ContactoPage() {
   return (
     <div className="container-luxury py-12">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
         <div className="text-center mb-12">
           <h1 className="font-display text-4xl font-semibold text-foreground mb-4">
             Contáctanos
           </h1>
           <p className="text-lg text-foreground-secondary max-w-2xl mx-auto">
-            ¿Tienes alguna pregunta o sugerencia? Estamos aquí para ayudarte.
-            Completa el formulario y te responderemos lo antes posible.
+            Formulario para el operador. No hay inbox público ni respuesta automática por correo.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Contact Info */}
           <div className="space-y-6">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center shrink-0">
-                    <Mail className="h-6 w-6 text-gold" />
+                    <MessageSquare className="h-6 w-6 text-gold" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-1">Email</h3>
-                    <a
-                      href={`mailto:${siteConfig.emails.contact}`}
-                      className="text-foreground-secondary hover:text-gold transition-colors"
-                    >
-                      {siteConfig.emails.contact}
-                    </a>
+                    <h3 className="font-semibold text-foreground mb-1">Operador</h3>
+                    <p className="text-foreground-secondary text-sm">
+                      El mensaje queda en cola. No se envía un correo.
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -122,33 +111,13 @@ export default function ContactoPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Ubicación</h3>
-                    <p className="text-foreground-secondary">
-                      Santiago, Chile
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gold/10 flex items-center justify-center shrink-0">
-                    <MessageSquare className="h-6 w-6 text-gold" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground mb-1">Horario de atención</h3>
-                    <p className="text-foreground-secondary">
-                      Lunes a Viernes<br />
-                      9:00 - 18:00 hrs
-                    </p>
+                    <p className="text-foreground-secondary">Santiago, Chile</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Contact Form */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
@@ -156,7 +125,15 @@ export default function ContactoPage() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Reason Selection */}
+                  {error && (
+                    <div
+                      role="alert"
+                      className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                    >
+                      {error}
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-3">
                       Motivo del contacto
@@ -174,14 +151,20 @@ export default function ContactoPage() {
                               : 'border-border hover:border-gold/50'
                           )}
                         >
-                          <reason.icon className={cn(
-                            'h-6 w-6',
-                            formData.reason === reason.id ? 'text-gold' : 'text-foreground-muted'
-                          )} />
-                          <span className={cn(
-                            'text-sm font-medium',
-                            formData.reason === reason.id ? 'text-gold' : 'text-foreground-secondary'
-                          )}>
+                          <reason.icon
+                            className={cn(
+                              'h-6 w-6',
+                              formData.reason === reason.id ? 'text-gold' : 'text-foreground-muted'
+                            )}
+                          />
+                          <span
+                            className={cn(
+                              'text-sm font-medium',
+                              formData.reason === reason.id
+                                ? 'text-gold'
+                                : 'text-foreground-secondary'
+                            )}
+                          >
                             {reason.label}
                           </span>
                         </button>
@@ -189,7 +172,6 @@ export default function ContactoPage() {
                     </div>
                   </div>
 
-                  {/* Name & Email */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label htmlFor="name" className="text-sm font-medium text-foreground">
@@ -218,7 +200,6 @@ export default function ContactoPage() {
                     </div>
                   </div>
 
-                  {/* Message */}
                   <div className="space-y-2">
                     <label htmlFor="message" className="text-sm font-medium text-foreground">
                       Mensaje

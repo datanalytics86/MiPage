@@ -46,8 +46,8 @@ export default function AdminConfiguracionPage() {
   const [settings, setSettings] = useState({
     siteName: 'MiPage',
     siteDescription: 'Marketplace de servicios profesionales en Chile',
-    supportEmail: 'soporte@mipage.cl',
-    adminEmail: 'contacto@mipage.cl',
+    supportEmail: '',
+    adminEmail: '',
     timezone: 'America/Santiago',
     currency: 'CLP',
     commissionRate: 15,

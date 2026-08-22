@@ -136,23 +136,14 @@ export default function AyudaPage() {
               ¿No encontraste lo que buscabas?
             </h2>
             <p className="text-foreground-secondary mb-6">
-              Nuestro equipo de soporte está disponible para ayudarte.
+              Deja el pedido en el formulario de contacto. Queda para el operador. No hay inbox.
             </p>
             <Link href="/contacto">
               <Button>
-                Contactar soporte
+                Ir a contacto
                 <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <p className="text-sm text-foreground-muted mt-4">
-              También puedes escribirnos a{' '}
-              <a
-                href={`mailto:${siteConfig.emails.support}`}
-                className="text-gold hover:underline"
-              >
-                {siteConfig.emails.support}
-              </a>
-            </p>
           </div>
         </div>
       </section>

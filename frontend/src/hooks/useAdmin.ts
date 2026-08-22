@@ -28,6 +28,7 @@ export interface AdminProviderRow {
   photos: string[]
   created_at: string
   bio: string | null
+  rejection_reason: string | null
   email: string
   services_count: number
 }
@@ -69,6 +70,7 @@ export function useAdminProviders() {
           photos: row.photos || [],
           created_at: row.created_at,
           bio: row.bio ?? null,
+          rejection_reason: row.rejection_reason ?? null,
           email: profile?.email ?? '',
           services_count: services?.[0]?.count ?? 0,
         }

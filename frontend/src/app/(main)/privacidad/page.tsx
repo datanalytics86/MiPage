@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { siteConfig } from '@/lib/site'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad',
@@ -40,9 +40,7 @@ export default function PrivacidadPage() {
             <p>Utilizamos tu información para:</p>
             <ul className="list-disc pl-6 mt-4 space-y-2">
               <li>Proporcionar y mejorar nuestros servicios</li>
-              <li>Procesar transacciones y enviar notificaciones relacionadas</li>
               <li>Personalizar tu experiencia en la plataforma</li>
-              <li>Comunicarnos contigo sobre actualizaciones y promociones</li>
               <li>Prevenir actividades fraudulentas</li>
             </ul>
           </section>
@@ -88,9 +86,11 @@ export default function PrivacidadPage() {
               <li>Portabilidad de datos</li>
             </ul>
             <p className="mt-4">
-              Para solicitar eliminación de cuenta y datos, inicia sesión y envía un POST autenticado a{' '}
-              <code className="text-sm bg-muted px-1 rounded">/api/account/delete-request</code>{' '}
-              o escribe a {siteConfig.emails.privacy}. Las solicitudes se procesan manualmente por el administrador.
+              Para solicitar eliminación de cuenta y datos, inicia sesión y usa el{' '}
+              <Link href="/contacto" className="text-gold hover:underline">
+                formulario de contacto
+              </Link>
+              . El operador procesa las solicitudes a mano. No llega un mail.
             </p>
           </section>
 
@@ -122,7 +122,7 @@ export default function PrivacidadPage() {
             </h2>
             <p>
               Nuestros servicios están destinados a personas mayores de 18 años.
-              No recopilamos intencionalmente información de menores de edad.
+              Cualquier indicio de menores implica rechazo inmediato y suspensión. No se reenvía.
             </p>
           </section>
 
@@ -131,10 +131,11 @@ export default function PrivacidadPage() {
               9. Contacto
             </h2>
             <p>
-              Para ejercer tus derechos o consultas sobre privacidad, contáctanos en:{' '}
-              <a href={`mailto:${siteConfig.emails.privacy}`} className="text-gold hover:underline">
-                {siteConfig.emails.privacy}
-              </a>
+              Para ejercer tus derechos o consultas sobre privacidad, usa el{' '}
+              <Link href="/contacto" className="text-gold hover:underline">
+                formulario de contacto
+              </Link>
+              . Queda para el operador. No hay inbox público.
             </p>
           </section>
         </div>
