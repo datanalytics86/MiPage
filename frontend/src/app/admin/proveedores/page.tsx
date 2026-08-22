@@ -67,13 +67,43 @@ const statusLabels: Record<string, string> = {
   suspended: 'Suspendido',
 }
 
-/** Empathetic rejection copy: what to fix, not punishment. */
-const REJECT_REASONS = [
-  'Las fotos están un poco borrosas o poco nítidas. ¿Puedes subir al menos 3 imágenes claras del servicio y de ti?',
-  'Parte del contenido no encaja con la política de MiPage. Revisa las normas y vuelve a enviar con fotos y texto apropiados.',
-  'Detectamos datos de contacto o enlaces que parecen spam. Usa los campos de WhatsApp/Instagram y deja la bio limpia.',
-  'La categoría o la ciudad no coinciden con el perfil. Corrige esos datos y reenvía para revisión.',
-  'El perfil está incompleto (bio corta o sin precio). Completa la información y las fotos; con gusto lo revisamos de nuevo.',
+/** Short chips (MIP-013). Menores = rechazo inmediato + suspensión, no se reenvía. */
+const REJECT_CHIPS = [
+  {
+    id: 'fotos',
+    label: 'Fotos',
+    reason:
+      'Las fotos están un poco borrosas o poco nítidas. ¿Puedes subir al menos 3 imágenes claras del servicio y de ti?',
+  },
+  {
+    id: 'policy',
+    label: 'Policy',
+    reason:
+      'Parte del contenido no encaja con la política de MiPage. Revisa las normas y vuelve a enviar con fotos y texto apropiados.',
+  },
+  {
+    id: 'spam',
+    label: 'Spam',
+    reason:
+      'Detectamos datos de contacto o enlaces que parecen spam. Usa los campos de WhatsApp/Instagram y deja la bio limpia.',
+  },
+  {
+    id: 'place',
+    label: 'Place',
+    reason:
+      'La categoría o la ciudad no coinciden con el perfil. Corrige esos datos y reenvía para revisión.',
+  },
+  {
+    id: 'incomplete',
+    label: 'Incomplete',
+    reason:
+      'El perfil está incompleto (bio corta o sin precio). Completa la información y las fotos; con gusto lo revisamos de nuevo.',
+  },
+  {
+    id: 'menores',
+    label: 'Menores',
+    reason: 'Menores: rechazo inmediato y suspensión. No se reenvía.',
+  },
 ] as const
 
 function AdminProveedoresInner() {
@@ -89,6 +119,7 @@ function AdminProveedoresInner() {
   const [preview, setPreview] = useState<AdminProviderRow | null>(null)
   const [rejectTarget, setRejectTarget] = useState<AdminProviderRow | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [rejectChip, setRejectChip] = useState<string>('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
 
@@ -119,10 +150,14 @@ function AdminProveedoresInner() {
   const confirmReject = async () => {
     if (!rejectTarget) return
     const reason = rejectReason.trim() || 'No cumple políticas de contenido'
+    const isMinors = rejectChip === 'menores'
     await mutate(
       rejectTarget.id,
-      { status: 'rejected', rejection_reason: reason },
-      'Proveedor rechazado',
+      {
+        status: isMinors ? 'suspended' : 'rejected',
+        rejection_reason: reason,
+      },
+      isMinors ? 'Rechazo inmediato y suspensión. No se reenvía.' : 'Proveedor rechazado',
       {
         type: 'provider_rejected',
         email: rejectTarget.email,
@@ -132,6 +167,7 @@ function AdminProveedoresInner() {
     )
     setRejectTarget(null)
     setRejectReason('')
+    setRejectChip('')
   }
 
   const filteredProviders = useMemo(() => {
@@ -445,6 +481,11 @@ function AdminProveedoresInner() {
                           )}
                         </div>
                         <p className="text-sm text-foreground-muted">{provider.email}</p>
+                        {provider.rejection_reason && (
+                          <p className="text-sm text-error mt-1">
+                            Motivo: {provider.rejection_reason}
+                          </p>
+                        )}
                         <div className="flex items-center gap-4 mt-1 text-sm text-foreground-secondary">
                           <span>{provider.category}</span>
                           <span className="flex items-center gap-1">
@@ -510,6 +551,7 @@ function AdminProveedoresInner() {
                             onClick={() => {
                               setRejectTarget(provider)
                               setRejectReason('')
+                              setRejectChip('')
                             }}
                           >
                             <XCircle className="h-4 w-4 mr-1" />
@@ -530,11 +572,9 @@ function AdminProveedoresInner() {
                               Ver perfil público
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <a href={`mailto:${provider.email}`}>
-                              <Mail className="h-4 w-4 mr-2" />
-                              Enviar email
-                            </a>
+                          <DropdownMenuItem disabled>
+                            <Mail className="h-4 w-4 mr-2" />
+                            El envío de mail está apagado. No salió ningún correo.
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -615,6 +655,9 @@ function AdminProveedoresInner() {
                   <p className="text-sm text-foreground-muted">
                     {preview.category} · {preview.city} · {preview.email}
                   </p>
+                  {preview.rejection_reason && (
+                    <p className="text-sm text-error mt-2">Motivo: {preview.rejection_reason}</p>
+                  )}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setPreview(null)}>
                   Cerrar
@@ -690,23 +733,25 @@ function AdminProveedoresInner() {
                 Ayudar a {rejectTarget.display_name} a mejorar
               </h3>
               <p className="text-sm text-foreground-muted">
-                Elige un motivo claro: se lo enviaremos para que pueda corregir y volver a enviar.
-                (Email si Resend está configurado.)
+                Elige un motivo. El proveedor lo ve en el panel. No sale ningún correo.
               </p>
               <div className="flex flex-wrap gap-2">
-                {REJECT_REASONS.map((reason) => (
+                {REJECT_CHIPS.map((chip) => (
                   <button
-                    key={reason}
+                    key={chip.id}
                     type="button"
-                    onClick={() => setRejectReason(reason)}
+                    onClick={() => {
+                      setRejectChip(chip.id)
+                      setRejectReason(chip.reason)
+                    }}
                     className={cn(
                       'text-xs px-3 py-1.5 rounded-full border transition-colors',
-                      rejectReason === reason
+                      rejectChip === chip.id
                         ? 'border-gold bg-gold/15 text-gold'
                         : 'border-border text-foreground-secondary hover:border-gold/40'
                     )}
                   >
-                    {reason}
+                    {chip.label}
                   </button>
                 ))}
               </div>
@@ -717,7 +762,13 @@ function AdminProveedoresInner() {
                 rows={4}
               />
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" onClick={() => setRejectTarget(null)}>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setRejectTarget(null)
+                    setRejectChip('')
+                  }}
+                >
                   Cancelar
                 </Button>
                 <Button variant="destructive" onClick={confirmReject}>

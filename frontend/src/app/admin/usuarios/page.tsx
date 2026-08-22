@@ -142,8 +142,9 @@ export default function AdminUsuariosPage() {
                             <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <a href={`mailto:${user.email}`}><Mail className="h-4 w-4 mr-2" />Enviar email</a>
+                            <DropdownMenuItem disabled>
+                              <Mail className="h-4 w-4 mr-2" />
+                              El envío de mail está apagado. No salió ningún correo.
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => changeRole(user.id, 'user')}>Rol: Usuario</DropdownMenuItem>
