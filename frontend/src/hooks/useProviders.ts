@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
-import type { Provider, ProviderFull, Service, GalleryItem } from '@/types/database'
+import { isAuthSessionError } from '@/lib/dbRetry'
+import type { Provider, ProviderFull } from '@/types/database'
 
 // Query keys
 export const providerKeys = {
@@ -36,52 +37,63 @@ export function useProviders(filters: ProvidersFilters = {}) {
     queryKey: providerKeys.list(filters),
     enabled: hasSupabaseEnv(),
     queryFn: async (): Promise<ProvidersListResult> => {
-      let query = supabase
-        .from('providers')
-        .select('*', { count: 'exact' })
-        .eq('status', 'approved')
+      const run = () => {
+        // MIP-021: never drop status=approved. Guest and session must see the same catalog.
+        let query = supabase
+          .from('providers')
+          .select('*', { count: 'exact' })
+          .eq('status', 'approved')
 
-      // Apply filters
-      if (filters.category) {
-        query = query.eq('category', filters.category)
-      }
-      if (filters.city) {
-        query = query.eq('city', filters.city)
-      }
-      if (filters.is_verified !== undefined) {
-        query = query.eq('is_verified', filters.is_verified)
-      }
-      if (filters.search) {
-        query = query.or(`display_name.ilike.%${filters.search}%,bio.ilike.%${filters.search}%`)
+        if (filters.category) {
+          query = query.eq('category', filters.category)
+        }
+        if (filters.city) {
+          query = query.eq('city', filters.city)
+        }
+        if (filters.is_verified !== undefined) {
+          query = query.eq('is_verified', filters.is_verified)
+        }
+        if (filters.search) {
+          query = query.or(`display_name.ilike.%${filters.search}%,bio.ilike.%${filters.search}%`)
+        }
+
+        switch (filters.sort) {
+          case 'rating':
+            query = query.order('rating', { ascending: false })
+            break
+          case 'price_low':
+            query = query.order('price_min', { ascending: true, nullsFirst: false })
+            break
+          case 'price_high':
+            query = query.order('price_min', { ascending: false })
+            break
+          case 'newest':
+            query = query.order('created_at', { ascending: false })
+            break
+          default:
+            query = query
+              .order('is_featured', { ascending: false })
+              .order('rating', { ascending: false })
+        }
+
+        if (filters.limit) {
+          query = query.limit(filters.limit)
+        }
+        if (filters.offset) {
+          query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1)
+        }
+
+        return query
       }
 
-      // Apply sorting
-      switch (filters.sort) {
-        case 'rating':
-          query = query.order('rating', { ascending: false })
-          break
-        case 'price_low':
-          query = query.order('price_min', { ascending: true, nullsFirst: false })
-          break
-        case 'price_high':
-          query = query.order('price_min', { ascending: false })
-          break
-        case 'newest':
-          query = query.order('created_at', { ascending: false })
-          break
-        default:
-          query = query.order('is_featured', { ascending: false }).order('rating', { ascending: false })
+      let { data, error, count } = await run()
+      if (error && isAuthSessionError(error)) {
+        await supabase.auth.refreshSession()
+        const retry = await run()
+        data = retry.data
+        error = retry.error
+        count = retry.count
       }
-
-      // Apply pagination
-      if (filters.limit) {
-        query = query.limit(filters.limit)
-      }
-      if (filters.offset) {
-        query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1)
-      }
-
-      const { data, error, count } = await query
 
       if (error) throw error
       return { items: (data || []) as Provider[], total: count ?? 0 }
@@ -154,11 +166,12 @@ export function useProvider(slug: string) {
         .eq('provider_id', provider.id)
         .order('sort_order')
 
-      // Increment view count
-      await supabase
-        .from('providers')
-        .update({ view_count: provider.view_count + 1 })
-        .eq('id', provider.id)
+      if (provider.status === 'approved') {
+        await supabase
+          .from('providers')
+          .update({ view_count: provider.view_count + 1 })
+          .eq('id', provider.id)
+      }
 
       return {
         ...provider,
