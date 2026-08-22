@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { siteConfig } from '@/lib/site'
+import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Términos de Servicio',
@@ -88,6 +88,10 @@ export default function TerminosPage() {
               <li>Acosar a otros usuarios o proveedores</li>
               <li>Intentar acceder a cuentas de otros usuarios</li>
               <li>Publicar información falsa o engañosa</li>
+              <li>
+                Cualquier contenido o identidad de menores de 18 años: rechazo inmediato y
+                suspensión. No se reenvía.
+              </li>
             </ul>
           </section>
 
@@ -118,10 +122,11 @@ export default function TerminosPage() {
               9. Contacto
             </h2>
             <p>
-              Si tienes preguntas sobre estos términos, contáctanos en:{' '}
-              <a href={`mailto:${siteConfig.emails.legal}`} className="text-gold hover:underline">
-                {siteConfig.emails.legal}
-              </a>
+              Si tienes preguntas sobre estos términos, usa el{' '}
+              <Link href="/contacto" className="text-gold hover:underline">
+                formulario de contacto
+              </Link>
+              . Queda para el operador. No hay inbox público.
             </p>
           </section>
         </div>

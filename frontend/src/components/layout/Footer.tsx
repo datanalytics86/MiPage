@@ -104,13 +104,13 @@ export function Footer() {
             >
               <Instagram className="h-5 w-5" aria-hidden />
             </a>
-            <a
-              href={`mailto:${siteConfig.emails.contact}`}
+            <Link
+              href="/contacto"
               className="text-foreground-muted hover:text-gold transition-colors"
-              aria-label={`Email ${siteConfig.emails.contact}`}
+              aria-label="Contacto"
             >
               <Mail className="h-5 w-5" aria-hidden />
-            </a>
+            </Link>
           </div>
         </div>
       </div>

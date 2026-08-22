@@ -21,17 +21,28 @@ export default function LoginPage() {
     password: '',
   })
   const [error, setError] = useState('')
+  const [errorTitle, setErrorTitle] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setErrorTitle('')
     setIsLoading(true)
 
     try {
       const { error: authError } = await signIn(formData.email, formData.password)
 
       if (authError) {
-        setError('Credenciales incorrectas. Por favor intenta de nuevo.')
+        const code = String((authError as Error & { code?: string }).code || '').toLowerCase()
+        const message = (authError.message || '').toLowerCase()
+        const emailNotConfirmed =
+          code === 'email_not_confirmed' || message.includes('email not confirmed')
+        if (emailNotConfirmed) {
+          setErrorTitle('Correo no confirmado')
+          setError('No hay mail de confirmación (operador a mano).')
+        } else {
+          setError('Correo o contraseña incorrectos. Vuelve a intentar.')
+        }
         return
       }
 
@@ -63,8 +74,9 @@ export default function LoginPage() {
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-lg bg-error/10 text-error text-sm">
-                {error}
+              <div className="p-3 rounded-lg bg-error/10 text-error text-sm space-y-1">
+                {errorTitle && <p className="font-semibold">{errorTitle}</p>}
+                <p>{error}</p>
               </div>
             )}
 

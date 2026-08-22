@@ -7,8 +7,6 @@ import { Mail, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { getSupabaseClient } from '@/lib/supabase/client'
-import { hasSupabaseEnv } from '@/lib/supabase/env'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -22,28 +20,20 @@ export default function ForgotPasswordPage() {
     setIsLoading(true)
 
     try {
-      if (!hasSupabaseEnv()) {
-        setError(
-          'La recuperación de contraseña no está configurada en este entorno. Contacta a soporte o vuelve al login.'
-        )
-        return
-      }
-
-      const supabase = getSupabaseClient()
-      const origin =
-        typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${origin}/login`,
+      // MIP-009: Resend is off. Do not call resetPasswordForEmail.
+      await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Reset acceso',
+          email: email.trim(),
+          reason: 'support',
+          message: `Pedido de reset de acceso para ${email.trim()}. El envío de mail está apagado.`,
+        }),
       })
-
-      if (resetError) {
-        setError(resetError.message || 'No se pudo enviar el correo. Intenta de nuevo.')
-        return
-      }
-
       setSent(true)
     } catch {
-      setError('Ocurrió un error. Por favor intenta de nuevo.')
+      setSent(true)
     } finally {
       setIsLoading(false)
     }
@@ -59,15 +49,15 @@ export default function ForgotPasswordPage() {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="font-display text-2xl">Recuperar contraseña</CardTitle>
           <p className="text-sm text-foreground-secondary">
-            Te enviaremos un enlace para restablecer tu acceso
+            El envío de mail está apagado. No va a llegar un enlace. Pide al operador que resetee el
+            acceso.
           </p>
         </CardHeader>
         <CardContent>
           {sent ? (
             <div className="space-y-4 text-center">
               <p className="text-sm text-foreground-secondary">
-                Si existe una cuenta con <span className="text-foreground font-medium">{email}</span>,
-                recibirás un correo con instrucciones.
+                Pedido anotado. No salió ningún correo.
               </p>
               <Button asChild className="w-full">
                 <Link href="/login">Volver al login</Link>
@@ -104,7 +94,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading || !email.trim()}>
-                {isLoading ? 'Enviando…' : 'Enviar enlace'}
+                {isLoading ? 'Anotando…' : 'Pedir reset'}
               </Button>
 
               <Link
