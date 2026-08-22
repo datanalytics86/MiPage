@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { Menu, X, Heart, LogOut, LayoutDashboard, Shield, Search } from 'lucide-react'
+import { Menu, X, Heart, LogOut, LayoutDashboard, Shield, Search, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -112,7 +112,7 @@ export function Header() {
                       <p className="text-xs text-foreground-muted">{profile.email}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    {profile.role === 'provider' && (
+                    {(profile.role === 'provider' || profile.role === 'admin') && (
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard">
                           <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -128,6 +128,12 @@ export function Header() {
                         </Link>
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuItem asChild>
+                      <Link href="/cuenta">
+                        <User className="h-4 w-4 mr-2" />
+                        Cuenta
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/favoritos">
                         <Heart className="h-4 w-4 mr-2" />
@@ -208,7 +214,7 @@ export function Header() {
                         Favoritos
                       </Button>
                     </Link>
-                    {profile.role === 'provider' && (
+                    {(profile.role === 'provider' || profile.role === 'admin') && (
                       <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
                         <Button variant="ghost" className="w-full justify-start">
                           <LayoutDashboard className="h-5 w-5 mr-2" aria-hidden />
@@ -224,6 +230,12 @@ export function Header() {
                         </Button>
                       </Link>
                     )}
+                    <Link href="/cuenta" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <User className="h-5 w-5 mr-2" aria-hidden />
+                        Cuenta
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       className="w-full justify-start text-error"
