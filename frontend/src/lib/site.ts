@@ -5,11 +5,15 @@ export const siteConfig = {
     'Encuentra servicios de modelaje y masajes en Chile. Perfiles con fotos, reseñas de clientes y contacto directo por WhatsApp.',
   url: process.env.NEXT_PUBLIC_APP_URL ?? 'https://mi-page-lake.vercel.app',
   locale: 'es_CL',
+  /**
+   * MIP-008/011: Public UI must not publish @mipage.cl inboxes.
+   * Contact flows go through /contacto form (operator queue). No public mailto.
+   */
   emails: {
-    contact: 'contacto@mipage.cl',
-    support: 'soporte@mipage.cl',
-    legal: 'legal@mipage.cl',
-    privacy: 'privacidad@mipage.cl',
+    contact: '',
+    support: '',
+    legal: '',
+    privacy: '',
   },
   social: {
     instagram: 'https://instagram.com/mipage.cl',
