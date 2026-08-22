@@ -27,6 +27,7 @@ export interface AdminProviderRow {
   cover_photo: string | null
   photos: string[]
   created_at: string
+  bio: string | null
   email: string
   services_count: number
 }
@@ -41,7 +42,7 @@ export function useAdminProviders() {
         .from('providers')
         .select(`
           *,
-          profile:profiles (email),
+          profile:profiles!user_id (email),
           services (count)
         `)
         .order('created_at', { ascending: false })
@@ -67,6 +68,7 @@ export function useAdminProviders() {
           cover_photo: row.cover_photo,
           photos: row.photos || [],
           created_at: row.created_at,
+          bio: row.bio ?? null,
           email: profile?.email ?? '',
           services_count: services?.[0]?.count ?? 0,
         }
