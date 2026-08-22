@@ -213,10 +213,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    if (supabase) {
-      // Global scope clears all sessions for this user on this browser (MIP multi-session fix)
-      await supabase.auth.signOut({ scope: 'global' })
+    // Always clear local state so a leftover session cannot keep admin/guest
+    // catalog queries on a stale JWT (MIP-014 / MIP-021).
+    const cleared: AuthState = {
+      user: null,
+      profile: null,
+      provider: null,
+      session: null,
+      isLoading: false,
+      isAuthenticated: false,
     }
+    if (supabase) {
+      try {
+        await supabase.auth.signOut({ scope: 'global' })
+      } catch (error) {
+        console.error('Error signing out:', error)
+      }
+    }
+    setState(cleared)
   }
 
   const refreshProfile = async () => {
