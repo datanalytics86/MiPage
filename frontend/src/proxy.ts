@@ -20,7 +20,20 @@ function isPublicMarketingPath(pathname: string): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(p + '/') || pathname.startsWith(p))
 }
 
-export async function middleware(request: NextRequest) {
+function sessionCookies(request: NextRequest) {
+  return {
+    getAll() {
+      return request.cookies.getAll()
+    },
+    setAll() {},
+  }
+}
+
+/**
+ * Next.js 16 renames edge middleware to a Node.js proxy.
+ * This file does not need the edge runtime.
+ */
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (!hasSupabaseEnv()) {
@@ -51,15 +64,7 @@ export async function middleware(request: NextRequest) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set() {},
-          remove() {},
-        },
-      }
+      { cookies: sessionCookies(request) }
     )
 
     const {
@@ -102,15 +107,7 @@ export async function middleware(request: NextRequest) {
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return request.cookies.get(name)?.value
-          },
-          set() {},
-          remove() {},
-        },
-      }
+      { cookies: sessionCookies(request) }
     )
 
     const {

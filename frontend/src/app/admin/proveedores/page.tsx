@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense, useEffect, useMemo, useState } from 'react'
+import React, { Suspense, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -83,20 +83,19 @@ function AdminProveedoresInner() {
   const updateProvider = useUpdateProvider()
   const moderateProviders = useModerateProviders()
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>(
-    searchParams.get('status') || 'all'
-  )
+  const statusFromUrl = searchParams.get('status')
+  const [statusFilter, setStatusFilter] = useState<string>(statusFromUrl || 'all')
+  const [seenStatus, setSeenStatus] = useState(statusFromUrl)
+  if (statusFromUrl && statusFromUrl !== seenStatus) {
+    setSeenStatus(statusFromUrl)
+    setStatusFilter(statusFromUrl)
+  }
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
   const [preview, setPreview] = useState<AdminProviderRow | null>(null)
   const [rejectTarget, setRejectTarget] = useState<AdminProviderRow | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkBusy, setBulkBusy] = useState(false)
-
-  useEffect(() => {
-    const s = searchParams.get('status')
-    if (s) setStatusFilter(s)
-  }, [searchParams])
 
   const mutate = async (
     id: string,

@@ -58,8 +58,9 @@ export default function AdminConfiguracionPage() {
     maintenanceMode: false,
   })
 
-  React.useEffect(() => {
-    if (!siteSettings) return
+  const [loadedSettings, setLoadedSettings] = useState(siteSettings)
+  if (siteSettings && siteSettings !== loadedSettings) {
+    setLoadedSettings(siteSettings)
     setSettings({
       siteName: siteSettings.general.siteName,
       siteDescription: siteSettings.general.siteDescription,
@@ -74,7 +75,7 @@ export default function AdminConfiguracionPage() {
       allowProviderRegistration: siteSettings.security.allowProviderRegistration,
       maintenanceMode: siteSettings.general.maintenanceMode,
     })
-  }, [siteSettings])
+  }
 
   const handleChange = (key: string, value: unknown) => {
     setSettings((prev) => ({ ...prev, [key]: value }))

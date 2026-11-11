@@ -7,7 +7,7 @@ export type ApiActor = {
 
 /** Session user plus role. Null when there is no session. */
 export async function getApiActor(): Promise<ApiActor | null> {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()

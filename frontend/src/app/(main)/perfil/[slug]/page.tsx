@@ -2,7 +2,7 @@ import { ProviderProfileClient } from '@/components/providers/ProviderProfileCli
 import { mockProviders } from '@/lib/mockProviders'
 
 interface ProviderPageProps {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 /** Pre-render demo slugs so profile links work even if SSR edge is slow. */
@@ -12,6 +12,7 @@ export function generateStaticParams() {
 
 export const dynamicParams = true
 
-export default function ProviderPage({ params }: ProviderPageProps) {
-  return <ProviderProfileClient slug={params.slug} />
+export default async function ProviderPage({ params }: ProviderPageProps) {
+  const { slug } = await params
+  return <ProviderProfileClient slug={slug} />
 }

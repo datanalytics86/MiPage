@@ -35,16 +35,15 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const supabase = hasSupabaseEnv() ? getSupabaseClient() : null
   const [state, setState] = useState<AuthState>({
     user: null,
     profile: null,
     provider: null,
     session: null,
-    isLoading: true,
+    isLoading: Boolean(supabase),
     isAuthenticated: false,
   })
-
-  const supabase = hasSupabaseEnv() ? getSupabaseClient() : null
 
   // Fetch user profile and provider data
   const fetchUserData = async (userId: string) => {
@@ -77,10 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize auth state
   useEffect(() => {
-    if (!supabase) {
-      setState((s) => ({ ...s, isLoading: false }))
-      return
-    }
+    if (!supabase) return
 
     const initAuth = async () => {
       try {

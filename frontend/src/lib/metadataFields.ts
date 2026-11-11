@@ -41,7 +41,7 @@ const keySchema = z
 
 export function validateFieldKey(key: string): { ok: boolean; message?: string } {
   const r = keySchema.safeParse(key)
-  if (!r.success) return { ok: false, message: r.error.errors[0]?.message }
+  if (!r.success) return { ok: false, message: r.error.issues[0]?.message }
   return { ok: true }
 }
 
@@ -99,8 +99,7 @@ export function validateMetadataValues(
       }
       case 'url': {
         try {
-          // eslint-disable-next-line no-new
-          new URL(String(raw))
+          void new URL(String(raw))
         } catch {
           errors[field.key] = 'URL inválida'
         }

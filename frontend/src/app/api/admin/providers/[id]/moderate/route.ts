@@ -29,7 +29,7 @@ type ProviderRow = {
  */
 export async function POST(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const actor = await getApiActor()
   if (!actor) {
@@ -51,12 +51,13 @@ export async function POST(
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
 
-  const ids = parsed.data.ids?.length ? parsed.data.ids : [context.params.id]
+  const { id } = await context.params
+  const ids = parsed.data.ids?.length ? parsed.data.ids : [id]
   const uniqueIds = Array.from(new Set(ids))
   const status = parsed.data.status
   const reason = parsed.data.rejection_reason?.trim() || null
 
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: rows, error: readError } = await supabase
     .from('providers')
     .select('id, user_id, display_name, status')
