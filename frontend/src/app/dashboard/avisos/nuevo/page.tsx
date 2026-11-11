@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useAuth } from '@/contexts/AuthContext'
+import { useCatalog } from '@/hooks/useCatalog'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 import { generateSlug, cn } from '@/lib/utils'
@@ -54,6 +55,7 @@ const STEP_HINTS = [
 export default function NuevoAvisoWizardPage() {
   const router = useRouter()
   const toast = useToast()
+  const catalog = useCatalog()
   const { provider, profile, refreshProfile, isLoading: authLoading } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -334,18 +336,37 @@ export default function NuevoAvisoWizardPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="masajes">Masajes</SelectItem>
-                      <SelectItem value="modelaje">Modelaje</SelectItem>
+                      {(catalog.data?.categories?.length
+                        ? catalog.data.categories
+                        : [
+                            { slug: 'masajes', label: 'Masajes' },
+                            { slug: 'modelaje', label: 'Modelaje' },
+                          ]
+                      ).map((item) => (
+                        <SelectItem key={item.slug} value={item.slug}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label htmlFor="city">Ciudad</Label>
-                  <Input
-                    id="city"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  />
+                  <Select value={form.city} onValueChange={(value) => setForm({ ...form, city: value })}>
+                    <SelectTrigger id="city">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(catalog.data?.cities?.length
+                        ? catalog.data.cities
+                        : ['Santiago', 'Viña del Mar', 'Concepción', 'Valparaíso']
+                      ).map((city) => (
+                        <SelectItem key={city} value={city}>
+                          {city}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div>

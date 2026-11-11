@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge'
 import { AuthGate } from '@/components/auth/AuthGate'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
 
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -36,6 +37,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { profile, provider, signOut } = useAuth()
+  const { data: siteSettings } = useSiteSettings()
+  if (siteSettings?.general.maintenanceMode && profile?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+        <div className="max-w-md space-y-3">
+          <h1 className="font-display text-3xl">Volvemos pronto</h1>
+          <p className="text-foreground-secondary">El panel de profesionales está en pausa por mantenimiento.</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleSignOut = async () => {
     await signOut()

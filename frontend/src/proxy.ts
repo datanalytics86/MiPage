@@ -78,28 +78,24 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
 
-    if (isAdminRoute) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, is_suspended')
+      .eq('id', user.id)
+      .single()
 
-      if (profile?.role !== 'admin') {
-        return NextResponse.redirect(new URL('/', request.url))
-      }
+    if (profile?.is_suspended) {
+      const login = new URL('/login', request.url)
+      login.searchParams.set('error', 'suspended')
+      return NextResponse.redirect(login)
     }
 
-    if (pathname.startsWith('/dashboard')) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+    if (isAdminRoute && profile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
 
-      if (profile?.role !== 'provider' && profile?.role !== 'admin') {
-        return NextResponse.redirect(new URL('/', request.url))
-      }
+    if (pathname.startsWith('/dashboard') && profile?.role !== 'provider' && profile?.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', request.url))
     }
   }
 

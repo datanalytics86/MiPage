@@ -6,6 +6,7 @@ import { ProviderGridSkeleton } from '@/components/ui/Skeleton'
 import { HomeSearch } from '@/components/home/HomeSearch'
 import { HomeStats } from '@/components/home/HomeStats'
 import { siteConfig } from '@/lib/site'
+import { loadPublicSettings } from '@/lib/loadPublicSettings'
 
 const FeaturedProviders = dynamic(
   () =>
@@ -72,25 +73,31 @@ const trustBadges = [
 ]
 
 /** Server Component home — hero HTML is in the first HTML byte stream (LCP). */
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await loadPublicSettings()
+  const eyebrow = settings.content.heroEyebrow || 'Chile · masajes y modelaje'
+  const subtitle = settings.content.heroSubtitle || siteConfig.description
   return (
     <div>
       <section className="relative min-h-[580px] lg:min-h-[680px] flex items-center overflow-hidden">
         <div className="container-luxury relative z-10 py-16 lg:py-24">
           <div className="max-w-2xl lg:pl-6 lg:border-l lg:border-gold/25">
             <p className="reveal text-[11px] uppercase tracking-[0.22em] text-gold mb-5">
-              Chile · masajes y modelaje
+              {eyebrow}
             </p>
 
             <h1 className="reveal reveal-2 font-display text-4xl md:text-5xl lg:text-[3.4rem] font-semibold text-foreground leading-[1.08] mb-6">
-              Servicios{' '}
-              <span className="text-gold italic font-medium">profesionales</span>
-              <br className="hidden sm:block" />{' '}
-              de confianza
+              {settings.content.heroTitle || (
+                <>
+                  Servicios{' '}
+                  <span className="text-gold italic font-medium">profesionales</span>
+                  <br className="hidden sm:block" /> de confianza
+                </>
+              )}
             </h1>
 
             <p className="reveal reveal-3 text-lg text-foreground-secondary mb-8 max-w-xl">
-              {siteConfig.description}
+              {subtitle}
             </p>
 
             <div className="reveal reveal-3 mb-8">

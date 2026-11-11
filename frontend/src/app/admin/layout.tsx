@@ -14,12 +14,17 @@ import {
   Menu,
   X,
   Shield,
+  Inbox,
+  Star,
+  ScrollText,
+  FolderTree,
+  Mail,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { AuthGate } from '@/components/auth/AuthGate'
-import { useAdminProviders } from '@/hooks/useAdmin'
+import { useAdminPendingCount } from '@/hooks/useAdmin'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 
@@ -50,6 +55,36 @@ const navigation = [
     icon: Flag,
   },
   {
+    name: 'Mensajes',
+    href: '/admin/mensajes',
+    icon: Inbox,
+  },
+  {
+    name: 'Reseñas',
+    href: '/admin/resenas',
+    icon: Star,
+  },
+  {
+    name: 'Solicitudes',
+    href: '/admin/solicitudes',
+    icon: Mail,
+  },
+  {
+    name: 'Catálogo',
+    href: '/admin/catalogo',
+    icon: FolderTree,
+  },
+  {
+    name: 'Actividad',
+    href: '/admin/actividad',
+    icon: ScrollText,
+  },
+  {
+    name: 'Correos',
+    href: '/admin/correos',
+    icon: Mail,
+  },
+  {
     name: 'Configuración',
     href: '/admin/configuracion',
     icon: Settings,
@@ -64,8 +99,7 @@ export default function AdminLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { profile, user } = useAuth()
-  const { data: adminProviders = [] } = useAdminProviders()
-  const pendingCount = adminProviders.filter((p) => p.status === 'pending').length
+  const { data: pendingCount = 0 } = useAdminPendingCount()
   const adminLabel = profile?.name || user?.email || 'Admin'
   const adminEmail = user?.email || profile?.email || ''
 

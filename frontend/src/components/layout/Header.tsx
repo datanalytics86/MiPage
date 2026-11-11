@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { Menu, X, Heart, LogOut, LayoutDashboard, Shield, Search } from 'lucide-react'
+import { Menu, X, Heart, LogOut, LayoutDashboard, Shield, Search, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -129,6 +129,12 @@ export function Header() {
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuItem asChild>
+                      <Link href="/cuenta">
+                        <User className="h-4 w-4 mr-2" />
+                        Mi cuenta
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
                       <Link href="/favoritos">
                         <Heart className="h-4 w-4 mr-2" />
                         Favoritos
@@ -202,6 +208,12 @@ export function Header() {
               <div className="border-t border-border pt-3 mt-3 space-y-2 px-4">
                 {isAuthenticated && profile ? (
                   <>
+                    <Link href="/cuenta" onClick={() => setIsMenuOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start">
+                        <User className="h-5 w-5 mr-2" aria-hidden />
+                        Mi cuenta
+                      </Button>
+                    </Link>
                     <Link href="/favoritos" onClick={() => setIsMenuOpen(false)}>
                       <Button variant="ghost" className="w-full justify-start">
                         <Heart className="h-5 w-5 mr-2" aria-hidden />

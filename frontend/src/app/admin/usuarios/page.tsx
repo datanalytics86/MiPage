@@ -41,27 +41,37 @@ const roleLabels: Record<string, string> = {
 
 export default function AdminUsuariosPage() {
   const toast = useToast()
-  const { data: users = [], isLoading } = useAdminUsers()
-  const updateRole = useUpdateUserRole()
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
+  const [page, setPage] = useState(0)
+  const { data, isLoading } = useAdminUsers({ q: search, role: roleFilter, page, pageSize: 20 })
+  const users = data?.rows ?? []
+  const updateRole = useUpdateUserRole()
 
-  const filteredUsers = users.filter((user) => {
-    const name = user.name || ''
-    const matchesSearch =
-      name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase())
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter
-    return matchesSearch && matchesRole
-  })
-
-  const changeRole = async (id: string, role: UserRole) => {
+  const changeRole = async (id: string, role: UserRole, label: string) => {
+    if (!window.confirm(`¿Cambiar el rol a ${label}?`)) return
     try {
       await updateRole.mutateAsync({ id, role })
       toast.success('Rol actualizado')
-    } catch {
-      toast.error('Error', 'No se pudo cambiar el rol')
+    } catch (error) {
+      toast.error('Error', error instanceof Error ? error.message : 'No se pudo cambiar el rol')
     }
+  }
+
+  const suspend = async (id: string, next: boolean) => {
+    if (!window.confirm(next ? '¿Suspender esta cuenta? No podrá entrar y su aviso quedará oculto.' : '¿Reactivar esta cuenta?')) return
+    const res = await fetch(`/api/admin/users/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suspend: next }),
+    })
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      toast.error('Error', body.error || 'No se pudo suspender')
+      return
+    }
+    toast.success(next ? 'Cuenta suspendida' : 'Cuenta reactivada')
+    window.location.reload()
   }
 
   return (
@@ -72,7 +82,7 @@ export default function AdminUsuariosPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-semibold">{users.length}</p><p className="text-sm text-foreground-muted">Total</p></CardContent></Card>
+        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-semibold">{data?.total ?? users.length}</p><p className="text-sm text-foreground-muted">Total</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-semibold text-success">{users.filter((u) => u.role === 'user').length}</p><p className="text-sm text-foreground-muted">Clientes</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-semibold text-gold">{users.filter((u) => u.role === 'provider').length}</p><p className="text-sm text-foreground-muted">Proveedores</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-semibold text-warning">{users.filter((u) => u.role === 'admin').length}</p><p className="text-sm text-foreground-muted">Admins</p></CardContent></Card>
@@ -112,7 +122,7 @@ export default function AdminUsuariosPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user, index) => (
+                  {users.map((user, index) => (
                     <motion.tr
                       key={user.id}
                       initial={{ opacity: 0 }}
@@ -134,6 +144,7 @@ export default function AdminUsuariosPage() {
                       </td>
                       <td className="p-4">
                         <Badge className={roleColors[user.role]}>{roleLabels[user.role]}</Badge>
+                        {user.is_suspended && <Badge variant="secondary" className="ml-2">Suspendida</Badge>}
                       </td>
                       <td className="p-4 text-sm text-foreground-secondary">{formatDate(user.created_at)}</td>
                       <td className="p-4 text-right">
@@ -146,11 +157,20 @@ export default function AdminUsuariosPage() {
                               <a href={`mailto:${user.email}`}><Mail className="h-4 w-4 mr-2" />Enviar email</a>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => changeRole(user.id, 'user')}>Rol: Usuario</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => changeRole(user.id, 'provider')}>Rol: Proveedor</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => changeRole(user.id, 'admin')}>
+                            <DropdownMenuItem onClick={() => changeRole(user.id, 'user', 'usuario')}>Rol: Usuario</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => changeRole(user.id, 'provider', 'proveedor')}>Rol: Proveedor</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => changeRole(user.id, 'admin', 'administrador')}>
                               <Shield className="h-4 w-4 mr-2" />Rol: Admin
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => suspend(user.id, !user.is_suspended)}>
+                              {user.is_suspended ? 'Reactivar cuenta' : 'Suspender cuenta'}
+                            </DropdownMenuItem>
+                            {user.provider_slug && (
+                              <DropdownMenuItem asChild>
+                                <a href={`/perfil/${user.provider_slug}`}>Ver aviso</a>
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </td>
@@ -162,6 +182,24 @@ export default function AdminUsuariosPage() {
           )}
         </CardContent>
       </Card>
+      <div className="flex items-center justify-between">
+        <a className="text-sm text-gold" href="/api/admin/export?kind=users">
+          Descargar CSV
+        </a>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage((value) => value - 1)}>
+            Anterior
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={(page + 1) * 20 >= (data?.total ?? 0)}
+            onClick={() => setPage((value) => value + 1)}
+          >
+            Siguiente
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

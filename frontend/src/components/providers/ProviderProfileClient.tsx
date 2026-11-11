@@ -23,6 +23,7 @@ import { GalleryLightbox } from '@/components/ui/GalleryLightbox'
 import { cn, formatPrice, formatDate, getInitials } from '@/lib/utils'
 import { useProvider } from '@/hooks/useProviders'
 import { useFavorites } from '@/hooks/useFavorites'
+import { ReportButton } from '@/components/reports/ReportButton'
 import { getProviderImage, normalizeCategory } from '@/lib/providers'
 import { buildWhatsAppLink } from '@/lib/whatsapp'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
@@ -218,6 +219,7 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
                 <h1 className="font-display text-3xl md:text-4xl font-semibold text-foreground">
                   {provider.display_name}
                 </h1>
+                <ReportButton reportedType="profile" reportedId={provider.slug} />
                 {provider.is_verified && (
                   <div className="flex items-center gap-1 text-sage">
                     <Shield className="h-5 w-5" />
@@ -315,6 +317,7 @@ export function ProviderProfileClient({ slug }: { slug: string }) {
                               {formatDate(review.created_at)}
                             </p>
                             <p className="text-foreground-secondary mt-2">{review.content}</p>
+                            <ReportButton reportedType="review" reportedId={review.id} />
                           </div>
                         </div>
                       </CardContent>

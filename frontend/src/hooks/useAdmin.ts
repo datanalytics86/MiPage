@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
+import { sanitizePostgrestSearch } from '@/lib/filters'
 import type { ProviderStatus, ReportStatus, UserRole } from '@/types/database'
 
 export const adminKeys = {
@@ -30,28 +31,67 @@ export interface AdminProviderRow {
   bio: string | null
   email: string
   services_count: number
+  whatsapp: string | null
+  instagram: string | null
+  rejection_reason: string | null
+  featured_until: string | null
+  metadata: Record<string, unknown> | null
+  services: { name: string; price: number }[]
 }
 
-export function useAdminProviders() {
+export function useAdminPendingCount() {
   return useQuery({
-    queryKey: adminKeys.providers(),
+    queryKey: [...adminKeys.providers(), 'pending-count'],
     enabled: hasSupabaseEnv(),
-    queryFn: async (): Promise<AdminProviderRow[]> => {
+    queryFn: async () => {
       const supabase = getSupabaseClient()
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('providers')
-        .select(`
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+      if (error) throw error
+      return count ?? 0
+    },
+  })
+}
+
+export function useAdminProviders(params?: {
+  q?: string
+  status?: string
+  category?: string
+  page?: number
+  pageSize?: number
+}) {
+  const page = params?.page ?? 0
+  const pageSize = params?.pageSize ?? 20
+  return useQuery({
+    queryKey: [...adminKeys.providers(), params ?? null],
+    enabled: hasSupabaseEnv(),
+    queryFn: async () => {
+      const supabase = getSupabaseClient()
+      let query = supabase
+        .from('providers')
+        .select(
+          `
           *,
           profile:profiles!user_id (email),
-          services (count)
-        `)
+          services (name, price)
+        `,
+          { count: 'exact' }
+        )
         .order('created_at', { ascending: false })
 
+      if (params?.status && params.status !== 'all') query = query.eq('status', params.status)
+      if (params?.category && params.category !== 'all') query = query.eq('category', params.category)
+      const q = sanitizePostgrestSearch(params?.q || '')
+      if (q) query = query.ilike('display_name', `%${q}%`)
+
+      const { data, error, count } = await query.range(page * pageSize, page * pageSize + pageSize - 1)
       if (error) throw error
 
-      return (data || []).map((row) => {
+      const rows = (data || []).map((row) => {
         const profile = row.profile as { email: string } | null
-        const services = row.services as { count: number }[] | null
+        const services = (row.services as { name: string; price: number }[] | null) || []
         return {
           id: row.id,
           user_id: row.user_id,
@@ -70,9 +110,19 @@ export function useAdminProviders() {
           created_at: row.created_at,
           bio: row.bio ?? null,
           email: profile?.email ?? '',
-          services_count: services?.[0]?.count ?? 0,
-        }
+          services_count: services.length,
+          whatsapp: row.whatsapp ?? null,
+          instagram: row.instagram ?? null,
+          rejection_reason: row.rejection_reason ?? null,
+          featured_until: row.featured_until ?? null,
+          metadata: (row.metadata as Record<string, unknown> | null) ?? null,
+          services: services.map((service) => ({
+            name: service.name,
+            price: Number(service.price) || 0,
+          })),
+        } satisfies AdminProviderRow
       })
+      return { rows, total: count ?? rows.length }
     },
   })
 }
@@ -95,7 +145,6 @@ export function useUpdateProvider() {
         reason?: string
       }
     }) => {
-      const supabase = getSupabaseClient()
       if (typeof updates.status === 'string') {
         const res = await fetch(`/api/admin/providers/${id}/moderate`, {
           method: 'POST',
@@ -117,8 +166,17 @@ export function useUpdateProvider() {
         return
       }
 
-      const { error } = await supabase.from('providers').update(updates).eq('id', id)
-      if (error) throw error
+      const res = await fetch(`/api/admin/providers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+      if (res.status === 401) throw new Error('No autenticado')
+      if (res.status === 403) throw new Error('Sin permisos')
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error || 'No se pudo guardar')
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.providers() })
@@ -171,21 +229,46 @@ export interface AdminUserRow {
   role: UserRole
   avatar_url: string | null
   created_at: string
+  is_suspended: boolean
+  provider_slug: string | null
 }
 
-export function useAdminUsers() {
+export function useAdminUsers(params?: { q?: string; role?: string; page?: number; pageSize?: number }) {
+  const page = params?.page ?? 0
+  const pageSize = params?.pageSize ?? 20
   return useQuery({
-    queryKey: adminKeys.users(),
+    queryKey: [...adminKeys.users(), params ?? null],
     enabled: hasSupabaseEnv(),
-    queryFn: async (): Promise<AdminUserRow[]> => {
+    queryFn: async () => {
       const supabase = getSupabaseClient()
-      const { data, error } = await supabase
+      let query = supabase
         .from('profiles')
-        .select('*')
+        .select('id, name, email, role, avatar_url, created_at, is_suspended, providers(slug)', {
+          count: 'exact',
+        })
         .order('created_at', { ascending: false })
 
+      if (params?.role && params.role !== 'all') query = query.eq('role', params.role)
+      const q = sanitizePostgrestSearch(params?.q || '')
+      if (q) query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%`)
+
+      const { data, error, count } = await query.range(page * pageSize, page * pageSize + pageSize - 1)
       if (error) throw error
-      return data || []
+      const rows = (data || []).map((row) => {
+        const linked = row.providers as { slug: string }[] | { slug: string } | null
+        const slug = Array.isArray(linked) ? linked[0]?.slug : linked?.slug
+        return {
+          id: row.id as string,
+          name: (row.name as string | null) ?? null,
+          email: row.email as string,
+          role: row.role as UserRole,
+          avatar_url: (row.avatar_url as string | null) ?? null,
+          created_at: row.created_at as string,
+          is_suspended: Boolean(row.is_suspended),
+          provider_slug: slug ?? null,
+        } satisfies AdminUserRow
+      })
+      return { rows, total: count ?? rows.length }
     },
   })
 }
@@ -195,9 +278,15 @@ export function useUpdateUserRole() {
 
   return useMutation({
     mutationFn: async ({ id, role }: { id: string; role: UserRole }) => {
-      const supabase = getSupabaseClient()
-      const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
-      if (error) throw error
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error || 'No se pudo cambiar el rol')
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users() })
@@ -219,23 +308,33 @@ export interface AdminReportRow {
   reporter: { name: string | null; email: string; avatar_url: string | null }
 }
 
-export function useAdminReports() {
+export function useAdminReports(params?: { q?: string; status?: string; page?: number; pageSize?: number }) {
+  const page = params?.page ?? 0
+  const pageSize = params?.pageSize ?? 20
   return useQuery({
-    queryKey: adminKeys.reports(),
+    queryKey: [...adminKeys.reports(), params ?? null],
     enabled: hasSupabaseEnv(),
-    queryFn: async (): Promise<AdminReportRow[]> => {
+    queryFn: async () => {
       const supabase = getSupabaseClient()
-      const { data, error } = await supabase
+      let query = supabase
         .from('reports')
-        .select(`
+        .select(
+          `
           *,
-          reporter:profiles (name, email, avatar_url)
-        `)
+          reporter:profiles!reports_reporter_id_fkey (name, email, avatar_url)
+        `,
+          { count: 'exact' }
+        )
         .order('created_at', { ascending: false })
 
+      if (params?.status && params.status !== 'all') query = query.eq('status', params.status)
+      const q = sanitizePostgrestSearch(params?.q || '')
+      if (q) query = query.or(`reason.ilike.%${q}%,description.ilike.%${q}%`)
+
+      const { data, error, count } = await query.range(page * pageSize, page * pageSize + pageSize - 1)
       if (error) throw error
 
-      return (data || []).map((row) => ({
+      const rows = (data || []).map((row) => ({
         id: row.id,
         reported_type: row.reported_type,
         reported_id: row.reported_id,
@@ -247,7 +346,8 @@ export function useAdminReports() {
         resolved_at: row.resolved_at,
         resolution_note: row.resolution_note,
         reporter: row.reporter as AdminReportRow['reporter'],
-      }))
+      })) satisfies AdminReportRow[]
+      return { rows, total: count ?? rows.length }
     },
   })
 }
@@ -258,17 +358,26 @@ export function useUpdateReport() {
   return useMutation({
     mutationFn: async ({
       id,
-      updates,
+      action,
+      note,
     }: {
       id: string
-      updates: { status: ReportStatus; resolution_note?: string; resolved_at?: string }
+      action: 'dismiss' | 'suspend_profile' | 'hide_review'
+      note?: string
     }) => {
-      const supabase = getSupabaseClient()
-      const { error } = await supabase.from('reports').update(updates).eq('id', id)
-      if (error) throw error
+      const res = await fetch(`/api/admin/reports/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, note }),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error || 'No se pudo actualizar el reporte')
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.reports() })
+      queryClient.invalidateQueries({ queryKey: adminKeys.providers() })
     },
   })
 }
@@ -278,18 +387,20 @@ export function useAdminStats() {
     queryKey: adminKeys.stats(),
     enabled: hasSupabaseEnv(),
     queryFn: async () => {
-      const supabase = getSupabaseClient()
-
-      const [usersRes, providersRes, reportsRes] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('providers').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-        supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-      ])
-
-      return {
-        totalUsers: usersRes.count ?? 0,
-        activeProviders: providersRes.count ?? 0,
-        pendingReports: reportsRes.count ?? 0,
+      const res = await fetch('/api/admin/stats')
+      if (!res.ok) throw new Error('No se pudieron cargar las cifras')
+      return (await res.json()) as {
+        totalUsers: number
+        activeProviders: number
+        pendingReports: number
+        pendingProviders: number
+        oldestPendingAt: string | null
+        unreadMessages: number
+        pendingDeletions: number
+        expiringFeatured: number
+        signups7: number
+        signups30: number
+        system: { database: boolean; email: boolean; payments: boolean }
       }
     },
   })

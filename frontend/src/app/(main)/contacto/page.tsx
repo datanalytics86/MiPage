@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { siteConfig } from '@/lib/site'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
 
 const contactReasons = [
   { id: 'general', label: 'Consulta general', icon: MessageSquare },
@@ -16,6 +17,8 @@ const contactReasons = [
 ]
 
 export default function ContactoPage() {
+  const { data: settings } = useSiteSettings()
+  const contactEmail = settings?.content.contactEmail || siteConfig.emails.contact
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -43,7 +46,7 @@ export default function ContactoPage() {
       setSubmitted(true)
       setFormData({ name: '', email: '', reason: 'general', message: '' })
     } catch {
-      window.location.href = `mailto:${siteConfig.emails.contact}?subject=${encodeURIComponent(
+      window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(
         `Contacto MiPage — ${formData.reason}`
       )}&body=${encodeURIComponent(
         `Nombre: ${formData.name}\nEmail: ${formData.email}\n\n${formData.message}`
@@ -104,10 +107,10 @@ export default function ContactoPage() {
                   <div>
                     <h3 className="font-semibold text-foreground mb-1">Email</h3>
                     <a
-                      href={`mailto:${siteConfig.emails.contact}`}
+                      href={`mailto:${contactEmail}`}
                       className="text-foreground-secondary hover:text-gold transition-colors"
                     >
-                      {siteConfig.emails.contact}
+                      {contactEmail}
                     </a>
                   </div>
                 </div>

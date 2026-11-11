@@ -1,503 +1,174 @@
 'use client'
 
 import React, { useState } from 'react'
-import {
-  Settings,
-  Globe,
-  Mail,
-  Bell,
-  Shield,
-  CreditCard,
-  Palette,
-  Save,
-  RotateCcw
-} from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Save } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
-import { useSiteSettings, useUpdateSiteSettings } from '@/hooks/useSiteSettings'
+import { useSiteSettings, useUpdateSiteSettings, type SiteSettings } from '@/hooks/useSiteSettings'
 import { useToast } from '@/stores/uiStore'
-
-interface SettingSection {
-  id: string
-  name: string
-  icon: React.ElementType
-  description: string
-}
-
-const sections: SettingSection[] = [
-  { id: 'general', name: 'General', icon: Settings, description: 'Configuración básica del sitio' },
-  { id: 'email', name: 'Email', icon: Mail, description: 'Plantillas y configuración de correo' },
-  { id: 'notifications', name: 'Notificaciones', icon: Bell, description: 'Preferencias de notificaciones' },
-  { id: 'security', name: 'Seguridad', icon: Shield, description: 'Autenticación y permisos' },
-  { id: 'payments', name: 'Pagos', icon: CreditCard, description: 'Métodos de pago y comisiones' },
-  { id: 'appearance', name: 'Apariencia', icon: Palette, description: 'Tema y personalización' },
-]
 
 export default function AdminConfiguracionPage() {
   const toast = useToast()
   const { data: siteSettings, isLoading } = useSiteSettings()
   const updateSettings = useUpdateSiteSettings()
-  const [activeSection, setActiveSection] = useState('general')
-  const [hasChanges, setHasChanges] = useState(false)
+  const [draft, setDraft] = useState<SiteSettings | null>(null)
+  const settings = draft ?? siteSettings ?? null
 
-  const [settings, setSettings] = useState({
-    siteName: 'MiPage',
-    siteDescription: 'Marketplace de servicios profesionales en Chile',
-    supportEmail: 'soporte@mipage.cl',
-    adminEmail: 'contacto@mipage.cl',
-    timezone: 'America/Santiago',
-    currency: 'CLP',
-    commissionRate: 15,
-    minWithdrawal: 50000,
-    requireEmailVerification: true,
-    requireIdVerification: true,
-    allowProviderRegistration: true,
-    maintenanceMode: false,
-  })
+  const save = async () => {
+    if (!settings) return
+    try {
+      await updateSettings.mutateAsync(settings)
+      setDraft(null)
+      toast.success('Configuración guardada')
+    } catch (error) {
+      toast.error('Error', error instanceof Error ? error.message : 'No se pudo guardar')
+    }
+  }
 
-  const [loadedSettings, setLoadedSettings] = useState(siteSettings)
-  if (siteSettings && siteSettings !== loadedSettings) {
-    setLoadedSettings(siteSettings)
-    setSettings({
-      siteName: siteSettings.general.siteName,
-      siteDescription: siteSettings.general.siteDescription,
-      supportEmail: siteSettings.email.supportEmail,
-      adminEmail: siteSettings.email.adminEmail,
-      timezone: siteSettings.general.timezone,
-      currency: siteSettings.general.currency,
-      commissionRate: siteSettings.payments.commissionRate,
-      minWithdrawal: siteSettings.payments.minWithdrawal,
-      requireEmailVerification: siteSettings.security.requireEmailVerification,
-      requireIdVerification: siteSettings.security.requireIdVerification,
-      allowProviderRegistration: siteSettings.security.allowProviderRegistration,
-      maintenanceMode: siteSettings.general.maintenanceMode,
+  if (isLoading || !settings) {
+    return <div className="h-64 rounded-xl bg-muted" />
+  }
+
+  const set = <K extends keyof SiteSettings>(section: K, field: string, value: string | number | boolean) => {
+    setDraft({
+      ...settings,
+      [section]: { ...settings[section], [field]: value },
     })
   }
 
-  const handleChange = (key: string, value: unknown) => {
-    setSettings((prev) => ({ ...prev, [key]: value }))
-    setHasChanges(true)
-  }
-
-  const handleSave = async () => {
-    try {
-      await updateSettings.mutateAsync({
-        general: {
-          siteName: settings.siteName,
-          siteDescription: settings.siteDescription,
-          timezone: settings.timezone,
-          currency: settings.currency,
-          maintenanceMode: settings.maintenanceMode,
-        },
-        email: {
-          supportEmail: settings.supportEmail,
-          adminEmail: settings.adminEmail,
-        },
-        security: {
-          requireEmailVerification: settings.requireEmailVerification,
-          requireIdVerification: settings.requireIdVerification,
-          allowProviderRegistration: settings.allowProviderRegistration,
-        },
-        payments: {
-          commissionRate: settings.commissionRate,
-          minWithdrawal: settings.minWithdrawal,
-        },
-      })
-      setHasChanges(false)
-      toast.success('Configuración guardada en la base de datos')
-    } catch {
-      toast.error('Error', 'No se pudo guardar la configuración')
-    }
-  }
-
-  const handleReset = () => {
-    if (siteSettings) {
-      setSettings({
-        siteName: siteSettings.general.siteName,
-        siteDescription: siteSettings.general.siteDescription,
-        supportEmail: siteSettings.email.supportEmail,
-        adminEmail: siteSettings.email.adminEmail,
-        timezone: siteSettings.general.timezone,
-        currency: siteSettings.general.currency,
-        commissionRate: siteSettings.payments.commissionRate,
-        minWithdrawal: siteSettings.payments.minWithdrawal,
-        requireEmailVerification: siteSettings.security.requireEmailVerification,
-        requireIdVerification: siteSettings.security.requireIdVerification,
-        allowProviderRegistration: siteSettings.security.allowProviderRegistration,
-        maintenanceMode: siteSettings.general.maintenanceMode,
-      })
-    }
-    setHasChanges(false)
-  }
-
-  if (isLoading) {
-    return (
-      <div className="h-64 rounded-xl bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
-    )
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 max-w-3xl">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-semibold text-foreground">
-            Configuración
-          </h2>
+          <h2 className="font-display text-2xl font-semibold">Configuración</h2>
           <p className="text-foreground-muted mt-1">
-            Administra la configuración global de la plataforma
+            Textos, correos y avisos que el sitio usa de verdad.
           </p>
         </div>
-        {hasChanges && (
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-warning/10 text-warning">
-              Cambios sin guardar
-            </Badge>
-            <Button variant="outline" size="sm" onClick={handleReset}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Descartar
-            </Button>
-            <Button size="sm" onClick={handleSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Guardar
-            </Button>
-          </div>
-        )}
+        <Button onClick={save} disabled={updateSettings.isPending}>
+          <Save className="h-4 w-4 mr-2" />
+          Guardar
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sections Navigation */}
-        <Card className="lg:col-span-1 h-fit">
-          <CardContent className="p-2">
-            <nav className="space-y-1">
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => setActiveSection(section.id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left',
-                    activeSection === section.id
-                      ? 'bg-gold/10 text-gold'
-                      : 'text-foreground-secondary hover:text-foreground hover:bg-muted'
-                  )}
-                >
-                  <section.icon className="h-5 w-5 shrink-0" />
-                  <span>{section.name}</span>
-                </button>
-              ))}
-            </nav>
-          </CardContent>
-        </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Sitio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Field label="Nombre" value={settings.general.siteName} onChange={(value) => set('general', 'siteName', value)} />
+          <Field label="Descripción" value={settings.general.siteDescription} onChange={(value) => set('general', 'siteDescription', value)} />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={settings.general.maintenanceMode}
+              onChange={(event) => set('general', 'maintenanceMode', event.target.checked)}
+            />
+            Modo mantenimiento (el público ve un aviso; el admin sigue entrando)
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={settings.security.allowProviderRegistration}
+              onChange={(event) => set('security', 'allowProviderRegistration', event.target.checked)}
+            />
+            Permitir registro de profesionales
+          </label>
+        </CardContent>
+      </Card>
 
-        {/* Settings Content */}
-        <div className="lg:col-span-3 space-y-6">
-          {/* General Settings */}
-          {activeSection === 'general' && (
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" />
-                    Información del sitio
-                  </CardTitle>
-                  <CardDescription>
-                    Configuración básica de tu plataforma
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">
-                        Nombre del sitio
-                      </label>
-                      <Input
-                        value={settings.siteName}
-                        onChange={(e) => handleChange('siteName', e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">
-                        Zona horaria
-                      </label>
-                      <Input
-                        value={settings.timezone}
-                        onChange={(e) => handleChange('timezone', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      Descripción del sitio
-                    </label>
-                    <Input
-                      value={settings.siteDescription}
-                      onChange={(e) => handleChange('siteDescription', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">
-                      Moneda
-                    </label>
-                    <Input
-                      value={settings.currency}
-                      onChange={(e) => handleChange('currency', e.target.value)}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Correos y redes</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Field label="Contacto" value={settings.content.contactEmail} onChange={(value) => set('content', 'contactEmail', value)} />
+          <Field label="Soporte" value={settings.email.supportEmail} onChange={(value) => set('email', 'supportEmail', value)} />
+          <Field label="Legal" value={settings.content.legalEmail} onChange={(value) => set('content', 'legalEmail', value)} />
+          <Field label="Privacidad" value={settings.content.privacyEmail} onChange={(value) => set('content', 'privacyEmail', value)} />
+          <Field label="Aviso al admin" value={settings.email.adminEmail} onChange={(value) => set('email', 'adminEmail', value)} />
+          <Field label="Instagram" value={settings.content.instagram} onChange={(value) => set('content', 'instagram', value)} />
+        </CardContent>
+      </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Modo mantenimiento</CardTitle>
-                  <CardDescription>
-                    Activa el modo mantenimiento para realizar actualizaciones
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Modo mantenimiento
-                      </p>
-                      <p className="text-sm text-foreground-muted">
-                        Los usuarios verán una página de mantenimiento
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleChange('maintenanceMode', !settings.maintenanceMode)}
-                      className={cn(
-                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                        settings.maintenanceMode ? 'bg-gold' : 'bg-muted'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                          settings.maintenanceMode ? 'translate-x-6' : 'translate-x-1'
-                        )}
-                      />
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Destacado manual</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field
+            label="Precio referencial (CLP)"
+            value={String(settings.payments.featuredPrice)}
+            onChange={(value) => set('payments', 'featuredPrice', Number(value) || 0)}
+          />
+          <Field
+            label="Duración al destacar (días)"
+            value={String(settings.payments.featuredDurationDays)}
+            onChange={(value) => set('payments', 'featuredDurationDays', Number(value) || 30)}
+          />
+        </CardContent>
+      </Card>
 
-          {/* Email Settings */}
-          {activeSection === 'email' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  Configuración de Email
-                </CardTitle>
-                <CardDescription>
-                  Configura los emails del sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Email de soporte
-                  </label>
-                  <Input
-                    type="email"
-                    value={settings.supportEmail}
-                    onChange={(e) => handleChange('supportEmail', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Email de administración
-                  </label>
-                  <Input
-                    type="email"
-                    value={settings.adminEmail}
-                    onChange={(e) => handleChange('adminEmail', e.target.value)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Banner y portada</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={settings.content.bannerEnabled}
+              onChange={(event) => set('content', 'bannerEnabled', event.target.checked)}
+            />
+            Mostrar aviso global
+          </label>
+          <Field label="Texto del aviso" value={settings.content.bannerText} onChange={(value) => set('content', 'bannerText', value)} />
+          <Field label="Hero, línea superior" value={settings.content.heroEyebrow} onChange={(value) => set('content', 'heroEyebrow', value)} />
+          <Field label="Hero, título" value={settings.content.heroTitle} onChange={(value) => set('content', 'heroTitle', value)} />
+          <Field label="Hero, subtítulo" value={settings.content.heroSubtitle} onChange={(value) => set('content', 'heroSubtitle', value)} />
+        </CardContent>
+      </Card>
 
-          {/* Security Settings */}
-          {activeSection === 'security' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Configuración de Seguridad
-                </CardTitle>
-                <CardDescription>
-                  Gestiona la seguridad y verificación de usuarios
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Verificación de email obligatoria
-                    </p>
-                    <p className="text-sm text-foreground-muted">
-                      Los usuarios deben verificar su email para acceder
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleChange('requireEmailVerification', !settings.requireEmailVerification)}
-                    className={cn(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      settings.requireEmailVerification ? 'bg-gold' : 'bg-muted'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        settings.requireEmailVerification ? 'translate-x-6' : 'translate-x-1'
-                      )}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Verificación de identidad para proveedores
-                    </p>
-                    <p className="text-sm text-foreground-muted">
-                      Los proveedores deben verificar su identidad
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleChange('requireIdVerification', !settings.requireIdVerification)}
-                    className={cn(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      settings.requireIdVerification ? 'bg-gold' : 'bg-muted'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        settings.requireIdVerification ? 'translate-x-6' : 'translate-x-1'
-                      )}
-                    />
-                  </button>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Permitir registro de proveedores
-                    </p>
-                    <p className="text-sm text-foreground-muted">
-                      Los nuevos proveedores pueden registrarse
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleChange('allowProviderRegistration', !settings.allowProviderRegistration)}
-                    className={cn(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                      settings.allowProviderRegistration ? 'bg-gold' : 'bg-muted'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                        settings.allowProviderRegistration ? 'translate-x-6' : 'translate-x-1'
-                      )}
-                    />
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Payments Settings */}
-          {activeSection === 'payments' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Configuración de Pagos
-                </CardTitle>
-                <CardDescription>
-                  Gestiona las comisiones y pagos de la plataforma
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Comisión de la plataforma (%)
-                  </label>
-                  <Input
-                    type="number"
-                    value={settings.commissionRate}
-                    onChange={(e) => handleChange('commissionRate', parseInt(e.target.value))}
-                  />
-                  <p className="text-xs text-foreground-muted">
-                    Porcentaje que se cobra a los proveedores por cada transacción
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Retiro mínimo (CLP)
-                  </label>
-                  <Input
-                    type="number"
-                    value={settings.minWithdrawal}
-                    onChange={(e) => handleChange('minWithdrawal', parseInt(e.target.value))}
-                  />
-                  <p className="text-xs text-foreground-muted">
-                    Monto mínimo que un proveedor puede retirar
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Notifications Settings */}
-          {activeSection === 'notifications' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Notificaciones
-                </CardTitle>
-                <CardDescription>
-                  Configura las notificaciones del sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-foreground-muted text-center py-8">
-                  Configuración de notificaciones próximamente
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Appearance Settings */}
-          {activeSection === 'appearance' && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Palette className="h-5 w-5" />
-                  Apariencia
-                </CardTitle>
-                <CardDescription>
-                  Personaliza el aspecto de la plataforma
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-foreground-muted text-center py-8">
-                  Configuración de apariencia próximamente
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Motivos de rechazo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <label className="block text-sm">
+            Uno por línea
+            <textarea
+              className="mt-1 w-full min-h-40 rounded-control border border-border bg-background px-3 py-2 text-sm"
+              value={settings.moderation.rejectionReasons.join('\n')}
+              onChange={(event) =>
+                setDraft({
+                  ...settings,
+                  moderation: {
+                    rejectionReasons: event.target.value.split('\n').map((line) => line.trim()).filter(Boolean),
+                  },
+                })
+              }
+            />
+          </label>
+        </CardContent>
+      </Card>
     </div>
+  )
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <label className="block text-sm">
+      {label}
+      <Input className="mt-1" value={value} onChange={(event) => onChange(event.target.value)} />
+    </label>
   )
 }

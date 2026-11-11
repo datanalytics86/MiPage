@@ -1,10 +1,16 @@
+'use client'
+
 import React from 'react'
 import Link from 'next/link'
 import { Instagram, Mail } from 'lucide-react'
 import { siteConfig } from '@/lib/site'
 import { BrandMark } from '@/components/layout/BrandMark'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
 
 export function Footer() {
+  const { data } = useSiteSettings()
+  const instagram = data?.content.instagram || siteConfig.social.instagram
+  const contactEmail = data?.content.contactEmail || siteConfig.emails.contact
   return (
     <footer className="bg-background-dark text-foreground">
       <div className="container-luxury py-12 lg:py-16">
@@ -96,7 +102,7 @@ export function Footer() {
           </p>
           <div className="flex items-center space-x-4">
             <a
-              href={siteConfig.social.instagram}
+              href={instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground-muted hover:text-gold transition-colors"
@@ -105,9 +111,9 @@ export function Footer() {
               <Instagram className="h-5 w-5" aria-hidden />
             </a>
             <a
-              href={`mailto:${siteConfig.emails.contact}`}
+              href={`mailto:${contactEmail}`}
               className="text-foreground-muted hover:text-gold transition-colors"
-              aria-label={`Email ${siteConfig.emails.contact}`}
+              aria-label={`Email ${contactEmail}`}
             >
               <Mail className="h-5 w-5" aria-hidden />
             </a>
