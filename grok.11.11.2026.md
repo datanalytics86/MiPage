@@ -6,6 +6,32 @@
 
 Lee este documento completo antes de tocar código. Las fases van en orden de prioridad: **no empieces la Fase 2 sin cerrar la Fase 1**.
 
+## 0. Modo de ejecución: autónomo, sin preguntas
+
+**Ejecuta las cinco fases de principio a fin sin preguntarle nada al dueño.** No pidas confirmación, no pidas aclaraciones, no ofrezcas opciones para que elija, no te detengas a esperar respuesta entre fases ni entre PRs.
+
+- Ante cualquier duda o ambigüedad: toma la opción más conservadora y segura, aplica los valores por defecto de la tabla de abajo, **anota el supuesto** en la descripción del PR y sigue.
+- Si algo falla (un test, el build, una dependencia): diagnostícalo y arréglalo. Si tras intentarlo de verdad no tiene arreglo, márcalo como "no hecho" con la causa en el PR y continúa con el siguiente punto. Nunca te quedes parado.
+- Cerrar una fase significa: código terminado, verificaciones en verde y PR abierto. No esperes a que el dueño lo revise ni lo mergee para empezar la siguiente: apila la rama de cada fase sobre la anterior.
+- Las tareas de la sección 9 (aplicar SQL en producción, configurar Supabase y Vercel, mergear) las hace el dueño después. No son preguntas ni bloqueos: déjalas como checklist en el PR y sigue trabajando.
+- Los únicos límites que no se cruzan aunque nadie responda: no tocar la base de datos de producción, no hacer push ni merge a `main`, no publicar secretos. Mergear desplegaría el frontend antes de que la migración esté aplicada y rompería producción; por eso queda fuera de tu alcance.
+
+**Decisiones ya tomadas (no las consultes):**
+
+| Tema | Decisión por defecto |
+|------|----------------------|
+| Rate limit persistente (1.6-f) | Tabla + RPC en Supabase. No añadir Upstash ni otro servicio |
+| Botón "Útil" en reseñas (1.5) | Implementarlo con `review_helpful_votes` |
+| Versión de Next (1.6-k) | La estable más reciente que deje la auditoría sin hallazgos altos o críticos |
+| Sentry (4.3) | Integrarlo, inerte si no hay `SENTRY_DSN` |
+| Cobro en línea del Destacado (4.7) | **No implementarlo.** Dejar la gestión manual con vencimiento y el botón de pago oculto |
+| Turnstile (4.8) | Implementarlo, apagado si no hay claves |
+| Respaldo semanal (4.6) | Implementarlo, sin efecto si falta el secreto |
+| Correos `@mipage.cl` e Instagram | Mantener los valores actuales como respaldo, editables desde Configuración |
+| Aviso de mayores de 18 (3.4) | Implementarlo, apagado por defecto, activable desde Configuración |
+| Pruebas RLS (1.7) | Script contra Supabase local levantado con la CLI |
+| Cualquier otra elección técnica | La más simple que cumpla el criterio de aceptación, sin dependencias ni servicios nuevos |
+
 ---
 
 ## 1. Contexto del proyecto
@@ -34,7 +60,7 @@ Consecuencias:
 
 ## 3. Reglas de trabajo (obligatorias)
 
-1. Trabaja en ramas `tier1/<fase>-<tema>` y abre un PR por fase contra `main`. No hagas push directo a `main`. No hagas merge tú: el dueño revisa y mergea.
+1. Trabaja en ramas `tier1/<fase>-<tema>` y abre un PR por fase. No hagas push directo a `main` ni merge. Como no vas a esperar revisión, apila las ramas: el PR de la Fase 1 va contra `main` y cada fase siguiente va contra la rama de la fase anterior. Indica en cada PR de cuál depende.
 2. Antes de cada commit, dentro de `frontend/`: `npm run lint && npm run type-check && npm run test:ci && npm run build`. Si algo falla, arréglalo; no lo saltes ni bajes umbrales de cobertura.
 3. Nunca desactives, borres ni marques `skip` un test para ponerlo en verde.
 4. Ningún secreto en el repo ni en variables `NEXT_PUBLIC_*`. `SUPABASE_SERVICE_ROLE_KEY` solo en código de servidor (route handlers), nunca importado desde un componente cliente.
@@ -44,7 +70,7 @@ Consecuencias:
 8. No inventes datos: nada de métricas falsas, perfiles demo en producción ni textos legales con afirmaciones que el código no cumple.
 9. Mantén la dirección visual actual (`DESIGN-SYSTEM.md`): oscuro, OKLCH, dorado único, foto primero, sin emojis. No rediseñes.
 10. Todo el texto de interfaz en español de Chile.
-11. Si una instrucción de este documento choca con lo que encuentras en el código, **detente en ese punto, explica el choque en el PR y sigue con el resto**. No improvises un cambio de alcance.
+11. Si una instrucción de este documento choca con lo que encuentras en el código, **no preguntes**: resuelve el punto de la forma que mejor cumpla su criterio de aceptación sin ampliar el alcance, explica el choque y lo que decidiste en el PR, y sigue.
 12. Al terminar cada fase, entrega el reporte de la sección 10.
 
 ---
@@ -112,7 +138,7 @@ Todo lo de esta fase está verificado leyendo el código. Cualquier persona con 
 - Sustituir la política de respuesta por una RPC `respond_to_review(review_id, response)` que solo toca `provider_response` y `response_date` y valida que quien llama es dueño del perfil.
 - Trigger en `reviews`: el autor solo puede modificar `rating` y `comment`; rechazar la inserción si `user_id` es el dueño del proveedor reseñado.
 - Políticas `DELETE`: autor y admin.
-- Quitar el recálculo de rating del cliente. "Útil": implementarlo con una RPC idempotente por usuario (tabla `review_helpful_votes`) o quitar el botón. No dejar un botón que no hace nada.
+- Quitar el recálculo de rating del cliente. "Útil": implementarlo con una RPC idempotente por usuario (tabla `review_helpful_votes`). No dejar un botón que no hace nada.
 - Añadir columna `is_hidden` para que el admin pueda ocultar una reseña sin borrarla (se usa en Fase 2).
 
 ### 1.6 Otros agujeros de esta fase
@@ -124,7 +150,7 @@ Todo lo de esta fase está verificado leyendo el código. Cualquier persona con 
 | c | Contador de visitas: `UPDATE` desde el cliente que RLS bloquea a visitantes; solo sube cuando el dueño mira su propio perfil | `frontend/src/hooks/useProviders.ts:157-161` | RPC `increment_provider_view(slug)` `SECURITY DEFINER`, solo para perfiles `approved`; una vez por sesión de navegador |
 | d | `AuthGate` deja pasar si `profile` es `null` (falló la carga) | `frontend/src/components/auth/AuthGate.tsx:104` | Sin perfil cargado → no renderizar hijos |
 | e | Filtro de búsqueda interpolado en `.or()` de PostgREST | `useProviders.ts:54-56` | Sanear comas, paréntesis y comodines antes de interpolar |
-| f | Rate limit en memoria: en serverless cada instancia tiene su propio contador | `frontend/src/lib/rateLimit.ts` | Rate limit persistente (tabla en Supabase con RPC, o Upstash si el dueño lo aprueba) para `/api/contact`, registro y envío de avisos |
+| f | Rate limit en memoria: en serverless cada instancia tiene su propio contador | `frontend/src/lib/rateLimit.ts` | Rate limit persistente (tabla en Supabase con RPC) para `/api/contact`, registro y envío de avisos |
 | g | CSP con `'unsafe-eval'` en producción | `frontend/next.config.js:19` | Quitarlo en producción (mantenerlo solo en desarrollo). Verificar que el sitio sigue funcionando |
 | h | Servicios y galería de perfiles `pending`/`rejected` legibles por cualquiera | `schema.sql:141-143`, `258-260` | `SELECT` solo si el proveedor está `approved`, o es el dueño, o `is_admin()` |
 | i | El admin no puede borrar filas de `gallery` ni de `services` de otros | no hay política de admin en esas tablas | Añadir políticas `FOR ALL` con `is_admin()` |
@@ -216,11 +242,11 @@ Todas las acciones destructivas llevan diálogo de confirmación. Todas las muta
 
 1. **Health real.** `frontend/src/app/api/health/route.ts` devuelve `ok` con que existan las variables (ni siquiera usa `hasSupabaseEnv()`, así que un placeholder cuenta como válido). Debe hacer una consulta mínima a la base y devolver 503 si falla. Incluir el commit desplegado (`VERCEL_GIT_COMMIT_SHA`).
 2. **Vigilancia.** Workflow programado en GitHub Actions (diario) que llame a `/api/health` de producción y falle si no es 200. Sirve de alerta por correo y de actividad periódica sobre la base.
-3. **Errores.** `SENTRY_DSN` aparece en `.env.example` y en health, pero no hay SDK instalado. Integrar Sentry de forma que sea inerte sin DSN, o eliminar todas las referencias. Sin punto medio.
+3. **Errores.** `SENTRY_DSN` aparece en `.env.example` y en health, pero no hay SDK instalado. Integrar Sentry de forma que sea inerte sin DSN.
 4. **Migraciones reproducibles.** Adoptar Supabase CLI: `supabase/config.toml`, migraciones con marca de tiempo a partir de un baseline que equivalga a `schema.sql` + 002 + 004 + 005 + 006 + las nuevas. Documentar `supabase db push`. Corregir la cabecera de `schema.sql`, que todavía dice "LuxeServices". Los datos demo van en `supabase/seed/`, nunca en migraciones.
 5. **CI.** Añadir un job que levante Supabase local, aplique las migraciones y corra las pruebas RLS de 1.7 y los E2E autenticados (hoy 5 de los E2E críticos se saltan siempre por falta de credenciales). Auditoría de dependencias bloqueante.
 6. **Respaldos.** `frontend/scripts/backup-check.mjs` solo imprime texto. Reemplazarlo por un workflow semanal opcional que haga `pg_dump` usando un secreto `SUPABASE_DB_URL` y guarde el resultado cifrado como artefacto; si el secreto no existe, el workflow termina en verde sin hacer nada. Documentar cómo restaurar.
-7. **Destacado de pago completo** (solo si el dueño confirma que quiere cobrar en línea; si no, dejarlo como en 1.6-b): tabla `payments`, webhook de Mercado Pago con validación de firma, activación automática con `featured_until`, y vista de pagos en `/admin`.
+7. **Destacado de pago completo: fuera de alcance.** No lo implementes. Queda como en 1.6-b (gestión manual con vencimiento, botón de pago oculto). Deja anotado en `DEPLOY.md` qué haría falta si el dueño lo pide más adelante: tabla `payments`, webhook de Mercado Pago con validación de firma, activación automática con `featured_until` y vista de pagos en `/admin`.
 8. **Entorno.** Añadir `engines.node` a `frontend/package.json`. Quitar de `next.config.js` los `remotePatterns` que no se usan en producción (`images.unsplash.com`, `api.dicebear.com`, `res.cloudinary.com`). Añadir verificación anti-bots (Cloudflare Turnstile) en registro y contacto, activable por variable de entorno, ajustando la CSP.
 
 ---
@@ -239,7 +265,7 @@ El repo tiene 16 archivos `.md` en la raíz, varios contradictorios o con fechas
 
 ## 9. Tareas que solo puede hacer el dueño
 
-Grok: **no intentes hacer estas tareas.** Inclúyelas como checklist en la descripción del PR correspondiente.
+Grok: **no intentes hacer estas tareas ni esperes a que estén hechas.** Inclúyelas como checklist en la descripción del PR correspondiente y continúa. Las líneas que empiezan con "Decidir" ya tienen un valor por defecto en la sección 0: úsalo.
 
 **Paso 0, antes de todo**
 
@@ -292,4 +318,6 @@ Grok: **no intentes hacer estas tareas.** Inclúyelas como checklist en la descr
 6. Riesgos conocidos y cómo revertir.
 7. Cualquier punto donde el código real contradijo este documento.
 
-No declares nada "listo" sin haberlo ejecutado. Si no pudiste verificar algo, dilo.
+No declares nada "listo" sin haberlo ejecutado. Si no pudiste verificar algo, dilo en el PR.
+
+Tu trabajo termina cuando las cinco fases tienen su PR abierto con este reporte. Hasta entonces, no te detengas ni preguntes.
