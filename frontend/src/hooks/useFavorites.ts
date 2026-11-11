@@ -24,7 +24,7 @@ export function useFavorites() {
     } else if (!isAuthenticated && favorites.length > 0) {
       clearFavorites()
     }
-  }, [isAuthenticated, user, isSynced])
+  }, [isAuthenticated, user, isSynced, favorites.length, fetchFavorites, clearFavorites])
 
   const toggleFavorite = async (providerId: string) => {
     if (!isAuthenticated || !user) {

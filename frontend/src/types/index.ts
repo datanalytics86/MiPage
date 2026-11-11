@@ -2,7 +2,7 @@ export type UserRole = 'client' | 'provider' | 'admin'
 
 export type ProviderCategory = string
 
-export type ProviderStatus = 'pending' | 'active' | 'suspended' | 'inactive'
+export type ProviderStatus = 'pending' | 'approved' | 'rejected' | 'suspended'
 
 export interface Profile {
   id: string

@@ -120,8 +120,14 @@ function buildProfileView(data: ProviderFull): ProfileView {
   }
 }
 
-export function ProviderProfileClient({ slug }: { slug: string }) {
-  const { data, isLoading, error } = useProvider(slug)
+export function ProviderProfileClient({
+  slug,
+  initial,
+}: {
+  slug: string
+  initial?: ProviderFull
+}) {
+  const { data, isLoading, error } = useProvider(slug, initial)
   const { isFavorite, toggleFavorite } = useFavorites()
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)

@@ -26,6 +26,7 @@ interface AuthContextType extends AuthState {
       category?: string
       city?: string
       privacyConsent?: boolean
+      ageDeclared?: boolean
     }
   ) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>
   signOut: () => Promise<void>
@@ -169,6 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       category?: string
       city?: string
       privacyConsent?: boolean
+      ageDeclared?: boolean
     }
   ) => {
     if (!supabase) {
@@ -195,6 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             city: data?.city || 'Santiago',
             privacy_consent: data?.privacyConsent ? 'true' : 'false',
             privacy_consent_version: data?.privacyConsent ? '2026-11-11' : '',
+            age_declared: data?.ageDeclared ? 'true' : 'false',
           },
         },
       })

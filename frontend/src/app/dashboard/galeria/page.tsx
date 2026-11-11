@@ -69,8 +69,8 @@ export default function DashboardGaleriaPage() {
         })
       }
       toast.success(`${files.length} archivo(s) subido(s)`)
-    } catch {
-      toast.error('Error', 'No se pudo subir. Verifica el bucket "gallery" en Supabase.')
+    } catch (error) {
+      toast.error('Error', error instanceof Error ? error.message : 'No se pudo subir la foto')
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
@@ -120,10 +120,12 @@ export default function DashboardGaleriaPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl font-semibold">Mi Galería</h2>
-          <p className="text-foreground-muted mt-1">Sube fotos a Supabase Storage o agrega URLs</p>
+          <p className="text-foreground-muted mt-1">
+            Las fotos se reducen a 2000 px y se les quita el EXIF antes de subirlas. Solo imágenes.
+          </p>
         </div>
         <div className="flex gap-2">
-          <input ref={fileInputRef} type="file" accept="image/*,video/*" multiple onChange={handleFileSelect} className="hidden" />
+          <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={handleFileSelect} className="hidden" />
           <Button variant="outline" onClick={() => setShowUrlForm(!showUrlForm)}>
             <LinkIcon className="h-4 w-4 mr-2" />
             URL
@@ -141,7 +143,7 @@ export default function DashboardGaleriaPage() {
             <Card className="border-gold/30">
               <CardContent className="p-4 flex gap-2">
                 <Input
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://…/foto.jpg"
                   value={urlInput}
                   onChange={(e) => setUrlInput(e.target.value)}
                   className="flex-1"

@@ -53,57 +53,31 @@ export function useProviders(filters: ProvidersFilters = {}) {
     queryKey: providerKeys.list(filters),
     enabled: hasSupabaseEnv(),
     queryFn: async (): Promise<ProvidersListResult> => {
+      const term = filters.search ? sanitizePostgrestSearch(filters.search) : ''
       let query = supabase
         .from('providers')
-        .select('*', { count: 'exact' })
+        .select('id', { count: 'exact', head: true })
         .eq('status', 'approved')
 
-      // Apply filters
-      if (filters.category) {
-        query = query.eq('category', filters.category)
-      }
-      if (filters.city) {
-        query = query.eq('city', filters.city)
-      }
-      if (filters.is_verified !== undefined) {
-        query = query.eq('is_verified', filters.is_verified)
-      }
-      if (filters.search) {
-        const term = sanitizePostgrestSearch(filters.search)
-        if (term) {
-          query = query.or(`display_name.ilike.%${term}%,bio.ilike.%${term}%`)
-        }
-      }
+      if (filters.category) query = query.eq('category', filters.category)
+      if (filters.city) query = query.eq('city', filters.city)
+      if (filters.is_verified !== undefined) query = query.eq('is_verified', filters.is_verified)
+      if (term) query = query.or(`display_name.ilike.%${term}%,bio.ilike.%${term}%`)
 
-      // Apply sorting
-      switch (filters.sort) {
-        case 'rating':
-          query = query.order('rating', { ascending: false })
-          break
-        case 'price_low':
-          query = query.order('price_min', { ascending: true, nullsFirst: false })
-          break
-        case 'price_high':
-          query = query.order('price_min', { ascending: false })
-          break
-        case 'newest':
-          query = query.order('created_at', { ascending: false })
-          break
-        default:
-          query = query.order('is_featured', { ascending: false }).order('rating', { ascending: false })
-      }
+      const { count, error: countError } = await query
+      if (countError) throw countError
 
-      // Apply pagination
-      if (filters.limit) {
-        query = query.limit(filters.limit)
-      }
-      if (filters.offset) {
-        query = query.range(filters.offset, filters.offset + (filters.limit || 20) - 1)
-      }
-
-      const { data, error, count } = await query
-
+      const { data, error } = await supabase.rpc('list_public_providers', {
+        p_category: filters.category || null,
+        p_city: filters.city || null,
+        p_verified: filters.is_verified ?? null,
+        p_search: term || null,
+        p_sort: filters.sort || 'featured',
+        p_limit: filters.limit || 20,
+        p_offset: filters.offset || 0,
+      })
       if (error) throw error
+
       const items = ((data || []) as Provider[]).map((row) => {
         const until = (row as Provider & { featured_until?: string | null }).featured_until
         if (row.is_featured && until && Date.parse(until) <= Date.now()) {
@@ -111,9 +85,6 @@ export function useProviders(filters: ProvidersFilters = {}) {
         }
         return row
       })
-      if (!filters.sort) {
-        items.sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
-      }
       return { items, total: count ?? 0 }
     },
   })
@@ -143,12 +114,14 @@ export function useFeaturedProviders(limit = 8) {
 }
 
 // Fetch single provider by slug
-export function useProvider(slug: string) {
+export function useProvider(slug: string, initial?: ProviderFull) {
   const supabase = getSupabaseClient()
 
   return useQuery({
     queryKey: providerKeys.detail(slug),
     enabled: hasSupabaseEnv() && !!slug,
+    initialData: initial,
+    staleTime: initial ? 30_000 : 0,
     queryFn: async () => {
       // Fetch provider
       const { data: provider, error: providerError } = await supabase

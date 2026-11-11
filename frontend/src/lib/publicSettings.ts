@@ -37,6 +37,7 @@ export interface PublicSettings {
     heroEyebrow: string
     heroTitle: string
     heroSubtitle: string
+    adultBanner: boolean
   }
   moderation: {
     rejectionReasons: string[]
@@ -72,6 +73,7 @@ export const publicSettingsDefaults: PublicSettings = {
     heroEyebrow: '',
     heroTitle: '',
     heroSubtitle: '',
+    adultBanner: false,
   },
   moderation: {
     rejectionReasons: DEFAULT_REJECTION_REASONS,

@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Search, X, ChevronDown } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -35,7 +35,8 @@ function getBasePath(category?: string) {
 function buildUrl(
   filters: FilterOptions,
   searchQuery: string,
-  basePath: string
+  basePath: string,
+  page: number
 ) {
   const params = new URLSearchParams()
   if (searchQuery.trim()) params.set('q', searchQuery.trim())
@@ -45,6 +46,7 @@ function buildUrl(
   if (filters.city && filters.city !== 'Todas') params.set('city', filters.city)
   if (filters.verified_only) params.set('verified', '1')
   if (filters.sort_by && filters.sort_by !== 'relevance') params.set('sort', filters.sort_by)
+  if (page > 1) params.set('page', String(page))
   const qs = params.toString()
   return qs ? `${basePath}?${qs}` : basePath
 }
@@ -70,7 +72,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     sort_by: 'relevance',
   })
   const [searchQuery, setSearchQuery] = useState('')
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [page, setPage] = useState(1)
   const [isInitialized, setIsInitialized] = useState(false)
   const urlKey = `${initialCategory ?? ''}|${searchParams.toString()}`
   const [appliedUrlKey, setAppliedUrlKey] = useState<string | null>(null)
@@ -85,6 +87,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     const verified = searchParams.get('verified') === '1'
     const sort = (searchParams.get('sort') as FilterOptions['sort_by']) ?? 'relevance'
 
+    const rawPage = Number(searchParams.get('page') || '1')
     setAppliedUrlKey(urlKey)
     setSearchQuery(q)
     setFilters({
@@ -93,28 +96,28 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
       verified_only: verified,
       sort_by: sort,
     })
-    setVisibleCount(PAGE_SIZE)
+    setPage(Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1)
     setIsInitialized(true)
   }
 
   const syncUrl = useCallback(
-    (nextFilters: FilterOptions, nextQuery: string) => {
+    (nextFilters: FilterOptions, nextQuery: string, nextPage: number) => {
       const category = nextFilters.category ?? 'all'
       const basePath = getBasePath(category)
-      router.replace(buildUrl(nextFilters, nextQuery, basePath), { scroll: false })
+      router.replace(buildUrl(nextFilters, nextQuery, basePath, nextPage), { scroll: false })
     },
     [router]
   )
 
   useEffect(() => {
     if (!isInitialized) return
-    const timer = setTimeout(() => syncUrl(filters, searchQuery), 350)
+    const timer = setTimeout(() => syncUrl(filters, searchQuery, page), 350)
     return () => clearTimeout(timer)
-  }, [filters, searchQuery, isInitialized, syncUrl])
+  }, [filters, searchQuery, page, isInitialized, syncUrl])
 
   const updateFilters = (patch: Partial<FilterOptions>) => {
     setFilters((prev) => ({ ...prev, ...patch }))
-    setVisibleCount(PAGE_SIZE)
+    setPage(1)
   }
 
   const providerFilters = useMemo(() => {
@@ -130,9 +133,10 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
       is_verified: filters.verified_only ? true : undefined,
       search: searchQuery.trim() || undefined,
       sort: sortMap[filters.sort_by || 'relevance'],
-      limit: visibleCount,
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
     }
-  }, [filters, searchQuery, visibleCount])
+  }, [filters, searchQuery, page])
 
   const { data: dbData, isLoading } = useProviders(providerFilters)
   const useMock = allowMockCatalog()
@@ -175,8 +179,10 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     : (dbData?.items ?? []).map(toProviderCardData)
 
   const totalCount = useMock ? mockFiltered.length : (dbData?.total ?? 0)
-  const visibleProviders = useMock ? sortedProviders.slice(0, visibleCount) : sortedProviders
-  const hasMore = useMock ? visibleCount < mockFiltered.length : visibleCount < totalCount
+  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const visibleProviders = useMock
+    ? sortedProviders.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : sortedProviders
 
   const activeFiltersCount = [
     filters.category !== 'all',
@@ -193,7 +199,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     }
     setFilters(cleared)
     setSearchQuery('')
-    setVisibleCount(PAGE_SIZE)
+    setPage(1)
     router.replace(getBasePath(initialCategory ?? 'all'))
   }
 
@@ -226,10 +232,10 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value)
-                  setVisibleCount(PAGE_SIZE)
+                  setPage(1)
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') syncUrl(filters, searchQuery)
+                  if (e.key === 'Enter') syncUrl(filters, searchQuery, 1)
                 }}
                 className="pl-10"
                 aria-label="Buscar profesionales"
@@ -462,17 +468,22 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
           />
         )}
 
-        {hasMore && (
-          <div className="mt-12 text-center">
+        {totalCount > PAGE_SIZE && (
+          <nav className="mt-12 flex items-center justify-center gap-3" aria-label="Paginación">
+            <Button variant="outline" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))}>
+              Anterior
+            </Button>
+            <span className="text-sm text-foreground-secondary">
+              Página {Math.min(page, pageCount)} de {pageCount}
+            </span>
             <Button
               variant="outline"
-              size="lg"
-              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+              disabled={page >= pageCount}
+              onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
             >
-              Cargar más ({totalCount - visibleCount} restantes)
-              <ChevronDown className="ml-2 h-4 w-4" />
+              Siguiente
             </Button>
-          </div>
+          </nav>
         )}
       </div>
     </div>

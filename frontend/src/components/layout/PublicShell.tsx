@@ -29,6 +29,11 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      {data?.content.adultBanner ? (
+        <div className="bg-background-secondary border-b border-border text-foreground text-sm text-center px-4 py-2" role="note">
+          Contenido para mayores de 18 años.
+        </div>
+      ) : null}
       {data?.content.bannerEnabled && data.content.bannerText ? (
         <div className="bg-gold/15 text-foreground text-sm text-center px-4 py-2">
           {data.content.bannerText}

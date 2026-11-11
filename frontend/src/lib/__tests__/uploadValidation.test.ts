@@ -76,9 +76,11 @@ describe('uploadValidation', () => {
     )
   })
 
-  it('accepts webp and mp4 under limit', () => {
+  it('accepts webp and rejects video', () => {
     expect(validateUploadFile(fakeFile('a.webp', 'image/webp', 500)).ok).toBe(true)
-    expect(validateUploadFile(fakeFile('v.mp4', 'video/mp4', 500)).ok).toBe(true)
+    const video = validateUploadFile(fakeFile('v.mp4', 'video/mp4', 500))
+    expect(video.ok).toBe(false)
+    expect(video.code).toBe('MIME_NOT_ALLOWED')
   })
 
   it('rejects empty batch and accepts valid batch', () => {

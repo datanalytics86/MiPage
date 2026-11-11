@@ -49,6 +49,7 @@ function RegisterForm() {
     category: 'masajes' as ProviderCategory,
     city: 'Santiago',
     acceptTerms: false,
+    ageDeclared: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -75,8 +76,12 @@ function RegisterForm() {
       newErrors.confirmPassword = 'Las contraseñas no coinciden'
     }
 
-    if (formData.isProvider && !formData.city.trim()) {
+    if (formData.isProvider && registrationOpen && !formData.city.trim()) {
       newErrors.city = 'Selecciona una ciudad'
+    }
+
+    if (formData.isProvider && registrationOpen && !formData.ageDeclared) {
+      newErrors.ageDeclared = 'Debes declarar que eres mayor de 18 años'
     }
 
     if (!formData.acceptTerms) {
@@ -105,6 +110,7 @@ function RegisterForm() {
           category: formData.isProvider ? formData.category : undefined,
           city: formData.isProvider ? formData.city : undefined,
           privacyConsent: true,
+          ageDeclared: formData.isProvider && formData.ageDeclared,
         }
       )
 
@@ -369,6 +375,24 @@ function RegisterForm() {
                   {errors.city && <p className="text-sm text-error">{errors.city}</p>}
                 </div>
               </>
+            )}
+
+            {registrationOpen && formData.isProvider && (
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.ageDeclared}
+                  onChange={(e) => setFormData({ ...formData, ageDeclared: e.target.checked })}
+                  className={cn(
+                    'mt-1 rounded border-border text-gold focus:ring-gold',
+                    errors.ageDeclared && 'border-error'
+                  )}
+                />
+                <span className="text-sm text-foreground-secondary">
+                  Declaro que soy mayor de 18 años
+                  {errors.ageDeclared && <span className="block text-error">{errors.ageDeclared}</span>}
+                </span>
+              </label>
             )}
 
             {registrationOpen && (

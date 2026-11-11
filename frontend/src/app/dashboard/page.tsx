@@ -1,6 +1,6 @@
 'use client'
 
-import React, { Suspense } from 'react'
+import React, { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import type { Provider } from '@/types/database'
 import { useProviderReviews } from '@/hooks/useReviews'
 import { FeaturedUpgradeCard } from '@/components/dashboard/FeaturedUpgradeCard'
 
@@ -38,6 +39,56 @@ function FeaturedPaymentNotice() {
     )
   }
   return null
+}
+
+function FeaturedExpiry({ until }: { until: string }) {
+  const [active] = useState(() => Date.parse(until) > Date.now())
+  return (
+    <p className="text-sm text-foreground-secondary">
+      {active
+        ? `Destacado vigente hasta ${formatDate(until)}.`
+        : `El Destacado venció el ${formatDate(until)}. Pídele al admin que lo renueve.`}
+    </p>
+  )
+}
+
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
+    pending: 'En revisión',
+    approved: 'Publicado',
+    rejected: 'Rechazado',
+    suspended: 'Suspendido',
+  }
+  return labels[status] || status
+}
+
+function ListingGaps({ provider }: { provider: Provider }) {
+  const missing: string[] = []
+  if (!provider.display_name || provider.display_name.trim().length < 2) missing.push('Nombre público')
+  if (!provider.bio || provider.bio.trim().length < 40) missing.push('Descripción de al menos 40 caracteres')
+  if (!provider.city) missing.push('Ciudad')
+  if (!provider.price_min) missing.push('Precio desde')
+  if (!provider.photos || provider.photos.length < 3) missing.push('Al menos 3 fotos')
+  if (missing.length === 0) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Qué falta para publicar</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-foreground-secondary">Estado actual: {statusLabel(provider.status)}.</p>
+        <ul className="list-disc pl-5 text-sm space-y-1">
+          {missing.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <Button size="sm" variant="outline" asChild>
+          <Link href="/dashboard/avisos/nuevo">Completar aviso</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function DashboardOverviewPage() {
@@ -136,27 +187,32 @@ function DashboardOverviewInner() {
       )}
 
       {provider.status === 'approved' && (
-        <FeaturedUpgradeCard providerId={provider.id} isFeatured={!!provider.is_featured} />
+        <div className="space-y-3">
+          <FeaturedUpgradeCard providerId={provider.id} isFeatured={!!provider.is_featured} />
+          {provider.featured_until && <FeaturedExpiry until={provider.featured_until} />}
+        </div>
       )}
+
+      {provider.status !== 'approved' && <ListingGaps provider={provider} />}
 
       {provider.status !== 'approved' && provider.status !== 'pending' && (
         <Card className="border-warning/40 bg-warning/5">
-          <CardContent className="p-4 text-sm text-foreground-secondary">
-            Tu perfil está en estado <strong className="text-foreground">{provider.status}</strong>.
+          <CardContent className="p-4 text-sm text-foreground-secondary space-y-3">
+            <p>
+              Tu perfil está en estado{' '}
+              <strong className="text-foreground">{statusLabel(provider.status)}</strong>.
+            </p>
             {provider.status === 'rejected' && (
               <>
-                {' '}
-                Revisa el motivo, corrige fotos o datos y vuelve a enviar desde el wizard.
-                {provider.rejection_reason && (
-                  <span className="block mt-2 text-foreground">
-                    Motivo: {provider.rejection_reason}
-                  </span>
-                )}
+                <p className="text-foreground">
+                  Motivo: {provider.rejection_reason || 'Sin detalle. Corrige fotos y texto y vuelve a enviar.'}
+                </p>
+                <Button size="sm" asChild>
+                  <Link href="/dashboard/avisos/nuevo">Corregir y reenviar</Link>
+                </Button>
               </>
             )}
-            {provider.status === 'suspended' && (
-              <> Contacta soporte si crees que es un error.</>
-            )}
+            {provider.status === 'suspended' && <p>Contacta soporte si crees que es un error.</p>}
           </CardContent>
         </Card>
       )}
