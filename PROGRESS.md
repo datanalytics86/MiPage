@@ -17,7 +17,7 @@
 8. [x] WhatsApp CTA solo si hay número válido + prefill
 9. [x] Admin: badge pendientes en layout + sort riesgo/fecha
 10. [x] Destacado: copy provider + 501 MP en español + notify admin (`ADMIN_NOTIFY_EMAIL`)
-11. [ ] **Dueño:** Production Branch = `main` + env + migrations 002–006 (`DEPLOY.md`)
+11. [ ] **Dueño:** Production Branch = `main` + env + migrations 002, 004, 005, 006 (`DEPLOY.md`). El seed 003 no va en producción.
 12. [ ] **Dueño:** seed de 6–10 providers reales y aprobarlos
 
 ---

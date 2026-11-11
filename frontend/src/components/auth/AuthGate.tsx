@@ -101,7 +101,26 @@ export function AuthGate({
     )
   }
 
-  if (allowRoles && profile && !allowRoles.includes(profile.role as 'provider' | 'admin' | 'user')) {
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center space-y-4 rounded-2xl border border-border bg-card p-8 shadow-soft">
+          <Shield className="h-10 w-10 text-gold mx-auto" aria-hidden />
+          <h1 className="font-display text-2xl font-semibold text-foreground">
+            No pudimos verificar tu perfil
+          </h1>
+          <p className="text-foreground-secondary text-sm leading-relaxed">
+            La sesión existe, pero el perfil no cargó. Recarga la página antes de entrar a {areaLabel}.
+          </p>
+          <Button type="button" onClick={() => window.location.reload()}>
+            Recargar
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (allowRoles && !allowRoles.includes(profile.role as 'provider' | 'admin' | 'user')) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center space-y-4 rounded-2xl border border-border bg-card p-8 shadow-soft">

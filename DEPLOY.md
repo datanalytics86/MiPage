@@ -20,7 +20,7 @@ Código bueno: `main` @ GitHub `datanalytics86/MiPage`.
 | `NEXT_PUBLIC_APP_URL=https://mi-page-lake.vercel.app` | `ADMIN_NOTIFY_EMAIL` (ping cola PENDING) |
 | | `MERCADOPAGO_ACCESS_TOKEN` (pago Destacado) |
 
-6. [ ] Supabase SQL: `frontend/supabase/schema.sql` y migrations **`002` → `006`**
+6. [ ] Supabase SQL: `frontend/supabase/schema.sql` y migrations **`002`, `004`, `005`, `006`**. No ejecutes `003`: es seed de demostración y vive en `frontend/supabase/seed/`, no en `migrations/`.
 7. [ ] Smoke live (deben ser **200**, no 404 de Vercel):
 
 ```

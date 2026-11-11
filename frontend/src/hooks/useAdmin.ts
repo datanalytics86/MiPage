@@ -96,24 +96,65 @@ export function useUpdateProvider() {
       }
     }) => {
       const supabase = getSupabaseClient()
-      const payload = {
-        ...updates,
-        moderated_at: new Date().toISOString(),
-      }
-      const { error } = await supabase.from('providers').update(payload).eq('id', id)
-      if (error) throw error
-
-      if (notify?.email) {
-        try {
-          await fetch('/api/notify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(notify),
-          })
-        } catch {
-          /* email is best-effort */
+      if (typeof updates.status === 'string') {
+        const res = await fetch(`/api/admin/providers/${id}/moderate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: updates.status,
+            rejection_reason:
+              typeof updates.rejection_reason === 'string' || updates.rejection_reason === null
+                ? updates.rejection_reason
+                : notify?.reason ?? null,
+          }),
+        })
+        if (res.status === 401) throw new Error('No autenticado')
+        if (res.status === 403) throw new Error('Sin permisos')
+        if (!res.ok) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string }
+          throw new Error(body.error || 'No se pudo moderar')
         }
+        return
       }
+
+      const { error } = await supabase.from('providers').update(updates).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.providers() })
+      queryClient.invalidateQueries({ queryKey: ['providers'] })
+      queryClient.invalidateQueries({ queryKey: adminKeys.stats() })
+    },
+  })
+}
+
+export function useModerateProviders() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      ids,
+      status,
+      rejection_reason,
+    }: {
+      ids: string[]
+      status: 'approved' | 'rejected' | 'suspended' | 'pending'
+      rejection_reason?: string | null
+    }) => {
+      const id = ids[0]
+      if (!id) throw new Error('Sin avisos')
+      const res = await fetch(`/api/admin/providers/${id}/moderate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids, status, rejection_reason: rejection_reason ?? null }),
+      })
+      if (res.status === 401) throw new Error('No autenticado')
+      if (res.status === 403) throw new Error('Sin permisos')
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error || 'No se pudo moderar')
+      }
+      return (await res.json()) as { ok: boolean; updated: number }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.providers() })

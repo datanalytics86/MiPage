@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Review, ReviewWithUser } from '@/types/database'
+import { loadPublicAuthors } from '@/lib/publicProfiles'
+import type { ReviewWithUser } from '@/types/database'
 
 export const reviewKeys = {
   all: ['reviews'] as const,
@@ -25,16 +26,21 @@ export function useProviderReviews(providerId: string, limit = 10) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('reviews')
-        .select(`
-          *,
-          user:profiles (name, avatar_url)
-        `)
+        .select('*')
         .eq('provider_id', providerId)
+        .eq('is_hidden', false)
         .order('created_at', { ascending: false })
         .limit(limit)
 
       if (error) throw error
-      return data as ReviewWithUser[]
+      const authors = await loadPublicAuthors(
+        supabase,
+        (data || []).map((review) => review.user_id as string)
+      )
+      return (data || []).map((review) => ({
+        ...review,
+        user: authors.get(review.user_id) ?? { name: null, avatar_url: null },
+      })) as ReviewWithUser[]
     },
     enabled: hasSupabaseEnv() && !!providerId,
   })
@@ -60,24 +66,6 @@ export function useCreateReview() {
         .single()
 
       if (error) throw error
-
-      // Update provider's review count and rating
-      const { data: reviews } = await supabase
-        .from('reviews')
-        .select('rating')
-        .eq('provider_id', data.provider_id)
-
-      if (reviews) {
-        const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
-        await supabase
-          .from('providers')
-          .update({
-            rating: Math.round(avgRating * 10) / 10,
-            review_count: reviews.length,
-          })
-          .eq('id', data.provider_id)
-      }
-
       return review
     },
     onSuccess: (_, variables) => {
@@ -98,18 +86,13 @@ export function useRespondToReview() {
       response: string
       providerId: string
     }) => {
-      const { data, error } = await supabase
-        .from('reviews')
-        .update({
-          provider_response: response,
-          response_date: new Date().toISOString(),
-        })
-        .eq('id', reviewId)
-        .select()
-        .single()
+      const { error } = await supabase.rpc('respond_to_review', {
+        p_review_id: reviewId,
+        p_response: response,
+      })
 
       if (error) throw error
-      return { ...data, providerId }
+      return { providerId }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: reviewKeys.provider(data.providerId) })
@@ -124,19 +107,9 @@ export function useMarkHelpful() {
 
   return useMutation({
     mutationFn: async ({ reviewId, providerId }: { reviewId: string; providerId: string }) => {
-      const { data: review } = await supabase
-        .from('reviews')
-        .select('helpful_count')
-        .eq('id', reviewId)
-        .single()
-
-      const { error } = await supabase
-        .from('reviews')
-        .update({
-          helpful_count: (review?.helpful_count || 0) + 1,
-        })
-        .eq('id', reviewId)
-
+      const { error } = await supabase.rpc('mark_review_helpful', {
+        p_review_id: reviewId,
+      })
       if (error) throw error
       return { reviewId, providerId }
     },

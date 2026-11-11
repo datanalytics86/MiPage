@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/select'
 import { DARK_BLUR_DATA_URL_CLIENT } from '@/lib/image'
 import { useProvider } from '@/hooks/useProviders'
-import { useCreateReview, useProviderReviews } from '@/hooks/useReviews'
+import { useCreateReview, useMarkHelpful, useProviderReviews } from '@/hooks/useReviews'
 import { useAuth } from '@/contexts/AuthContext'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 import { getProviderImage } from '@/lib/providers'
@@ -67,6 +67,7 @@ export default function ComentariosPage() {
     50
   )
   const createReview = useCreateReview()
+  const markHelpful = useMarkHelpful()
   const [sortBy, setSortBy] = useState<'recent' | 'rating'>('recent')
   const [filterRating, setFilterRating] = useState<string>('all')
   const [formOpen, setFormOpen] = useState(false)
@@ -264,6 +265,28 @@ export default function ComentariosPage() {
                     <p className="mt-4 text-foreground-secondary leading-relaxed">
                       {review.comment}
                     </p>
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        disabled={markHelpful.isPending}
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            toast.error('Inicia sesión', 'Necesitas una cuenta para marcar una reseña como útil')
+                            return
+                          }
+                          markHelpful.mutate(
+                            { reviewId: review.id, providerId: provider.id },
+                            {
+                              onError: () => toast.error('No se pudo marcar', 'Inténtalo de nuevo en un momento'),
+                            }
+                          )
+                        }}
+                      >
+                        Útil{review.helpful_count ? ` (${review.helpful_count})` : ''}
+                      </Button>
+                    </div>
                     {review.provider_response && (
                       <div className="mt-4 p-4 bg-muted/50 rounded-lg border-l-2 border-gold">
                         <span className="text-sm font-medium text-foreground">

@@ -2,7 +2,9 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 import {
   buildAdminPendingEmail,
   buildApprovalEmail,
+  buildPendingEmail,
   buildRejectionEmail,
+  buildSuspendedEmail,
   escapeHtml,
   sendTransactionalEmail,
 } from '../email'
@@ -30,6 +32,15 @@ describe('email templates', () => {
     expect(m.subject).toMatch(/PENDING/)
     expect(m.html).toContain('/admin/proveedores?status=pending')
     expect(m.html).not.toContain('<x>')
+  })
+
+  it('escapes the pending and suspended templates', () => {
+    const pending = buildPendingEmail('Ana <script>', 'https://app.test')
+    expect(pending.html).not.toContain('<script>')
+    expect(pending.html).toContain('en revisión')
+    const suspended = buildSuspendedEmail('Bob <x>', 'https://app.test')
+    expect(suspended.html).not.toContain('<x>')
+    expect(suspended.html).toContain('/contacto')
   })
 
   it('builds rejection with reason', () => {

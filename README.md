@@ -66,7 +66,7 @@ npm run dev
 ### Supabase
 
 1. Crea proyecto en https://supabase.com  
-2. Ejecuta en orden: `frontend/supabase/schema.sql` y migrations `002`…`006`  
+2. Ejecuta en orden: `frontend/supabase/schema.sql` y migrations `002`, `004`, `005`, `006`. No ejecutes el seed `frontend/supabase/seed/003_seed_demo_data.sql` en producción.  
 3. Crea buckets `gallery` y `avatars` (o usa `004_storage_gallery.sql`)  
 4. (Opcional) `npm run seed:demo` con service role  
 

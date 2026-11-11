@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
+import { sanitizePostgrestSearch } from '@/lib/filters'
+import { loadPublicAuthors } from '@/lib/publicProfiles'
 import type { Provider, ProviderFull, Service, GalleryItem } from '@/types/database'
 
 // Query keys
@@ -11,6 +13,21 @@ export const providerKeys = {
   details: () => [...providerKeys.all, 'detail'] as const,
   detail: (slug: string) => [...providerKeys.details(), slug] as const,
   featured: () => [...providerKeys.all, 'featured'] as const,
+}
+
+async function bumpViewOnce(
+  supabase: { rpc: (fn: string, args: { p_slug: string }) => PromiseLike<unknown> },
+  slug: string
+) {
+  if (typeof window === 'undefined') return
+  const key = `mipage:viewed:${slug}`
+  try {
+    if (window.sessionStorage.getItem(key)) return
+    window.sessionStorage.setItem(key, '1')
+  } catch {
+    return
+  }
+  await supabase.rpc('increment_provider_view', { p_slug: slug })
 }
 
 interface ProvidersFilters {
@@ -52,7 +69,10 @@ export function useProviders(filters: ProvidersFilters = {}) {
         query = query.eq('is_verified', filters.is_verified)
       }
       if (filters.search) {
-        query = query.or(`display_name.ilike.%${filters.search}%,bio.ilike.%${filters.search}%`)
+        const term = sanitizePostgrestSearch(filters.search)
+        if (term) {
+          query = query.or(`display_name.ilike.%${term}%,bio.ilike.%${term}%`)
+        }
       }
 
       // Apply sorting
@@ -136,16 +156,22 @@ export function useProvider(slug: string) {
         .eq('is_active', true)
         .order('sort_order')
 
-      // Fetch reviews with user info
-      const { data: reviews } = await supabase
+      const { data: reviewRows } = await supabase
         .from('reviews')
-        .select(`
-          *,
-          user:profiles!reviews_user_id_fkey (name, avatar_url)
-        `)
+        .select('*')
         .eq('provider_id', provider.id)
+        .eq('is_hidden', false)
         .order('created_at', { ascending: false })
         .limit(10)
+
+      const authors = await loadPublicAuthors(
+        supabase,
+        (reviewRows || []).map((review) => review.user_id as string)
+      )
+      const reviews = (reviewRows || []).map((review) => ({
+        ...review,
+        user: authors.get(review.user_id) ?? null,
+      }))
 
       // Fetch gallery
       const { data: gallery } = await supabase
@@ -154,11 +180,9 @@ export function useProvider(slug: string) {
         .eq('provider_id', provider.id)
         .order('sort_order')
 
-      // Increment view count
-      await supabase
-        .from('providers')
-        .update({ view_count: provider.view_count + 1 })
-        .eq('id', provider.id)
+      if (provider.status === 'approved') {
+        await bumpViewOnce(supabase, slug)
+      }
 
       return {
         ...provider,

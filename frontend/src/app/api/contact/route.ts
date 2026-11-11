@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { clientIpFromRequest, rateLimit } from '@/lib/rateLimit'
+import { clientIpFromRequest } from '@/lib/rateLimit'
+import { persistentRateLimit } from '@/lib/persistentRateLimit'
 import { z } from 'zod'
 
 const contactSchema = z.object({
@@ -12,7 +13,7 @@ const contactSchema = z.object({
 export async function POST(request: Request) {
   try {
     const ip = clientIpFromRequest(request)
-    const rl = rateLimit(`contact:${ip}`, 10, 60_000)
+    const rl = await persistentRateLimit(`contact:${ip}`, 10, 60)
     if (!rl.ok) {
       return NextResponse.json(
         { ok: false, error: 'Demasiadas solicitudes. Espera un momento.' },

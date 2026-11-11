@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Star } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,23 @@ export function FeaturedUpgradeCard({
 }) {
   const toast = useToast()
   const [busy, setBusy] = useState(false)
+  const [mpConfigured, setMpConfigured] = useState(false)
   const [mpMessage, setMpMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/payments/featured')
+      .then((res) => res.json())
+      .then((json: { configured?: boolean }) => {
+        if (!cancelled) setMpConfigured(Boolean(json.configured))
+      })
+      .catch(() => {
+        if (!cancelled) setMpConfigured(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const requestPayment = async () => {
     setBusy(true)
@@ -77,7 +93,7 @@ export function FeaturedUpgradeCard({
             {mpMessage}
           </p>
         )}
-        {!isFeatured && (
+        {!isFeatured && mpConfigured && (
           <Button size="sm" variant="outline" disabled={busy} onClick={requestPayment}>
             {busy ? 'Consultando pago…' : 'Pedir Destacado (Mercado Pago)'}
           </Button>

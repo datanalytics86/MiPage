@@ -7,9 +7,8 @@ export type EmailTemplate =
   | 'provider_approved'
   | 'provider_rejected'
   | 'provider_pending'
+  | 'provider_suspended'
   | 'admin_new_pending'
-  | 'invitation'
-  | 'generic'
 
 export interface SendEmailInput {
   to: string
@@ -49,6 +48,29 @@ export function buildRejectionEmail(
       <p><strong>Motivo:</strong> ${escapeHtml(reason || 'No especificado')}</p>
       <p>Puedes actualizar tu información y volver a enviarlo desde el dashboard.</p>
       <p><a href="${escapeHtml(appUrl)}/dashboard">Ir al dashboard</a></p>
+    `,
+  }
+}
+
+export function buildPendingEmail(displayName: string, appUrl: string): { subject: string; html: string } {
+  return {
+    subject: 'Recibimos tu aviso en MiPage',
+    html: `
+      <p>Hola ${escapeHtml(displayName)},</p>
+      <p>Tu aviso está en revisión. Te avisaremos cuando lo aprobemos o lo rechacemos.</p>
+      <p><a href="${escapeHtml(appUrl)}/dashboard">Ver el estado de tu aviso</a></p>
+    `,
+  }
+}
+
+export function buildSuspendedEmail(displayName: string, appUrl: string): { subject: string; html: string } {
+  return {
+    subject: 'Tu perfil fue suspendido en MiPage',
+    html: `
+      <p>Hola ${escapeHtml(displayName)},</p>
+      <p>Tu perfil dejó de mostrarse en el catálogo porque fue suspendido.</p>
+      <p>Si crees que se trata de un error, escribe a soporte desde la página de contacto.</p>
+      <p><a href="${escapeHtml(appUrl)}/contacto">Contacto</a></p>
     `,
   }
 }

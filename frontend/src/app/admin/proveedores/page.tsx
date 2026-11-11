@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn, formatDate, formatPrice } from '@/lib/utils'
-import { useAdminProviders, useUpdateProvider, type AdminProviderRow } from '@/hooks/useAdmin'
+import { useAdminProviders, useModerateProviders, useUpdateProvider, type AdminProviderRow } from '@/hooks/useAdmin'
 import { getProviderImage } from '@/lib/providers'
 import { useToast } from '@/stores/uiStore'
 import type { ProviderStatus } from '@/types/database'
@@ -81,6 +81,7 @@ function AdminProveedoresInner() {
   const searchParams = useSearchParams()
   const { data: providers = [], isLoading, error } = useAdminProviders()
   const updateProvider = useUpdateProvider()
+  const moderateProviders = useModerateProviders()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>(
     searchParams.get('status') || 'all'
@@ -201,60 +202,49 @@ function AdminProveedoresInner() {
   const clearSelection = () => setSelected(new Set())
 
   const bulkApprove = async () => {
-    if (selected.size === 0) return
-    setBulkBusy(true)
-    let ok = 0
-    for (const id of Array.from(selected)) {
+    const ids = Array.from(selected).filter((id) => {
       const p = providers.find((x) => x.id === id)
-      if (!p || p.status !== 'pending') continue
-      try {
-        await updateProvider.mutateAsync({
-          id,
-          updates: { status: 'approved', rejection_reason: null },
-          notify: {
-            type: 'provider_approved',
-            email: p.email,
-            displayName: p.display_name,
-          },
-        })
-        ok += 1
-      } catch {
-        /* continue batch */
-      }
+      return p?.status === 'pending'
+    })
+    if (ids.length === 0) return
+    setBulkBusy(true)
+    try {
+      const result = await moderateProviders.mutateAsync({
+        ids,
+        status: 'approved',
+        rejection_reason: null,
+      })
+      toast.success('Lote completado', `${result.updated} aprobado(s)`)
+      clearSelection()
+    } catch {
+      toast.error('Error', 'No se pudo aprobar el lote')
+    } finally {
+      setBulkBusy(false)
     }
-    setBulkBusy(false)
-    clearSelection()
-    toast.success('Lote completado', `${ok} aprobado(s)`)
   }
 
   const bulkReject = async () => {
-    if (selected.size === 0) return
+    const ids = Array.from(selected).filter((id) => {
+      const p = providers.find((x) => x.id === id)
+      return p?.status === 'pending'
+    })
+    if (ids.length === 0) return
     const reason = rejectReason.trim() || 'No cumple políticas de contenido'
     setBulkBusy(true)
-    let ok = 0
-    for (const id of Array.from(selected)) {
-      const p = providers.find((x) => x.id === id)
-      if (!p || p.status !== 'pending') continue
-      try {
-        await updateProvider.mutateAsync({
-          id,
-          updates: { status: 'rejected', rejection_reason: reason },
-          notify: {
-            type: 'provider_rejected',
-            email: p.email,
-            displayName: p.display_name,
-            reason,
-          },
-        })
-        ok += 1
-      } catch {
-        /* continue */
-      }
+    try {
+      const result = await moderateProviders.mutateAsync({
+        ids,
+        status: 'rejected',
+        rejection_reason: reason,
+      })
+      toast.success('Lote completado', `${result.updated} rechazado(s)`)
+      clearSelection()
+      setRejectReason('')
+    } catch {
+      toast.error('Error', 'No se pudo rechazar el lote')
+    } finally {
+      setBulkBusy(false)
     }
-    setBulkBusy(false)
-    clearSelection()
-    setRejectReason('')
-    toast.success('Lote completado', `${ok} rechazado(s)`)
   }
 
   if (error) {

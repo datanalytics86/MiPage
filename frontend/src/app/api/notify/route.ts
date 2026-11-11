@@ -1,98 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
-import {
-  buildAdminPendingEmail,
-  buildApprovalEmail,
-  buildRejectionEmail,
-  sendTransactionalEmail,
-} from '@/lib/email'
-import { clientIpFromRequest, rateLimit } from '@/lib/rateLimit'
 import { z } from 'zod'
+import { getApiActor } from '@/lib/api/actor'
 
 const schema = z.object({
-  type: z.enum([
-    'provider_approved',
-    'provider_rejected',
-    'provider_pending',
-    'admin_new_pending',
-    'invitation',
-    'generic',
-  ]),
-  email: z.string().email().optional(),
-  displayName: z.string().max(200).optional(),
-  reason: z.string().max(1000).optional(),
-  subject: z.string().max(200).optional(),
-  html: z.string().max(10000).optional(),
+  type: z.string().max(40).optional(),
 })
 
+/**
+ * El relé abierto se cerró. La moderación vive en
+ * `/api/admin/providers/[id]/moderate` y el aviso del wizard en
+ * `/api/providers/submit`. Esta ruta ya no envía correo.
+ */
 export async function POST(req: NextRequest) {
-  const ip = clientIpFromRequest(req)
-  const rl = rateLimit(`notify:${ip}`, 20, 60_000)
-  if (!rl.ok) {
-    return NextResponse.json(
-      { error: 'Too many requests' },
-      {
-        status: 429,
-        headers: { 'Retry-After': String(rl.retryAfterSec) },
-      }
-    )
+  const actor = await getApiActor()
+  if (!actor) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
   }
 
-  let json: unknown
+  let json: unknown = {}
   try {
     json = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    json = {}
   }
 
   const parsed = schema.safeParse(json)
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  const type = parsed.success ? parsed.data.type : undefined
+  if (type === 'generic' || type === 'invitation') {
+    return NextResponse.json(
+      { error: 'Ese tipo de correo ya no existe' },
+      { status: 400 }
+    )
   }
 
-  const { type, email, displayName, reason, subject, html } = parsed.data
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://mi-page-lake.vercel.app'
-  const name = displayName || 'Usuario'
-
-  const adminEmail = process.env.ADMIN_NOTIFY_EMAIL?.trim()
-  const to =
-    type === 'admin_new_pending' ? adminEmail || email : email
-
-  if (!to) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'no_email' })
-  }
-
-  let mail: { subject: string; html: string }
-  switch (type) {
-    case 'provider_approved':
-      mail = buildApprovalEmail(name, appUrl)
-      break
-    case 'provider_rejected':
-      mail = buildRejectionEmail(name, reason || 'No especificado', appUrl)
-      break
-    case 'provider_pending':
-      mail = {
-        subject: 'Recibimos tu aviso en MiPage',
-        html: `<p>Hola ${name},</p><p>Tu aviso está en revisión (PENDING). Te avisaremos al aprobarlo o rechazarlo.</p>`,
-      }
-      break
-    case 'admin_new_pending':
-      mail = buildAdminPendingEmail(name, appUrl)
-      break
-    case 'invitation':
-    case 'generic':
-      mail = {
-        subject: subject || 'Mensaje de MiPage',
-        html: html || '<p>Hola desde MiPage</p>',
-      }
-      break
-  }
-
-  const result = await sendTransactionalEmail({
-    to,
-    subject: mail.subject,
-    html: mail.html,
-    template: type,
-  })
-
-  return NextResponse.json({ ok: true, ...result })
+  return NextResponse.json(
+    { error: 'Este endpoint ya no envía correos' },
+    { status: 410 }
+  )
 }
