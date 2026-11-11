@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { siteConfig } from '@/lib/site'
 import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { TurnstileWidget } from '@/components/security/TurnstileWidget'
 
 const contactReasons = [
   { id: 'general', label: 'Consulta general', icon: MessageSquare },
@@ -27,16 +28,24 @@ export default function ContactoPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const [formError, setFormError] = useState('')
+  const turnstileRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim())
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setFormError('')
+    if (turnstileRequired && !turnstileToken) {
+      setFormError('Confirma que eres una persona antes de enviar el mensaje.')
+      return
+    }
     setIsSubmitting(true)
 
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, turnstileToken }),
       })
 
       if (!response.ok) {
@@ -236,6 +245,9 @@ export default function ContactoPage() {
                       required
                     />
                   </div>
+
+                  <TurnstileWidget onToken={setTurnstileToken} />
+                  {formError && <p className="text-sm text-error">{formError}</p>}
 
                   <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
                     {isSubmitting ? (

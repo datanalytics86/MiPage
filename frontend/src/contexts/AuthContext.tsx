@@ -27,6 +27,7 @@ interface AuthContextType extends AuthState {
       city?: string
       privacyConsent?: boolean
       ageDeclared?: boolean
+      turnstileToken?: string
     }
   ) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>
   signOut: () => Promise<void>
@@ -171,15 +172,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       city?: string
       privacyConsent?: boolean
       ageDeclared?: boolean
+      turnstileToken?: string
     }
   ) => {
     if (!supabase) {
       return { error: new Error('Supabase no configurado') }
     }
     try {
-      const gate = await fetch('/api/auth/register-gate', { method: 'POST' })
+      const gate = await fetch('/api/auth/register-gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ turnstileToken: data?.turnstileToken || '' }),
+      })
       if (gate.status === 429) {
         return { error: new Error('Demasiados intentos de registro. Espera un momento.') }
+      }
+      if (gate.status === 400) {
+        return { error: new Error('No se pudo verificar que eres una persona.') }
       }
 
       // Solo user o provider. El trigger descarta cualquier otro valor, incluido admin.

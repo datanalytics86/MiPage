@@ -5,12 +5,14 @@ import { createServiceRoleClient } from '@/lib/supabase/admin'
 import { sendAndLog } from '@/lib/notifications'
 import { escapeHtml } from '@/lib/email'
 import { z } from 'zod'
+import { verifyTurnstile } from '@/lib/turnstile'
 
 const contactSchema = z.object({
   name: z.string().trim().min(2).max(120),
   email: z.string().trim().email().max(255),
   reason: z.enum(['general', 'support', 'report']),
   message: z.string().trim().min(10).max(4000),
+  turnstileToken: z.string().max(2048).optional(),
 })
 
 export async function POST(request: Request) {
@@ -26,6 +28,10 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const data = contactSchema.parse(body)
+    const human = await verifyTurnstile(data.turnstileToken, ip)
+    if (!human.ok) {
+      return NextResponse.json({ ok: false, error: 'No se pudo verificar el envío' }, { status: 400 })
+    }
 
     const admin = createServiceRoleClient()
     if (!admin) {

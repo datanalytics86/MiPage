@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { ErrorState } from '@/components/ui/ErrorState'
+import { captureException } from '@/lib/sentry'
 
 export default function Error({
   error,
@@ -12,6 +13,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error(error)
+    void captureException(error)
   }, [error])
 
   return (

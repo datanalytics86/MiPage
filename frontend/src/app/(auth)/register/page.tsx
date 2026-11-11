@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { filterCities } from '@/lib/filters'
 import { useCatalog } from '@/hooks/useCatalog'
 import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { TurnstileWidget } from '@/components/security/TurnstileWidget'
 import type { ProviderCategory } from '@/types'
 
 const REGISTER_CITIES = filterCities.filter((city) => city !== 'Todas')
@@ -52,6 +53,8 @@ function RegisterForm() {
     ageDeclared: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRequired = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim())
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -89,6 +92,10 @@ function RegisterForm() {
         'Debes aceptar términos, privacidad y tratamiento de datos (Ley 19.628)'
     }
 
+    if (turnstileRequired && !turnstileToken) {
+      newErrors.turnstile = 'Confirma que eres una persona antes de crear la cuenta.'
+    }
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -111,6 +118,7 @@ function RegisterForm() {
           city: formData.isProvider ? formData.city : undefined,
           privacyConsent: true,
           ageDeclared: formData.isProvider && formData.ageDeclared,
+          turnstileToken,
         }
       )
 
@@ -441,6 +449,9 @@ function RegisterForm() {
               </span>
             </label>
             {errors.acceptTerms && <p className="text-sm text-error">{errors.acceptTerms}</p>}
+
+            <TurnstileWidget onToken={setTurnstileToken} />
+            {errors.turnstile && <p className="text-sm text-error">{errors.turnstile}</p>}
 
             <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
               {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}

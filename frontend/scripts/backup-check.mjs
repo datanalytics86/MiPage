@@ -1,28 +1,23 @@
 #!/usr/bin/env node
 /**
- * Documents / verifies backup readiness for Supabase PITR.
- * Does not call Supabase Management API unless SUPABASE_ACCESS_TOKEN is set.
+ * El respaldo automático vive en .github/workflows/backup-weekly.yml.
+ * Este script solo recuerda el camino. No llama a ninguna API.
  */
 console.log(`
-MiPage — Backup checklist (Supabase)
-====================================
-1. Supabase Dashboard → Project Settings → Database → Backups
-2. Pro plan: enable PITR (Point-in-Time Recovery)
-3. Weekly: verify latest backup timestamp is < 24h
-4. Restore drill (staging): restore to a new project, smoke-test login + explore
-5. Storage: gallery bucket objects are in the same project backups
+MiPage — respaldo
+=================
+El volcado semanal es el workflow "Respaldo semanal"
+(.github/workflows/backup-weekly.yml).
 
-Env tips:
-- Keep SUPABASE_SERVICE_ROLE_KEY only in Vercel server env / password manager
-- Never commit service role keys
+- Sin el secreto SUPABASE_DB_URL el workflow termina en verde y no hace nada.
+- Con SUPABASE_DB_URL exige también BACKUP_ENCRYPTION_KEY.
+- El artefacto es mipage.dump.enc (AES-256-CBC, PBKDF2), retención 14 días.
 
-Status: MANUAL CHECK (no automated Management API call without token)
+Restaurar (en una base vacía, nunca encima de producción sin copia):
+  openssl enc -d -aes-256-cbc -pbkdf2 -in mipage.dump.enc -out mipage.dump
+  pg_restore --clean --if-exists --no-owner --dbname "$SUPABASE_DB_URL" mipage.dump
+
+PITR del plan de pago de Supabase sigue siendo opcional y manual:
+Dashboard → Project Settings → Database → Backups.
 `)
-
-if (!process.env.SUPABASE_ACCESS_TOKEN) {
-  console.log('Result: skipped automated API (set SUPABASE_ACCESS_TOKEN for future automation)')
-  process.exit(0)
-}
-
-console.log('SUPABASE_ACCESS_TOKEN present — extend this script to call Management API if needed.')
 process.exit(0)
