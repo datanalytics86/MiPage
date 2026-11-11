@@ -1,292 +1,42 @@
-# 🤝 Guía de Contribución - MiPage
+# Contribuir a MiPage
 
-Gracias por tu interés en contribuir a MiPage. Esta guía te ayudará a empezar.
+El producto está en `frontend/`. Node `>=20.9.0`. El backend de `archive/2026-legacy/` no se despliega y no se testea.
 
----
+## Arranque
 
-## 🚀 Inicio Rápido
+1. Clona el repositorio.
+2. Copia `.env.example` a `frontend/.env.local` y completa la URL y la anon key de Supabase. El ejemplo no trae contraseñas.
+3. Desde `frontend/`: `npm install` y `npm run dev`.
+4. Rama nueva desde `main`. No hagas push a `main`.
 
-1. **Fork el repositorio**
-2. **Clona tu fork:**
-   ```bash
-   git clone https://github.com/tu-usuario/MiPage.git
-   cd MiPage
-   ```
-3. **Crea una rama:**
-   ```bash
-   git checkout -b feature/mi-nueva-feature
-   ```
-4. **Haz tus cambios**
-5. **Commit y push:**
-   ```bash
-   git add .
-   git commit -m "Agregar nueva feature"
-   git push origin feature/mi-nueva-feature
-   ```
-6. **Abre un Pull Request**
+## Antes de abrir un PR
 
----
-
-## 📋 Reglas de Contribución
-
-### Commits
-
-Usa commits descriptivos siguiendo Conventional Commits:
-
-```
-feat: agregar búsqueda por precio
-fix: corregir error en login
-docs: actualizar README
-style: formatear código con Prettier
-refactor: reorganizar componentes
-test: agregar tests para servicios
-chore: actualizar dependencias
-```
-
-### Code Style
-
-- **ESLint:** Seguir reglas definidas
-- **Prettier:** Formatear antes de commit
-- **TypeScript:** Usar tipos estrictos
-- **Naming:**
-  - Components: `PascalCase`
-  - Functions: `camelCase`
-  - Files: `kebab-case` o `PascalCase` (componentes)
-
-### Pull Requests
-
-**Antes de abrir un PR:**
-
-- [ ] Tests pasan (`npm test`)
-- [ ] Linter sin errores (`npm run lint`)
-- [ ] Build exitoso (`npm run build`)
-- [ ] Documentación actualizada
-- [ ] Changelog actualizado (si aplica)
-
-**Template del PR:**
-
-```markdown
-## Descripción
-Breve descripción de los cambios
-
-## Tipo de cambio
-- [ ] Bug fix
-- [ ] Nueva feature
-- [ ] Breaking change
-- [ ] Documentación
-
-## Testing
-- [ ] Tests agregados/actualizados
-- [ ] Tests pasan localmente
-
-## Checklist
-- [ ] Code review hecho
-- [ ] Documentación actualizada
-- [ ] Sin console.logs
-```
-
----
-
-## 🧪 Testing
-
-**Ejecutar tests:**
+Desde `frontend/`, en este orden:
 
 ```bash
-cd frontend
-npm test
+npm run lint
 npm run type-check
+npm run test:ci
+npm run build
 ```
 
-El backend Express/Prisma está archivado en `archive/2026-legacy/`. No lo uses ni lo testees para el producto.
+`test:ci` exige cobertura solo sobre los archivos listados en `frontend/vitest.config.ts`: líneas 85, funciones 90, ramas 75, statements 85. No bajes esos números.
 
-**Coverage mínimo:** 80%
+`npm audit --omit=dev --audit-level=high` tiene que salir en 0. No agregues un paquete que lo rompa.
 
----
+Commits en inglés, Conventional Commits (`feat:`, `fix:`, `docs:`).
 
-## 🎨 Componentes UI
+Cambios de base: una migración nueva e idempotente en `frontend/supabase/migrations/`. No reescribas el SQL ya aplicado. No edites `schema.sql` salvo la cabecera legible. El seed demo no entra en una migración.
 
-Al agregar nuevos componentes:
+La interfaz va en español (Chile). Sin emojis. El sistema visual está en `DESIGN-SYSTEM.md`.
 
-1. **Crear en:** `frontend/src/components/ui/`
-2. **Incluir:**
-   - Props con TypeScript
-   - Variantes configurables
-   - Accesibilidad (ARIA)
-   - Documentación JSDoc
+## Qué no hace falta construir
 
-**Ejemplo:**
+- Cobro en línea del Destacado. Sigue manual. Ver `DEPLOY.md`.
+- Un segundo backend, Redis o Cypress. Las pruebas de punta a punta son Playwright (`npm run test:e2e:critical`). Sin `E2E_PROVIDER_EMAIL` y `E2E_ADMIN_EMAIL` esos casos se saltan.
 
-```tsx
-import { forwardRef } from 'react';
+## Seguridad
 
-interface MyComponentProps {
-  /** Descripción de la prop */
-  variant?: 'primary' | 'secondary';
-  children: React.ReactNode;
-}
+No abras un issue público con una vulnerabilidad. No subas `.env`, service role ni llaves de respaldo.
 
-/**
- * Componente de ejemplo
- * @example
- * <MyComponent variant="primary">Hola</MyComponent>
- */
-const MyComponent = forwardRef<HTMLDivElement, MyComponentProps>(
-  ({ variant = 'primary', children }, ref) => {
-    return (
-      <div ref={ref} className={...}>
-        {children}
-      </div>
-    );
-  }
-);
-
-export default MyComponent;
-```
-
----
-
-## 📚 Documentación
-
-**Actualizar docs cuando:**
-- Agregas nuevas features
-- Cambias API endpoints
-- Modificas configuración
-- Agregas dependencias
-
-**Ubicación:**
-- API: `docs/API.md`
-- Componentes: JSDoc en el código
-- Guías: `docs/*.md`
-
----
-
-## 🐛 Reportar Bugs
-
-**Template de Issue:**
-
-```markdown
-**Descripción del bug:**
-Descripción clara y concisa
-
-**Pasos para reproducir:**
-1. Ir a '...'
-2. Click en '...'
-3. Ver error
-
-**Comportamiento esperado:**
-Qué debería pasar
-
-**Screenshots:**
-Si aplica
-
-**Entorno:**
-- OS: [ej. macOS]
-- Browser: [ej. Chrome 120]
-- Version: [ej. 1.0.0]
-```
-
----
-
-## 💡 Sugerir Features
-
-**Template:**
-
-```markdown
-**Feature sugerida:**
-Descripción clara
-
-**Problema que resuelve:**
-Por qué es útil
-
-**Alternativas consideradas:**
-Otras opciones
-
-**Contexto adicional:**
-Screenshots, ejemplos, etc.
-```
-
----
-
-## 📊 Áreas de Contribución
-
-### 🎯 Alta Prioridad
-- [ ] Tests para todos los endpoints
-- [ ] Tests E2E con Cypress
-- [ ] Integración con pasarela de pagos
-- [ ] Chat en tiempo real
-- [ ] Notificaciones push
-
-### 🎨 UI/UX
-- [ ] Modo oscuro
-- [ ] Más componentes UI
-- [ ] Animaciones
-- [ ] Mejoras de accesibilidad
-
-### 🔧 Backend
-- [ ] Más endpoints API
-- [ ] Optimizaciones de DB
-- [ ] Cache con Redis
-- [ ] Background jobs
-
-### 📱 Frontend
-- [ ] Progressive Web App mejorado
-- [ ] Offline mode
-- [ ] Service Workers
-- [ ] Image lazy loading mejorado
-
-### 📚 Documentación
-- [ ] Video tutorials
-- [ ] Más ejemplos
-- [ ] Traducción a inglés
-- [ ] API examples
-
----
-
-## 🏆 Reconocimientos
-
-Los contribuidores serán:
-- Listados en `CONTRIBUTORS.md`
-- Mencionados en releases
-- Reconocidos en la documentación
-
----
-
-## ❓ Preguntas
-
-- **General:** Abre un Issue
-- **Seguridad:** Email privado (no crear issue público)
-- **Discusión:** GitHub Discussions
-
----
-
-## 📜 Código de Conducta
-
-### Nuestra Promesa
-
-Nos comprometemos a hacer de la participación en este proyecto una experiencia libre de acoso para todos.
-
-### Comportamiento Esperado
-
-- ✅ Ser respetuoso
-- ✅ Aceptar críticas constructivas
-- ✅ Enfocarse en lo mejor para la comunidad
-- ✅ Mostrar empatía
-
-### Comportamiento Inaceptable
-
-- ❌ Lenguaje ofensivo
-- ❌ Trolling o comentarios insultantes
-- ❌ Acoso público o privado
-- ❌ Publicar información privada
-
----
-
-## 📄 Licencia
-
-Al contribuir, aceptas que tus contribuciones serán licenciadas bajo la misma licencia del proyecto (MIT).
-
----
-
-**¡Gracias por contribuir a MiPage!** 🎉
-
-Si tienes dudas, no dudes en preguntar en los Issues.
+Al contribuir, el cambio queda bajo la licencia MIT (`LICENSE`).

@@ -1,132 +1,67 @@
-# ADMIN-GUIDE — MiPage (un solo administrador)
+# Guía del administrador
 
-Guía ultra simple. **Sin código.** Objetivo: **≤ 8 minutos al día**.  
-Detalle de automatización: **`ADMIN-AUTOMATION.md`**.
+Un solo administrador. Todo el día a día está en `/admin`. No abras el editor de tablas de Supabase.
 
----
+La única excepción es el primer admin, y ni eso es el editor: la persona se registra en el sitio y después, desde `frontend/`, con `SUPABASE_SERVICE_ROLE_KEY` en el entorno:
 
-## Acceso
+```bash
+npm run admin:create -- tu-correo@dominio.cl
+```
 
-1. https://mi-page-lake.vercel.app/login (o tu dominio)  
-2. Cuenta con `profiles.role = 'admin'`  
-3. **Admin** → `/admin`
+Luego entras en https://mi-page-lake.vercel.app/login y abres `/admin`.
 
-Si todavía no hay administrador, desde `frontend/` y con la service role en el entorno:
+## Cada día
 
-`npm run admin:create -- tu-correo@dominio.cl`
+1. `/admin` muestra la cola y los accesos rápidos.
+2. Moderación (`/admin/proveedores`, filtro Pendiente). Mira las fotos. Aprueba o rechaza con motivo. Hay lote.
+3. Si hay reportes, `/admin/reportes`.
+4. Si alguien escribió por el formulario, `/admin/mensajes`: responder, archivar o marcar como nuevo.
 
-La cuenta tiene que existir (regístrate antes). Es la única vez que hace falta una terminal. Después todo se hace en `/admin`.
+## El resto del panel
 
----
+| Menú | Ruta | Qué haces ahí |
+|------|------|----------------|
+| Dashboard | `/admin` | Cola, accesos, resumen |
+| Usuarios | `/admin/usuarios` | Rol y suspensión. El último admin no puede quitarse el rol |
+| Moderación | `/admin/proveedores` | Aprobar, rechazar, editar, borrar fotos, destacar con vencimiento |
+| Metadata | `/admin/metadata` | Campos extra de los avisos |
+| Reportes | `/admin/reportes` | Denuncias de perfiles y contenido |
+| Mensajes | `/admin/mensajes` | Bandeja de contacto |
+| Reseñas | `/admin/resenas` | Moderar reseñas. La nota la recalcula la base, no el formulario |
+| Solicitudes | `/admin/solicitudes` | Pedidos de borrado (Ley 19.628). Se atienden aquí |
+| Catálogo | `/admin/catalogo` | Categorías y ciudades |
+| Actividad | `/admin/actividad` | Historial de acciones del panel |
+| Correos | `/admin/correos` | Envíos y reintento. Sin `RESEND_API_KEY` no sale correo |
+| Archivos | `/admin/huerfanos` | Objetos de Storage que ya no tienen ficha |
+| Configuración | `/admin/configuracion` | Textos, correos, Instagram, mantenimiento, registro de profesionales, aviso 18+, precio y días del Destacado, motivos de rechazo |
 
-## Checklist diario (≤ 8 minutos)
+Guardar en Configuración escribe los ajustes. El sitio público los lee con una caché corta.
 
-| Min | Tarea | Dónde | ☐ |
-|-----|--------|--------|---|
-| 0:00 | Leer **Cola del día** + badge **Pendientes** (siempre visible) | `/admin` o header | |
-| 0:30 | Ir a pendientes | Botón “Revisar N pendientes” o `/admin/proveedores?status=pending` | |
-| 1:00 | Priorizar badges **Revisar primero** / flags rojos | Lista | |
-| 2:00 | **Fotos** en cada caso dudoso | Preview grande | |
-| 4:00 | **Aprobar** (individual o **lote**) | Botones / bulk bar | |
-| 6:00 | **Rechazar** con motivo (chip o custom) | Modal / lote | |
-| 7:00 | Reportes si el banner lo indica | `/admin/reportes` | |
-| 7:30 | (Opc.) health | `/api/health` | |
+## Destacado
 
-### Semanal (~10 min extra)
+Se marca a mano en Moderación. La duración sale de Configuración (días). No hay cobro en línea: el botón de pago del profesional permanece oculto mientras no exista `MERCADOPAGO_ACCESS_TOKEN`, y aun con token el pago no activa el destacado por sí solo.
 
-- Site settings / textos → Configuración  
-- Metadata fields nuevos → Metadata  
-- Featured / destacados → menú ⋮ en moderación  
-- `npm run backup-check` o Dashboard Supabase backups  
+## Mantenimiento y cuentas
 
----
+Modo mantenimiento: el público ve el aviso. El admin sigue entrando.
 
-## Moderación (one-click + lote)
+Suspender una cuenta la manda al login. Se reactiva en Usuarios.
 
-1. Filtro **Pendiente**  
-2. Revisa flags automáticos (sugerencias, no decisiones):  
-   - `NO_PHOTOS`, `BIO_SPAM` = prioridad alta  
-   - `FEW_PHOTOS`, `BIO_THIN` = aviso  
-3. **Fotos** → calidad, persona real, política  
-4. Aprobar o rechazar  
-5. **Lote:** “Seleccionar pendientes visibles” → Aprobar/Rechazar lote  
+## Si algo falla
 
-### Motivos de rechazo sugeridos
-
-- Fotos borrosas / stock  
-- Contenido no permitido  
-- Spam / contacto engañoso  
-- Categoría o ciudad incorrecta  
-- Perfil incompleto  
-- Menores → rechazo inmediato + suspensión  
-
-Emails: si `RESEND_API_KEY` está en Vercel, el publisher recibe aviso. Si no, el rechazo igual se guarda.
-
----
-
-## Metadata
-
-1. Admin → **Metadata**  
-2. Key `snake_case`, label, tipo, aplica a categoría  
-3. Migration `006` debe estar aplicada en Supabase  
-
----
-
-## Destacar (featured)
-
-Moderación → ⋮ → **Destacar**. El badge y el orden se ven en `/explorar`.
-
-El provider aprobado ve en el dashboard qué significa Destacado. Si `MERCADOPAGO_ACCESS_TOKEN` está en Vercel, puede iniciar pago; si no, el API responde **501** con mensaje claro y tú lo marcas a mano.
-
-## Aviso de nuevos PENDING
-
-Si `RESEND_API_KEY` + `ADMIN_NOTIFY_EMAIL` están en Vercel, cada wizard enviado te manda un mail con link a `/admin/proveedores?status=pending`. Sin esas keys, el aviso igual queda PENDING (mira la **Cola del día**).
-
----
-
-## Métricas
-
-- Admin home: usuarios, proveedores activos, reportes  
-- Cola del día: resumen en lenguaje natural  
-- Health: `GET /api/health`  
-
----
-
-## Borrado de datos (Ley 19.628)
-
-1. Usuario autenticado → `POST /api/account/delete-request`  
-2. Tabla `data_deletion_requests`  
-3. Admin procesa en Supabase / proceso  
-
----
-
-## Si algo se rompe
-
-| Síntoma | Qué mirar |
-|---------|-----------|
-| Admin vacío | Env Supabase + rol admin |
-| Upload falla | Bucket `gallery` + migration 004 |
-| No aparecen perfiles nuevos | Siguen `pending` |
-| Emails no salen | `RESEND_API_KEY` |
-| Health 503 | Faltan `NEXT_PUBLIC_SUPABASE_*` reales en Production |
-
----
+| Qué ves | Dónde mirar |
+|---------|-------------|
+| No entras a `/admin` | Esa cuenta no es admin. Usa `admin:create` una vez, con el correo ya registrado |
+| No salen correos | Falta `RESEND_API_KEY` o el remitente. El rechazo y el aviso igual quedan guardados |
+| Health 503 | Faltan las claves de Supabase o la consulta a `providers` no respondió |
+| Un aviso no aparece en Explorar | Sigue `pending` o `rejected` |
+| Subir fotos falla | Bucket `gallery` y la migración de storage |
 
 ## No hagas esto
 
-- No restaures `archive/2026-legacy/backend` en prod  
-- No subas `.env` a git  
-- No expongas `service_role` al browser  
-- No apruebes sin mirar fotos en casos con flag **high**  
+- No edites filas a mano en Supabase para moderar, destacar o borrar.
+- No ejecutes `frontend/supabase/seed/003_seed_demo_data.sql` en producción.
+- No pongas `service_role` en una variable `NEXT_PUBLIC_*`.
+- No apruebes un aviso con fotos dudosas solo por cerrar la cola.
 
----
-
-## Docs relacionadas
-
-| Archivo | Uso |
-|---------|-----|
-| `ADMIN-AUTOMATION.md` | Automatizaciones y bulk |
-| `QA-REPORT.md` | Calidad y residuales |
-| `UX-OPPORTUNITIES.md` | Mejoras de fricción |
-| `ARCHITECTURE-DECISION.md` | Supabase-first |
-| `PROGRESS.md` | Estado del proyecto |
+Despliegue, migraciones y secretos: `DEPLOY.md`.
