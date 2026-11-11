@@ -62,8 +62,10 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [isInitialized, setIsInitialized] = useState(false)
+  const urlKey = `${initialCategory ?? ''}|${searchParams.toString()}`
+  const [appliedUrlKey, setAppliedUrlKey] = useState<string | null>(null)
 
-  useEffect(() => {
+  if (appliedUrlKey !== urlKey) {
     const q = searchParams.get('q') ?? ''
     const categoryParam = searchParams.get('category') as ProviderCategory | null
     const category =
@@ -72,6 +74,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     const verified = searchParams.get('verified') === '1'
     const sort = (searchParams.get('sort') as FilterOptions['sort_by']) ?? 'relevance'
 
+    setAppliedUrlKey(urlKey)
     setSearchQuery(q)
     setFilters({
       category,
@@ -81,7 +84,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     })
     setVisibleCount(PAGE_SIZE)
     setIsInitialized(true)
-  }, [searchParams, initialCategory])
+  }
 
   const syncUrl = useCallback(
     (nextFilters: FilterOptions, nextQuery: string) => {

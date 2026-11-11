@@ -72,7 +72,6 @@ jobs:
 
       - name: npm audit (production, high+)
         run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
 
   deploy-note:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'

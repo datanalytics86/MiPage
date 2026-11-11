@@ -72,7 +72,7 @@ describe('server routes auth', () => {
     getApiActor.mockResolvedValue(null)
     const res = await moderatePost(
       post('http://localhost/api/admin/providers/p1/moderate', { status: 'approved' }),
-      { params: { id: '11111111-1111-1111-1111-111111111111' } }
+      { params: Promise.resolve({ id: '11111111-1111-4111-8111-111111111111' }) }
     )
     expect(res.status).toBe(401)
   })
@@ -81,14 +81,14 @@ describe('server routes auth', () => {
     getApiActor.mockResolvedValue({ id: 'u1', role: 'provider' })
     const asProvider = await moderatePost(
       post('http://localhost/api/admin/providers/p1/moderate', { status: 'approved' }),
-      { params: { id: '11111111-1111-1111-1111-111111111111' } }
+      { params: Promise.resolve({ id: '11111111-1111-4111-8111-111111111111' }) }
     )
     expect(asProvider.status).toBe(403)
 
     getApiActor.mockResolvedValue({ id: 'u2', role: 'user' })
     const asUser = await moderatePost(
       post('http://localhost/api/admin/providers/p1/moderate', { status: 'approved' }),
-      { params: { id: '11111111-1111-1111-1111-111111111111' } }
+      { params: Promise.resolve({ id: '11111111-1111-4111-8111-111111111111' }) }
     )
     expect(asUser.status).toBe(403)
   })
@@ -97,7 +97,7 @@ describe('server routes auth', () => {
     getApiActor.mockResolvedValue(null)
     const res = await featuredPost(
       post('http://localhost/api/payments/featured', {
-        providerId: '11111111-1111-1111-1111-111111111111',
+        providerId: '11111111-1111-4111-8111-111111111111',
         unitPrice: 1,
       })
     )
@@ -109,7 +109,7 @@ describe('server routes auth', () => {
     createServerSupabaseClient.mockReturnValue(supabaseWithProvider('owner-b'))
     const res = await featuredPost(
       post('http://localhost/api/payments/featured', {
-        providerId: '11111111-1111-1111-1111-111111111111',
+        providerId: '11111111-1111-4111-8111-111111111111',
         unitPrice: 1,
       })
     )
@@ -120,7 +120,7 @@ describe('server routes auth', () => {
     getApiActor.mockResolvedValue(null)
     const anon = await submitPost(
       post('http://localhost/api/providers/submit', {
-        providerId: '11111111-1111-1111-1111-111111111111',
+        providerId: '11111111-1111-4111-8111-111111111111',
       })
     )
     expect(anon.status).toBe(401)
@@ -129,7 +129,7 @@ describe('server routes auth', () => {
     createServerSupabaseClient.mockReturnValue(supabaseWithProvider('owner-b'))
     const foreign = await submitPost(
       post('http://localhost/api/providers/submit', {
-        providerId: '11111111-1111-1111-1111-111111111111',
+        providerId: '11111111-1111-4111-8111-111111111111',
       })
     )
     expect(foreign.status).toBe(403)

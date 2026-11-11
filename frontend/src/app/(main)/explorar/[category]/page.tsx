@@ -15,7 +15,7 @@ export function generateStaticParams() {
 export const dynamicParams = true
 
 interface CategoryPageProps {
-  params: { category: string }
+  params: Promise<{ category: string }>
 }
 
 function ExplorarFallback() {
@@ -28,8 +28,9 @@ function ExplorarFallback() {
   )
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const category = params.category?.toLowerCase()
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const { category: rawCategory } = await params
+  const category = rawCategory?.toLowerCase()
   const valid = CATEGORY_SLUGS.includes(category as ProviderCategory)
 
   if (!valid) {

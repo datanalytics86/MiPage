@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Save, User, MapPin, Phone, Instagram, Ruler, Clock } from 'lucide-react'
@@ -33,9 +33,10 @@ export default function DashboardPerfilPage() {
   })
   const [isSaving, setIsSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [loadedProvider, setLoadedProvider] = useState(provider)
 
-  useEffect(() => {
-    if (!provider) return
+  if (provider && provider !== loadedProvider) {
+    setLoadedProvider(provider)
     setFormData({
       displayName: provider.display_name,
       category: normalizeCategory(provider.category),
@@ -48,7 +49,7 @@ export default function DashboardPerfilPage() {
       heightCm: provider.height ?? 0,
       weightKg: provider.weight ?? 0,
     })
-  }, [provider])
+  }
 
   if (!provider) {
     return (
