@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -29,12 +29,14 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useCatalog } from '@/hooks/useCatalog'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
-import { generateSlug, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import {
   validateUploadBatch,
   validateUploadFile,
   sanitizePlainText,
 } from '@/lib/uploadValidation'
+import { prepareGalleryImage } from '@/lib/imagePrivacy'
+import { extractStoragePath } from '@/lib/storagePath'
 import {
   DEFAULT_METADATA_FIELDS,
   validateMetadataValues,
@@ -48,19 +50,27 @@ const STEPS = ['Datos básicos', 'Fotos', 'Servicios y envío'] as const
 
 const STEP_HINTS = [
   'Usa tu nombre público real. Las fotos se revisan antes de publicarte.',
-  'Mínimo 3 fotos nítidas (rostro y servicio). Puedes reordenar después en Galería.',
+  'Mínimo 3 fotos. Se reducen a 2000 px y se les quita la ubicación (EXIF) antes de subir.',
   'Define un precio desde y un servicio. Al enviar queda en revisión (PENDING).',
 ] as const
+
+type WizardPhoto = { id: string; preview: string; file?: File; url?: string }
+
+function draftKey(userId: string) {
+  return `mipage:listing-draft:${userId}`
+}
 
 export default function NuevoAvisoWizardPage() {
   const router = useRouter()
   const toast = useToast()
   const catalog = useCatalog()
-  const { provider, profile, refreshProfile, isLoading: authLoading } = useAuth()
+  const { user, provider, profile, refreshProfile, isLoading: authLoading } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [ageDeclared, setAgeDeclared] = useState(false)
+  const [hydratedFor, setHydratedFor] = useState<string | null>(null)
   const [form, setForm] = useState({
     display_name: provider?.display_name || profile?.name || '',
     category: (provider?.category as string) || 'masajes',
@@ -69,14 +79,50 @@ export default function NuevoAvisoWizardPage() {
     whatsapp: provider?.whatsapp || '',
     instagram: provider?.instagram || '',
     price_min: provider?.price_min?.toString() || '',
+    age: provider?.age ? String(provider.age) : '',
     service_name: '',
     service_price: '',
     service_duration: '60 min',
   })
   const [metadata, setMetadata] = useState<MetadataValues>({ years_experience: 1 })
-  const [files, setFiles] = useState<File[]>([])
-  const [previews, setPreviews] = useState<string[]>([])
+  const [photos, setPhotos] = useState<WizardPhoto[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  if (user?.id && hydratedFor !== user.id) {
+    setHydratedFor(user.id)
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(draftKey(user.id))
+        if (raw) {
+          const parsed = JSON.parse(raw) as {
+            form?: Partial<typeof form>
+            metadata?: MetadataValues
+            photoUrls?: string[]
+            ageDeclared?: boolean
+          }
+          if (parsed.form) setForm((prev) => ({ ...prev, ...parsed.form }))
+          if (parsed.metadata) setMetadata(parsed.metadata)
+          if (parsed.ageDeclared) setAgeDeclared(true)
+          if (Array.isArray(parsed.photoUrls)) {
+            setPhotos(
+              parsed.photoUrls.filter(Boolean).map((url) => ({ id: url, preview: url, url }))
+            )
+          }
+        }
+      } catch {
+        /* el borrador dañado no bloquea el wizard */
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!user?.id || hydratedFor !== user.id) return
+    const photoUrls = photos.map((photo) => photo.url).filter((url): url is string => Boolean(url))
+    localStorage.setItem(
+      draftKey(user.id),
+      JSON.stringify({ form, metadata, photoUrls, ageDeclared })
+    )
+  }, [hydratedFor, user?.id, form, metadata, photos, ageDeclared])
 
   const metaFields = useMemo(
     () =>
@@ -112,6 +158,10 @@ export default function NuevoAvisoWizardPage() {
     if (!form.display_name.trim()) e.display_name = 'Nombre público requerido'
     if (!form.city.trim()) e.city = 'Ciudad requerida'
     if (form.bio.length > 2000) e.bio = 'Bio demasiado larga'
+    if (!ageDeclared) e.age = 'Debes declarar que eres mayor de 18 años'
+    if (form.age && (Number(form.age) < 18 || Number(form.age) > 120)) {
+      e.ageNumber = 'La edad debe ser 18 o más'
+    }
     const metaResult = validateMetadataValues(metaFields, metadata, form.category)
     Object.assign(e, metaResult.errors)
     setErrors(e)
@@ -119,151 +169,133 @@ export default function NuevoAvisoWizardPage() {
   }
 
   const validateStep1 = () => {
-    if (files.length < 3) {
+    if (photos.length < 3) {
       setErrors({ photos: 'Sube al menos 3 fotos' })
       return false
     }
-    const batch = validateUploadBatch(files)
-    if (!batch.ok) {
-      setErrors({ photos: batch.message || 'Archivos inválidos' })
-      return false
+    const pending = photos.map((photo) => photo.file).filter((file): file is File => Boolean(file))
+    if (pending.length) {
+      const batch = validateUploadBatch(pending)
+      if (!batch.ok) {
+        setErrors({ photos: batch.message || 'Archivos inválidos' })
+        return false
+      }
     }
     setErrors({})
     return true
   }
 
-  const onPickFiles = (list: FileList | null) => {
+  const onPickFiles = async (list: FileList | null) => {
     if (!list?.length) return
-    const next: File[] = [...files]
-    const nextPrev: string[] = [...previews]
-    for (const f of Array.from(list)) {
-      const v = validateUploadFile(f)
-      if (!v.ok) {
-        toast.error('Archivo rechazado', v.message || f.name)
-        continue
-      }
+    const next = [...photos]
+    for (const original of Array.from(list)) {
       if (next.length >= 6) {
         toast.error('Límite', 'Máximo 6 fotos')
         break
       }
-      next.push(f)
-      nextPrev.push(URL.createObjectURL(f))
+      try {
+        const prepared = await prepareGalleryImage(original)
+        const check = validateUploadFile(prepared)
+        if (!check.ok) {
+          toast.error('Archivo rechazado', check.message || original.name)
+          continue
+        }
+        next.push({
+          id: crypto.randomUUID(),
+          preview: URL.createObjectURL(prepared),
+          file: prepared,
+        })
+      } catch (error) {
+        toast.error(
+          'Archivo rechazado',
+          error instanceof Error ? error.message : original.name
+        )
+      }
     }
-    setFiles(next)
-    setPreviews(nextPrev)
+    setPhotos(next)
   }
 
   const removeFile = (idx: number) => {
-    URL.revokeObjectURL(previews[idx])
-    setFiles((f) => f.filter((_, i) => i !== idx))
-    setPreviews((p) => p.filter((_, i) => i !== idx))
+    const photo = photos[idx]
+    if (photo?.preview.startsWith('blob:')) URL.revokeObjectURL(photo.preview)
+    setPhotos((current) => current.filter((_, i) => i !== idx))
   }
 
   const submit = async () => {
+    if (!user?.email_confirmed_at) {
+      toast.error('Confirma tu correo', 'Revisa tu bandeja antes de enviar el aviso')
+      return
+    }
     if (!validateStep0() || !validateStep1()) {
-      setStep(files.length < 3 ? 1 : 0)
+      setStep(photos.length < 3 ? 1 : 0)
       return
     }
     setSubmitting(true)
     try {
       const supabase = getSupabaseClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) throw new Error('No autenticado')
-
-      const slugBase = generateSlug(form.display_name) || `provider-${user.id.slice(0, 8)}`
-      const slug = provider?.slug || `${slugBase}-${Date.now().toString(36).slice(-4)}`
-
-      const providerPayload = {
-        user_id: user.id,
-        slug,
-        display_name: cleanText(form.display_name),
-        category: form.category,
-        city: cleanText(form.city),
-        bio: cleanText(form.bio),
-        whatsapp: cleanText(form.whatsapp),
-        instagram: cleanText(form.instagram),
-        price_min: form.price_min ? Number(form.price_min) : null,
-        status: 'pending' as const,
-        rejection_reason: null,
-        submitted_at: new Date().toISOString(),
-        metadata,
+      const previousUrls: string[] = []
+      if (provider?.id) {
+        const { data: existing } = await supabase.from('gallery').select('url').eq('provider_id', provider.id)
+        for (const row of existing || []) previousUrls.push(String(row.url || ''))
       }
 
-      let providerId = provider?.id
-
-      if (providerId) {
-        const { error } = await supabase
-          .from('providers')
-          .update(providerPayload)
-          .eq('id', providerId)
-        if (error) throw error
-      } else {
-        const { data, error } = await supabase
-          .from('providers')
-          .insert(providerPayload)
-          .select('id')
-          .single()
-        if (error) throw error
-        providerId = data.id
-        if (profile?.role !== 'provider' && profile?.role !== 'admin') {
-          const { error: roleError } = await supabase.rpc('become_provider')
-          if (roleError) throw roleError
-        }
-      }
-
-      // upload photos
       const photoUrls: string[] = []
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i]
-        const ext = file.name.split('.').pop() || 'jpg'
-        const path = `${providerId}/${Date.now()}-${i}.${ext}`
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i]
+        if (photo.url) {
+          photoUrls.push(photo.url)
+          continue
+        }
+        if (!photo.file) throw new Error('Falta una foto')
+        const path = `${user.id}/draft/${crypto.randomUUID()}.jpg`
         const { error: upErr } = await supabase.storage
           .from('gallery')
-          .upload(path, file, { upsert: false, contentType: file.type })
+          .upload(path, photo.file, { upsert: false, contentType: 'image/jpeg' })
         if (upErr) throw upErr
         const { data: pub } = supabase.storage.from('gallery').getPublicUrl(path)
         photoUrls.push(pub.publicUrl)
-        await supabase.from('gallery').insert({
-          provider_id: providerId,
-          type: 'image',
-          url: pub.publicUrl,
-          is_cover: i === 0,
-          sort_order: i,
-        })
       }
 
-      await supabase
-        .from('providers')
-        .update({
+      const { data: providerId, error } = await supabase.rpc('submit_provider_listing', {
+        p_payload: {
+          display_name: cleanText(form.display_name),
+          category: form.category,
+          city: cleanText(form.city),
+          bio: cleanText(form.bio),
+          whatsapp: cleanText(form.whatsapp),
+          instagram: cleanText(form.instagram),
+          price_min: form.price_min ? String(Number(form.price_min)) : '',
+          age: form.age ? String(Number(form.age)) : '',
+          age_declared: 'true',
           photos: photoUrls,
-          cover_photo: photoUrls[0] || null,
-          status: 'pending',
-        })
-        .eq('id', providerId)
+          metadata,
+          service_name: cleanText(form.service_name),
+          service_price: form.service_price ? String(Number(form.service_price)) : '',
+          service_duration: form.service_duration,
+        },
+      })
+      if (error) throw error
 
-      if (form.service_name && form.service_price) {
-        await supabase.from('services').insert({
-          provider_id: providerId,
-          name: cleanText(form.service_name),
-          price: Number(form.service_price),
-          duration: form.service_duration || null,
-          is_active: true,
-          sort_order: 0,
-        })
+      const keep = new Set(photoUrls)
+      const stale = previousUrls
+        .filter((url) => url && !keep.has(url))
+        .map((url) => extractStoragePath(url, 'gallery'))
+        .filter((path): path is string => Boolean(path))
+      if (stale.length) await supabase.storage.from('gallery').remove(stale)
+
+      if (providerId) {
+        try {
+          await fetch('/api/providers/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ providerId }),
+          })
+        } catch {
+          /* el aviso ya quedó guardado; el correo es best-effort */
+        }
       }
 
-      try {
-        await fetch('/api/providers/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ providerId }),
-        })
-      } catch {
-        /* el aviso ya quedó guardado; el correo es best-effort */
-      }
-
+      localStorage.removeItem(draftKey(user.id))
       await refreshProfile()
       toast.success('Enviado a moderación', 'Tu aviso quedó en estado PENDING')
       router.push('/dashboard?submitted=1')
@@ -272,7 +304,7 @@ export default function NuevoAvisoWizardPage() {
       console.error(err)
       toast.error(
         'Error al publicar',
-        err instanceof Error ? err.message : 'Revisa Storage y permisos RLS'
+        err instanceof Error ? err.message : 'Revisa Storage y la migración 009'
       )
     } finally {
       setSubmitting(false)
@@ -286,6 +318,11 @@ export default function NuevoAvisoWizardPage() {
         <p className="text-foreground-muted text-sm mt-1">
           Wizard en 3 pasos. Al enviar, el estado será <Badge className="ml-1">PENDING</Badge>
         </p>
+        {user && !user.email_confirmed_at && (
+          <p className="text-sm text-warning mt-3">
+            Confirma tu correo antes de enviar. Revisa la bandeja de entrada y el spam.
+          </p>
+        )}
       </div>
 
       <div className="flex gap-2">
@@ -397,6 +434,28 @@ export default function NuevoAvisoWizardPage() {
                   />
                 </div>
               </div>
+              <label className="flex items-start gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={ageDeclared}
+                  onChange={(event) => setAgeDeclared(event.target.checked)}
+                />
+                <span>Declaro que soy mayor de 18 años</span>
+              </label>
+              {errors.age && <p className="text-xs text-error">{errors.age}</p>}
+              <div>
+                <Label htmlFor="age">Edad (opcional)</Label>
+                <Input
+                  id="age"
+                  type="number"
+                  min={18}
+                  max={120}
+                  value={form.age}
+                  onChange={(e) => setForm({ ...form, age: e.target.value })}
+                />
+                {errors.ageNumber && <p className="text-xs text-error mt-1">{errors.ageNumber}</p>}
+              </div>
               {metaFields.map((field) => (
                 <div key={field.key}>
                   <Label>
@@ -452,7 +511,7 @@ export default function NuevoAvisoWizardPage() {
           {step === 1 && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
               <p className="text-sm text-foreground-muted">
-                Mínimo 3 fotos, máximo 6. Solo JPG/PNG/WebP (≤10MB). Se bloquean .exe/.php/etc.
+                Mínimo 3 fotos, máximo 6. Se recomprimen y se elimina el EXIF, incluida la ubicación.
               </p>
               <input
                 ref={fileInputRef}
@@ -468,13 +527,13 @@ export default function NuevoAvisoWizardPage() {
               </Button>
               {errors.photos && <p className="text-sm text-error">{errors.photos}</p>}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {previews.map((src, i) => (
+                {photos.map((photo, i) => (
                   <div
-                    key={src}
+                    key={photo.id}
                     className="relative aspect-square rounded-xl overflow-hidden border border-white/10 group"
                   >
                     <Image
-                      src={src}
+                      src={photo.preview}
                       alt={`Vista previa ${i + 1}`}
                       fill
                       unoptimized
@@ -496,7 +555,7 @@ export default function NuevoAvisoWizardPage() {
                     </button>
                   </div>
                 ))}
-                {previews.length === 0 && (
+                {photos.length === 0 && (
                   <div className="col-span-full flex flex-col items-center justify-center py-12 text-foreground-muted border border-dashed rounded-xl">
                     <ImageIcon className="h-8 w-8 mb-2" />
                     Aún no hay fotos
@@ -546,7 +605,7 @@ export default function NuevoAvisoWizardPage() {
                 <p>
                   <strong>{form.display_name}</strong> · {form.category} · {form.city}
                 </p>
-                <p>{files.length} fotos listas</p>
+                <p>{photos.length} fotos listas</p>
                 <p className="text-warning">Al enviar → estado PENDING (no visible hasta aprobación)</p>
               </div>
             </motion.div>

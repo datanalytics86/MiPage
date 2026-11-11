@@ -1,6 +1,7 @@
 'use client'
 
 import React, { Suspense, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
@@ -42,7 +43,13 @@ import { useAdminProviders, useModerateProviders, useUpdateProvider, type AdminP
 import { getProviderImage } from '@/lib/providers'
 import { useToast } from '@/stores/uiStore'
 import { useSiteSettings } from '@/hooks/useSiteSettings'
-import { ProviderEditor } from '@/components/admin/ProviderEditor'
+const ProviderEditor = dynamic(
+  () => import('@/components/admin/ProviderEditor').then((mod) => mod.ProviderEditor),
+  {
+    ssr: false,
+    loading: () => <p className="text-sm text-foreground-muted">Cargando editor…</p>,
+  }
+)
 import type { ProviderStatus } from '@/types/database'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -106,7 +113,8 @@ function AdminProveedoresInner() {
     page,
     pageSize,
   })
-  const providers = providerPage?.rows ?? []
+  const providerRows = providerPage?.rows
+  const providers = providerRows ?? []
   const providerTotal = providerPage?.total ?? 0
   const [preview, setPreview] = useState<AdminProviderRow | null>(null)
   const [rejectTarget, setRejectTarget] = useState<AdminProviderRow | null>(null)
@@ -152,7 +160,7 @@ function AdminProveedoresInner() {
   }
 
   const filteredProviders = useMemo(() => {
-    return providers.filter((provider) => {
+    return (providerRows ?? []).filter((provider) => {
       const matchesSearch =
         provider.display_name.toLowerCase().includes(search.toLowerCase()) ||
         provider.email.toLowerCase().includes(search.toLowerCase())
@@ -162,7 +170,7 @@ function AdminProveedoresInner() {
         provider.category.toLowerCase() === categoryFilter.toLowerCase()
       return matchesSearch && matchesStatus && matchesCategory
     })
-  }, [providers, search, statusFilter, categoryFilter])
+  }, [providerRows, search, statusFilter, categoryFilter])
 
   const flagsById = useMemo(() => {
     const map = new Map<string, ModerationFlag[]>()

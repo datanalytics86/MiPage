@@ -118,6 +118,14 @@ export default function AdminConfiguracionPage() {
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
+              checked={settings.content.adultBanner}
+              onChange={(event) => set('content', 'adultBanner', event.target.checked)}
+            />
+            Mostrar aviso de mayoría de edad (18+). Apagado por defecto.
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
               checked={settings.content.bannerEnabled}
               onChange={(event) => set('content', 'bannerEnabled', event.target.checked)}
             />

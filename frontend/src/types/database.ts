@@ -75,6 +75,8 @@ export interface Database {
           moderated_at: string | null
           moderated_by: string | null
           metadata: Record<string, unknown> | null
+          featured_until: string | null
+          age_declared_at: string | null
           created_at: string
           updated_at: string
         }
@@ -107,6 +109,8 @@ export interface Database {
           moderated_at?: string | null
           moderated_by?: string | null
           metadata?: Record<string, unknown> | null
+          featured_until?: string | null
+          age_declared_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -137,6 +141,8 @@ export interface Database {
           moderated_at?: string | null
           moderated_by?: string | null
           metadata?: Record<string, unknown> | null
+          featured_until?: string | null
+          age_declared_at?: string | null
           updated_at?: string
         }
       }

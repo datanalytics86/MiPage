@@ -11,12 +11,9 @@ export const ALLOWED_IMAGE_MIME = [
   'image/gif',
 ] as const
 
-export const ALLOWED_VIDEO_MIME = ['video/mp4', 'video/quicktime'] as const
-
-export const ALLOWED_UPLOAD_MIME = [...ALLOWED_IMAGE_MIME, ...ALLOWED_VIDEO_MIME] as const
+export const ALLOWED_UPLOAD_MIME = [...ALLOWED_IMAGE_MIME] as const
 
 export const MAX_IMAGE_BYTES = 10 * 1024 * 1024 // 10 MB
-export const MAX_VIDEO_BYTES = 10 * 1024 * 1024 // 10 MB (aligned with storage policy)
 export const MAX_FILES_PER_BATCH = 6
 
 const DANGEROUS_EXTENSIONS = [
@@ -91,19 +88,15 @@ export function validateUploadFile(file: File): UploadValidationResult {
     return {
       ok: false,
       code: 'MIME_NOT_ALLOWED',
-      message: `Tipo no permitido: ${mime || 'desconocido'}. Usa JPG, PNG, WebP o MP4.`,
+      message: `Tipo no permitido: ${mime || 'desconocido'}. Usa JPG, PNG, WebP o GIF.`,
     }
   }
 
-  const max = ALLOWED_VIDEO_MIME.includes(mime as (typeof ALLOWED_VIDEO_MIME)[number])
-    ? MAX_VIDEO_BYTES
-    : MAX_IMAGE_BYTES
-
-  if (file.size > max) {
+  if (file.size > MAX_IMAGE_BYTES) {
     return {
       ok: false,
       code: 'SIZE_EXCEEDED',
-      message: `Archivo supera el máximo de ${Math.round(max / (1024 * 1024))} MB`,
+      message: `Archivo supera el máximo de ${Math.round(MAX_IMAGE_BYTES / (1024 * 1024))} MB`,
     }
   }
 

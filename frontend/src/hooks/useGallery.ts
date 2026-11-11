@@ -2,7 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 import { syncProviderGallery } from '@/lib/providerSync'
+import { prepareGalleryImage } from '@/lib/imagePrivacy'
 import type { GalleryItem } from '@/types/database'
+
+function assertImageUrl(url: string) {
+  const clean = url.split('?')[0].toLowerCase()
+  if (!/^https?:\/\//.test(url)) throw new Error('La URL debe empezar por http o https')
+  if (/\.(mp4|mov|webm|svg)$/.test(clean)) throw new Error('Solo se aceptan imágenes')
+  if (!/\.(jpe?g|png|webp|gif)$/.test(clean)) {
+    throw new Error('La URL debe terminar en jpg, png, webp o gif')
+  }
+}
 
 export const galleryKeys = {
   all: ['gallery'] as const,
@@ -58,6 +68,7 @@ export function useAddGalleryUrl() {
       sortOrder?: number
     }) => {
       const supabase = getSupabaseClient()
+      assertImageUrl(url)
 
       if (isCover) {
         await supabase
@@ -105,12 +116,12 @@ export function useUploadGalleryFile() {
       sortOrder?: number
     }) => {
       const supabase = getSupabaseClient()
-      const ext = file.name.split('.').pop() || 'jpg'
-      const path = `${providerId}/${Date.now()}.${ext}`
+      const prepared = await prepareGalleryImage(file)
+      const path = `${providerId}/${Date.now()}.jpg`
 
       const { error: uploadError } = await supabase.storage
         .from('gallery')
-        .upload(path, file, { upsert: false })
+        .upload(path, prepared, { upsert: false, contentType: 'image/jpeg' })
 
       if (uploadError) throw uploadError
 
@@ -128,7 +139,7 @@ export function useUploadGalleryFile() {
         .from('gallery')
         .insert({
           provider_id: providerId,
-          type: file.type.startsWith('video/') ? 'video' : 'image',
+          type: 'image',
           url,
           is_cover: isCover,
           sort_order: sortOrder ?? 0,

@@ -19,6 +19,7 @@ import {
   ScrollText,
   FolderTree,
   Mail,
+  Images,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -83,6 +84,11 @@ const navigation = [
     name: 'Correos',
     href: '/admin/correos',
     icon: Mail,
+  },
+  {
+    name: 'Archivos',
+    href: '/admin/huerfanos',
+    icon: Images,
   },
   {
     name: 'Configuración',
