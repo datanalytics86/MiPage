@@ -1,0 +1,39 @@
+name: Respaldo semanal
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Volcado cifrado o salida en verde
+        id: dump
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "SUPABASE_DB_URL ausente: el respaldo no se ejecuta."
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$BACKUP_ENCRYPTION_KEY" ]; then
+            echo "BACKUP_ENCRYPTION_KEY ausente."
+            exit 1
+          fi
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client openssl
+          pg_dump --no-owner --format=custom --file=mipage.dump "$SUPABASE_DB_URL"
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in mipage.dump -out mipage.dump.enc -pass env:BACKUP_ENCRYPTION_KEY
+          rm -f mipage.dump
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        if: steps.dump.outputs.created == 'true'
+        with:
+          name: mipage-backup
+          path: mipage.dump.enc
+          retention-days: 14

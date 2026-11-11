@@ -1,5 +1,5 @@
 -- =============================================
--- LuxeServices - Supabase Database Schema
+-- MiPage — esquema base de Supabase
 -- =============================================
 
 -- Enable necessary extensions
