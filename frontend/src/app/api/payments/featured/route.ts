@@ -1,44 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getApiActor } from '@/lib/api/actor'
+import { featuredPriceFromSettings } from '@/lib/featuredPrice'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-/**
- * Optional Mercado Pago preference for featured listing.
- * If MERCADOPAGO_ACCESS_TOKEN is missing, returns 501 with clear message.
- */
 const schema = z.object({
   providerId: z.string().uuid(),
-  title: z.string().min(1).max(120).default('Destacar perfil MiPage'),
-  unitPrice: z.number().int().positive().default(9990),
+  title: z.string().min(1).max(120).optional(),
 })
 
+export async function GET() {
+  return NextResponse.json({
+    configured: Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN?.trim()),
+  })
+}
+
+/**
+ * Preferencia de Mercado Pago. El precio sale del servidor.
+ * Sin webhook en esta fase: pagar no activa el Destacado (fase 4 lo deja manual).
+ */
 export async function POST(req: NextRequest) {
-  const token = process.env.MERCADOPAGO_ACCESS_TOKEN
-  if (!token) {
-    return NextResponse.json(
-      {
-        error: 'Mercado Pago not configured',
-        configured: false,
-        message:
-          'El pago de Destacado no está configurado. Un administrador puede marcar tu perfil como Destacado desde el panel. Para activar cobros, añade MERCADOPAGO_ACCESS_TOKEN en Vercel.',
-      },
-      { status: 501 }
-    )
+  const actor = await getApiActor()
+  if (!actor) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
   }
 
   let json: unknown
   try {
     json = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'JSON inválido' }, { status: 400 })
   }
 
   const parsed = schema.safeParse(json)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 })
   }
 
+  const supabase = createServerSupabaseClient()
+  const { data: provider } = await supabase
+    .from('providers')
+    .select('id, user_id')
+    .eq('id', parsed.data.providerId)
+    .maybeSingle()
+
+  if (!provider || provider.user_id !== actor.id) {
+    return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
+  }
+
+  const token = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim()
+  if (!token) {
+    return NextResponse.json(
+      {
+        error: 'Mercado Pago no está configurado',
+        configured: false,
+        message:
+          'El pago de Destacado no está configurado. Un administrador puede marcar tu perfil como Destacado desde el panel.',
+      },
+      { status: 501 }
+    )
+  }
+
+  const { data: settings } = await supabase
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'payments')
+    .maybeSingle()
+
+  const unitPrice = featuredPriceFromSettings(settings?.value)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const { providerId, title, unitPrice } = parsed.data
+  const title = parsed.data.title || 'Destacar perfil MiPage'
 
   try {
     const res = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -56,7 +87,7 @@ export async function POST(req: NextRequest) {
             unit_price: unitPrice,
           },
         ],
-        metadata: { providerId, product: 'featured_listing' },
+        metadata: { providerId: provider.id, product: 'featured_listing' },
         back_urls: {
           success: `${appUrl}/dashboard?featured=success`,
           failure: `${appUrl}/dashboard?featured=failure`,
@@ -79,7 +110,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (e) {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : 'MP error' },
+      { error: e instanceof Error ? e.message : 'Error de Mercado Pago' },
       { status: 500 }
     )
   }

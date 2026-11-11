@@ -6,9 +6,9 @@
  *   NEXT_PUBLIC_SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
  *
- * Uso:
- *   node scripts/seed-demo.mjs
- *   node scripts/seed-demo.mjs --sql-only   # solo imprime SQL para el editor
+ * Uso (nunca en producción):
+ *   DEMO_SEED_PASSWORD='...' node scripts/seed-demo.mjs --i-know-this-is-not-production
+ *   DEMO_SEED_PASSWORD='...' node scripts/seed-demo.mjs --sql-only --i-know-this-is-not-production
  */
 import { createClient } from '@supabase/supabase-js'
 import { readFileSync, existsSync } from 'fs'
@@ -37,8 +37,14 @@ loadEnvFile(join(root, '.env'))
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 const sqlOnly = process.argv.includes('--sql-only')
+const acknowledged = process.argv.includes('--i-know-this-is-not-production')
+const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD
 
-const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD || 'DemoMiPage2026!'
+if (!acknowledged || !DEMO_PASSWORD) {
+  console.error('ERROR: este seed no corre sin DEMO_SEED_PASSWORD y el flag --i-know-this-is-not-production.')
+  console.error('No uses este script contra producción. No hay contraseña por defecto.')
+  process.exit(1)
+}
 
 const demoUsers = [
   { email: 'admin@mipage.cl', name: 'Admin MiPage', role: 'admin' },
@@ -50,7 +56,7 @@ const demoUsers = [
 ]
 
 if (sqlOnly) {
-  const seedPath = join(root, 'supabase', 'migrations', '003_seed_demo_data.sql')
+  const seedPath = join(root, 'supabase', 'seed', '003_seed_demo_data.sql')
   console.log(readFileSync(seedPath, 'utf8'))
   console.log('\n-- Ejecuta este SQL en Supabase después de crear los usuarios Auth manualmente.')
   process.exit(0)
@@ -104,7 +110,7 @@ async function syncProfiles() {
 
 async function main() {
   console.log('MiPage seed demo')
-  console.log(`Contraseña demo: ${DEMO_PASSWORD}\n`)
+  console.log('Contraseña: la que definiste en DEMO_SEED_PASSWORD (no se imprime).\n')
 
   console.log('1. Creando usuarios Auth...')
   for (const user of demoUsers) {
@@ -115,7 +121,7 @@ async function main() {
   await syncProfiles()
 
   console.log('\n3. Ejecuta en Supabase SQL Editor:')
-  console.log('   supabase/migrations/003_seed_demo_data.sql')
+  console.log('   supabase/seed/003_seed_demo_data.sql')
   console.log('   (requiere migración 005 ejecutada previamente)\n')
   console.log('Listo. Los providers se crean al asignar role=provider; el SQL 003 los enriquece.')
 }

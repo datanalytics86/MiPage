@@ -90,6 +90,7 @@ function RegisterForm() {
           role: formData.isProvider ? 'provider' : 'user',
           category: formData.isProvider ? formData.category : undefined,
           city: formData.isProvider ? formData.city : undefined,
+          privacyConsent: true,
         }
       )
 

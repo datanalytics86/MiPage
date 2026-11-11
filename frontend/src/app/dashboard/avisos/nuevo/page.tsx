@@ -205,7 +205,10 @@ export default function NuevoAvisoWizardPage() {
           .single()
         if (error) throw error
         providerId = data.id
-        await supabase.from('profiles').update({ role: 'provider' }).eq('id', user.id)
+        if (profile?.role !== 'provider' && profile?.role !== 'admin') {
+          const { error: roleError } = await supabase.rpc('become_provider')
+          if (roleError) throw roleError
+        }
       }
 
       // upload photos
@@ -249,27 +252,14 @@ export default function NuevoAvisoWizardPage() {
         })
       }
 
-      // fire-and-forget: provider confirmation + admin cola ping
       try {
-        await fetch('/api/notify', {
+        await fetch('/api/providers/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'provider_pending',
-            email: profile?.email,
-            displayName: form.display_name,
-          }),
-        })
-        await fetch('/api/notify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'admin_new_pending',
-            displayName: form.display_name,
-          }),
+          body: JSON.stringify({ providerId }),
         })
       } catch {
-        /* optional */
+        /* el aviso ya quedó guardado; el correo es best-effort */
       }
 
       await refreshProfile()

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
+import { safeRedirect } from '@/lib/safeRedirect'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -36,8 +37,7 @@ export default function LoginPage() {
       }
 
       // Redirect to intended page or home
-      const redirect = searchParams.get('redirect') || '/'
-      router.push(redirect)
+      router.push(safeRedirect(searchParams.get('redirect'), '/'))
       router.refresh()
     } catch (err) {
       setError('Ocurrió un error. Por favor intenta de nuevo.')

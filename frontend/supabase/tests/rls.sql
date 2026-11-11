@@ -1,0 +1,19 @@
+-- Pruebas RLS de la fase 1.
+-- El ejecutor es frontend/scripts/rls-tests.mjs (Supabase local + CLI).
+-- Este archivo documenta las aserciones y se puede correr a mano en el
+-- SQL Editor de un proyecto LOCAL después de crear los tres usuarios de
+-- prueba. No lo ejecutes en producción: crea y borra filas.
+--
+-- Casos que el script Node debe dejar en verde:
+-- 1. Un usuario no cambia su role a admin, ni nace admin por metadata.
+-- 2. Un proveedor no pone status=approved, is_featured ni is_verified.
+-- 3. El rol anon no lee email ni phone de profiles (0 filas).
+-- 4. Un proveedor no altera rating ni comment de una reseña recibida.
+-- 5. Un proveedor no se reseña a sí mismo.
+-- 6. Insertar una reseña de otro usuario actualiza providers.rating y review_count.
+-- 7. El rol anon no ve servicios ni galería de un perfil pending.
+
+-- Plantilla para el caso 3, con la anon key o SET ROLE anon:
+--   select count(*) from public.profiles;          -- esperado: 0
+--   select count(*) from public.public_profiles;   -- esperado: > 0 si hay perfiles
+--   select email from public.profiles;             -- esperado: 0 filas

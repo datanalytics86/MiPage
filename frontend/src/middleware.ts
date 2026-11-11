@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession, protectedRoutes, adminRoutes, authRoutes } from '@/lib/supabase/middleware'
 import { createServerClient } from '@supabase/ssr'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
+import { safeRedirect } from '@/lib/safeRedirect'
 
 /** Marketing/public routes: skip heavy session refresh (client AuthContext still works). */
 function isPublicMarketingPath(pathname: string): boolean {
@@ -117,7 +118,7 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (user) {
-      const redirect = request.nextUrl.searchParams.get('redirect') || '/'
+      const redirect = safeRedirect(request.nextUrl.searchParams.get('redirect'), '/')
       return NextResponse.redirect(new URL(redirect, request.url))
     }
   }

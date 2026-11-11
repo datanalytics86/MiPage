@@ -25,6 +25,7 @@ interface AuthContextType extends AuthState {
       role?: 'user' | 'provider'
       category?: 'masajes' | 'modelaje'
       city?: string
+      privacyConsent?: boolean
     }
   ) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>
   signOut: () => Promise<void>
@@ -162,13 +163,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role?: 'user' | 'provider'
       category?: 'masajes' | 'modelaje'
       city?: string
+      privacyConsent?: boolean
     }
   ) => {
     if (!supabase) {
       return { error: new Error('Supabase no configurado') }
     }
     try {
-      const role = data?.role || 'user'
+      const gate = await fetch('/api/auth/register-gate', { method: 'POST' })
+      if (gate.status === 429) {
+        return { error: new Error('Demasiados intentos de registro. Espera un momento.') }
+      }
+
+      // Solo user o provider. El trigger descarta cualquier otro valor, incluido admin.
+      const role = data?.role === 'provider' ? 'provider' : 'user'
       const { data: authData, error } = await supabase.auth.signUp({
         email,
         password,
@@ -178,21 +186,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             role,
             category: data?.category || 'masajes',
             city: data?.city || 'Santiago',
+            privacy_consent: data?.privacyConsent ? 'true' : 'false',
+            privacy_consent_version: data?.privacyConsent ? '2026-11-11' : '',
           },
         },
       })
 
       if (error) return { error }
 
-      // Profile y provider los crean los triggers de Supabase (handle_new_user + ensure_provider_profile).
-      // Solo sincronizamos nombre/rol por si el trigger aún no propagó metadata.
-      if (authData.user) {
+      // El rol lo fija handle_new_user. No se escribe role desde el cliente.
+      if (authData.user && authData.session) {
         await supabase
           .from('profiles')
-          .update({
-            name: data?.name || null,
-            role,
-          })
+          .update({ name: data?.name || null })
           .eq('id', authData.user.id)
 
         if (role === 'provider') {
