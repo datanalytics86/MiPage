@@ -113,5 +113,5 @@ No mezclar `#C9A962` y `#D4B56A`. Un solo gold.
 ## Implementación
 
 - `frontend/src/app/globals.css` + `frontend/tailwind.config.ts`
-- Critique: `TIER1-CRITIQUE.md`
+- Critique: `archive/reports/TIER1-CRITIQUE.md`
 - Live: Production Branch debe ser `main` (`DEPLOY.md`)

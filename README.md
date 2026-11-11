@@ -1,146 +1,106 @@
 # MiPage
 
-Marketplace web de servicios de **modelaje** y **masajes** (Chile), centrado en perfiles visuales y moderación humana.
+Marketplace web de servicios de modelaje y masajes (Chile). Perfiles visuales, moderación humana y textos en español.
 
-**Live:** https://mi-page-lake.vercel.app  
+Sitio público: https://mi-page-lake.vercel.app
 
-> **Estado honesto (2026-08-16):** el código de `main` está listo para vender contactos (wizard → PENDING → admin → Explorar → WhatsApp). **Producción sigue desfasada** (landing “neurosensorial”, `/explorar` 404). El dueño debe poner Production Branch = `main`. Checklist: `DEPLOY.md`.
+El 2026-11-11, `/`, `/explorar` y `/login` respondieron 200. `/api/health` en ese sitio respondió `version` 1.0.0, sin el campo `database`. Eso es lo que sirve `main` hoy. Esta rama todavía no está en producción: aquí el health consulta `providers` y responde 503 si la base no contesta.
 
-**Estética (branch `feat/tier1-tactile-sensory`):** dirección *Tactile Sensory Precision* — OKLCH, gold unificado, page-fold mark, grain en el suelo, sin emojis ni orbs. Ver `DESIGN-SYSTEM.md` y `TIER1-CRITIQUE.md`.
-
----
-
-## Stack real
+## Stack
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | Next.js 14 + TypeScript + Tailwind |
-| Auth / DB / Storage / RLS | **Supabase** |
-| Hosting | Vercel (`frontend/`) |
-| Emails (opcional) | Resend vía `/api/notify` |
-| Featured (opcional) | Mercado Pago vía `/api/payments/featured` |
+| App | Next.js 16.4.6 (App Router) + React 19 + TypeScript + Tailwind |
+| Node | `>=20.9.0` |
+| Auth, Postgres, Storage, RLS | Supabase |
+| Hosting | Vercel, Root Directory `frontend` |
+| Correo | Resend, solo en servidor y solo si hay `RESEND_API_KEY` |
+| Errores | Aviso a Sentry solo si hay DSN. Sin SDK de `@sentry/nextjs` |
+| Anti-bots | Cloudflare Turnstile, apagado si faltan las dos claves |
 
-El backend Express/Prisma/temp-db fue **archivado** en `archive/2026-legacy/backend/` (no se despliega).
+El backend Express/Prisma está en `archive/2026-legacy/` y no se despliega.
 
----
+## Qué hace este código
 
-## Qué funciona hoy
+- Registro e inicio de sesión con Supabase. El alta de profesional pide declaración de 18 años cuando el registro está abierto.
+- Explorar con paginación, perfiles públicos renderizados en el servidor y sitemap de perfiles aprobados.
+- Wizard de aviso en un solo paso de base (`submit_provider_listing`). El aviso queda `pending`.
+- Panel `/admin` para moderar, destacar con vencimiento, usuarios, reportes, reseñas, mensajes, borrados, catálogo, textos y mantenimiento.
+- Fotos de galería subidas como archivo: se les quita EXIF antes de guardarlas. Una URL pegada no se vuelve a codificar.
+- `/api/health` consulta la base. El cron diario vive en `.github/workflows/health-daily.yml` y solo corre cuando el workflow está en la rama por defecto.
+- Destacado de pago en línea no está implementado. El botón se oculta si no hay token de Mercado Pago.
 
-- Registro / login (Supabase Auth) con consentimiento **Ley 19.628**
-- Explorar + perfiles + favoritos + reseñas (con Supabase configurado)
-- Dashboard proveedor: perfil, servicios, galería, **wizard de aviso** (`/dashboard/avisos/nuevo`) → estado **PENDING**
-- Admin: cola de proveedores, preview de fotos, approve/reject + motivo, featured, metadata fields, site settings
-- Upload a Supabase Storage con validación de tipo/tamaño (bloquea `.exe`/`.php`, etc.)
-- Health: `GET /api/health`
-- Solicitud de borrado de datos: `POST /api/account/delete-request`
-- Tests unitarios (Vitest) + smoke E2E (Playwright)
+## Qué no hace
 
-## Qué falta / es opcional
+- Chat en vivo, app nativa, ni cobro automático del Destacado.
+- No envía correo a un destinatario elegido por el cliente. `/api/notify` ya no reenvía mail.
+- No hay métricas de Lighthouse medidas sobre esta rama en producción.
 
-| Ítem | Estado |
-|------|--------|
-| Chat en tiempo real | No |
-| App móvil | No |
-| i18n / geolocalización fina | No |
-| Resend en prod | Opcional (sin key = skip) |
-| Mercado Pago featured | Opcional (501 sin token) |
-| Cobertura E2E auth completa | Requiere credenciales seed |
-| Lighthouse ≥ 92 | **Desktop local 98/100/100/100** ✅ · Mobile lab local Perf~81 (CPU 4×) · Live histórico 96/98/96/100 · Preview `main` deploy **success** (auth wall Vercel) |
-| npm audit 0 high (Next 14) | Parcheado a `14.2.35`; cierre total exige Next 16 (breaking) |
-| Default branch | **`main`** (PR #12 mergeada) |
-| Vercel Production Branch | **Bloqueado en ops:** dueño debe apuntar a `main` + Root Directory `frontend`. Ver `DEPLOY.md` |
+## Arranque local
 
----
-
-## Setup local
+Hace falta Node 20.9 o mayor.
 
 ```bash
 git clone https://github.com/datanalytics86/MiPage.git
 cd MiPage/frontend
-cp .env.local.example .env.local
-# Completa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY
+# Copia el ejemplo de la raíz. No tiene contraseñas.
+# Windows: copy ..\.env.example .env.local
+# bash: cp ../.env.example .env.local
 npm install
 npm run dev
 ```
 
-### Supabase
+Completa `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`. El resto está comentado en `.env.example`.
 
-1. Crea proyecto en https://supabase.com  
-2. Ejecuta en orden: `frontend/supabase/schema.sql` y migrations `002`, `004`, `005`, `006`. No ejecutes el seed `frontend/supabase/seed/003_seed_demo_data.sql` en producción.  
-3. Crea buckets `gallery` y `avatars` (o usa `004_storage_gallery.sql`)  
-4. (Opcional) `npm run seed:demo` con service role  
-
-Guía de admin diario: **`ADMIN-GUIDE.md`**.
-
----
-
-## Scripts
+Base local (hace falta Docker):
 
 ```bash
-npm run dev           # desarrollo
-npm run build         # build producción
-npm run test          # unit tests
-npm run test:ci       # unit + coverage thresholds
-npm run test:e2e      # Playwright smoke
-npm run type-check    # tsc --noEmit
-npm run seed:demo     # datos demo
-npm run health        # GET /api/health
-npm run backup-check  # checklist backups PITR
+npx supabase start
+npx supabase db reset
 ```
 
----
+Eso aplica `frontend/supabase/migrations/` en orden. No carga el seed demo. El archivo `frontend/supabase/seed/003_seed_demo_data.sql` es manual y no va a producción.
 
-## Flujo de negocio
+Sin Docker, el orden de SQL está en `DEPLOY.md`.
 
-1. Provider completa wizard → `providers.status = pending` + fotos en Storage  
-2. Admin revisa en `/admin/proveedores` (preview fotos) → **Aprobar** o **Rechazar** (motivo + email si Resend)  
-3. Aprobado → visible en explorar/perfil público  
-4. Featured: admin flag o pago MP opcional  
+El primer admin, con la cuenta ya registrada:
 
----
+```bash
+npm run admin:create -- tu-correo@dominio.cl
+```
 
-## Seguridad
+## Scripts (desde `frontend/`)
 
-- RLS en Supabase; middleware RBAC para `/admin` y `/dashboard`  
-- Headers: CSP, HSTS, X-Frame-Options, nosniff  
-- No secrets en client bundle (service role solo server)  
-- `backend/.env` legacy eliminado del tree activo  
+```bash
+npm run dev
+npm run lint
+npm run type-check
+npm run test:ci
+npm run build
+npm run test:e2e:critical
+npm run admin:create -- tu-correo@dominio.cl
+npm run health
+npm run backup-check
+```
 
----
+`npm audit --omit=dev --audit-level=high` es bloqueante en CI.
 
-## Deploy
+## Flujo
 
-- Vercel apunta a monorepo root con build del frontend (`vercel.json`)  
-- **Solo `main`** debe ser production (CI lo documenta)  
-- Variables en Vercel: las de `.env.example`  
+1. El profesional envía el aviso. Queda pendiente. Las fotos de archivo salen sin EXIF.
+2. El admin aprueba o rechaza en `/admin/proveedores`.
+3. Aprobado, el perfil se ve en Explorar y en `/perfil/[slug]`.
+4. Destacar es manual, con fecha de término, desde el mismo panel.
 
----
+## Documentos
 
-## Changelog estético (2026-08-16)
+| Archivo | Para qué |
+|---------|----------|
+| `DEPLOY.md` | Puesta en marcha y actualización |
+| `ADMIN-GUIDE.md` | El día a día en `/admin` |
+| `DESIGN-SYSTEM.md` | OKLCH, oro, sin emojis |
+| `ARCHITECTURE-DECISION.md` | Por qué Supabase |
+| `CONTRIBUTING.md` | Cómo cambiar el código |
+| `archive/reports/` | Informes viejos |
 
-- Tokens a OKLCH; gold unificado (`oklch(0.78 0.09 88)`)
-- Radios variables (`tight` / `control` / `photo` / `panel`)
-- Brand: page-fold + dog-ear gold (`BrandMark`)
-- Hero editorial (sin orbs, sin emojis)
-- Motion: spring cards, stagger `.reveal`, View Transition en la marca, `prefers-reduced-motion`
-- Grain en el suelo de la página, nunca sobre fotos
-
----
-
-## Docs
-
-| Archivo | Contenido |
-|---------|-----------|
-| `ARCHITECTURE-DECISION.md` | Por qué Supabase-first |
-| `AUDIT-REPORT.md` | Auditoría forense (re-audit 2026-07-29) |
-| `DESIGN-SYSTEM.md` | Tokens OKLCH + photo-first |
-| `TIER1-CRITIQUE.md` | Rounds de critique estético |
-| `ADMIN-GUIDE.md` | Operación diaria (10 min) |
-| `DEPLOY.md` | Checklist Vercel / env / migrations |
-| `archive/2026-legacy/` | Docs y backend históricos |
-
----
-
-## Licencia
-
-MIT — ver `LICENSE`.
+Licencia MIT. Ver `LICENSE`.

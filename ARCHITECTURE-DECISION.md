@@ -2,7 +2,9 @@
 
 **Fecha:** 2026-07-28  
 **Estado:** Aceptada  
-**Basado en:** `AUDIT-REPORT.md` (Agente 0)
+**Basado en:** `archive/reports/AUDIT-REPORT.md` (Agente 0)
+
+Actualización 2026-11-11: el runtime es Next.js 16.4.6. La operación diaria está en `/admin`. El editor de tablas de Supabase no es el camino del dueño, salvo crear el primer admin con `npm run admin:create`.
 
 ---
 
@@ -11,12 +13,12 @@
 **Supabase-first estricto.** Un solo path de producto:
 
 ```
-[Usuario] → Next.js 14 (Vercel)
+[Usuario] → Next.js 16 (Vercel)
               ├─ Supabase Auth (sesiones, recovery)
               ├─ Supabase Postgres + RLS (datos)
               ├─ Supabase Storage (imágenes/video)
-              ├─ Next.js Route Handlers (emails, health, webhooks, contact)
-              └─ Supabase Dashboard (admin humano sin código)
+              ├─ Next.js Route Handlers (emails, health, contact)
+              └─ Panel /admin (moderación sin editar tablas)
 ```
 
 El directorio `backend/` (Express + Prisma + `temp-db.json`) se **archiva** en `archive/2026-legacy/backend/`. No se despliega. No se instala en CI de producto.
