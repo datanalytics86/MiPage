@@ -13,6 +13,7 @@ import { ProviderGridSkeleton } from '@/components/ui/Skeleton'
 import { useProviders } from '@/hooks/useProviders'
 import { mockProviders } from '@/lib/mockProviders'
 import { filterCities, sortOptions } from '@/lib/filters'
+import { useCatalog } from '@/hooks/useCatalog'
 import { toProviderCardData } from '@/lib/providers'
 import { allowMockCatalog } from '@/lib/supabase/env'
 import { cn } from '@/lib/utils'
@@ -24,9 +25,10 @@ interface ExplorarContentProps {
   initialCategory?: ProviderCategory
 }
 
-function getBasePath(category?: ProviderCategory | 'all') {
-  if (category === 'masajes') return '/explorar/masajes'
-  if (category === 'modelaje') return '/explorar/modelaje'
+function getBasePath(category?: string) {
+  if (category && category !== 'all' && /^[a-z0-9-]{2,40}$/.test(category)) {
+    return `/explorar/${category}`
+  }
   return '/explorar'
 }
 
@@ -48,6 +50,14 @@ function buildUrl(
 }
 
 export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
+  const catalog = useCatalog()
+  const cityOptions = ['Todas', ...(catalog.data?.cities?.length ? catalog.data.cities : filterCities.filter((city) => city !== 'Todas'))]
+  const categoryOptions = catalog.data?.categories?.length
+    ? catalog.data.categories
+    : [
+        { slug: 'masajes', label: 'Masajes' },
+        { slug: 'modelaje', label: 'Modelaje' },
+      ]
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -69,7 +79,8 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
     const q = searchParams.get('q') ?? ''
     const categoryParam = searchParams.get('category') as ProviderCategory | null
     const category =
-      initialCategory ?? (categoryParam && ['masajes', 'modelaje'].includes(categoryParam) ? categoryParam : 'all')
+      initialCategory ??
+      (categoryParam && /^[a-z0-9-]{2,40}$/.test(categoryParam) ? categoryParam : 'all')
     const city = searchParams.get('city') ?? undefined
     const verified = searchParams.get('verified') === '1'
     const sort = (searchParams.get('sort') as FilterOptions['sort_by']) ?? 'relevance'
@@ -89,10 +100,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
   const syncUrl = useCallback(
     (nextFilters: FilterOptions, nextQuery: string) => {
       const category = nextFilters.category ?? 'all'
-      const basePath =
-        category === 'masajes' || category === 'modelaje'
-          ? getBasePath(category)
-          : '/explorar'
+      const basePath = getBasePath(category)
       router.replace(buildUrl(nextFilters, nextQuery, basePath), { scroll: false })
     },
     [router]
@@ -238,9 +246,8 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                 {(
                   [
                     { id: 'all', label: 'Todas' },
-                    { id: 'masajes', label: 'Masajes' },
-                    { id: 'modelaje', label: 'Modelaje' },
-                  ] as const
+                    ...categoryOptions.map((item) => ({ id: item.slug, label: item.label })),
+                  ]
                 ).map((chip) => {
                   const active = (filters.category || 'all') === chip.id
                   return (
@@ -291,8 +298,11 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                 aria-label="Categoría"
               >
                 <option value="all">Categoría</option>
-                <option value="masajes">Masajes</option>
-                <option value="modelaje">Modelaje</option>
+                {categoryOptions.map((item) => (
+                  <option key={item.slug} value={item.slug}>
+                    {item.label}
+                  </option>
+                ))}
               </select>
 
               <select
@@ -305,7 +315,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
                 className="input-luxury min-w-[140px]"
                 aria-label="Ciudad"
               >
-                {filterCities.map((city) => (
+                {cityOptions.map((city) => (
                   <option key={city} value={city}>
                     {city}
                   </option>
@@ -335,7 +345,7 @@ export function ExplorarContent({ initialCategory }: ExplorarContentProps) {
             role="group"
             aria-label="Ciudad"
           >
-            {filterCities.map((city) => {
+            {cityOptions.map((city) => {
               const active =
                 city === 'Todas'
                   ? !filters.city || filters.city === 'Todas'

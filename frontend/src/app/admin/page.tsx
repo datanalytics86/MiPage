@@ -70,8 +70,10 @@ const statusLabels: Record<string, string> = {
 
 export default function AdminDashboardPage() {
   const { data: adminStats } = useAdminStats()
-  const { data: providers = [] } = useAdminProviders()
-  const { data: reports = [] } = useAdminReports()
+  const { data: providerPage } = useAdminProviders({ pageSize: 5 })
+  const providers = providerPage?.rows ?? []
+  const { data: reportPage } = useAdminReports({ pageSize: 5 })
+  const reports = reportPage?.rows ?? []
 
   const stats = buildStats(
     adminStats ?? { totalUsers: 0, activeProviders: 0, pendingReports: 0 }
@@ -150,6 +152,16 @@ export default function AdminDashboardPage() {
           </motion.div>
         ))}
       </div>
+
+      {adminStats && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card><CardContent className="p-4"><p className="text-sm text-foreground-muted">Pendientes</p><p className="text-2xl font-semibold">{adminStats.pendingProviders}</p><p className="text-xs text-foreground-muted">{adminStats.oldestPendingAt ? `El más antiguo: ${new Date(adminStats.oldestPendingAt).toLocaleDateString('es-CL')}` : 'Sin cola'}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-foreground-muted">Mensajes nuevos</p><p className="text-2xl font-semibold">{adminStats.unreadMessages}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-foreground-muted">Borrados pendientes</p><p className="text-2xl font-semibold">{adminStats.pendingDeletions}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-foreground-muted">Destacados por vencer</p><p className="text-2xl font-semibold">{adminStats.expiringFeatured}</p><p className="text-xs text-foreground-muted">Altas 7 días: {adminStats.signups7} · 30 días: {adminStats.signups30}</p></CardContent></Card>
+          <Card className="sm:col-span-2 lg:col-span-4"><CardContent className="p-4 text-sm">Estado del sistema: base {adminStats.system.database ? 'disponible' : 'con error'}, correo {adminStats.system.email ? 'configurado' : 'sin clave'}, pagos {adminStats.system.payments ? 'configurados' : 'manuales'}.</CardContent></Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

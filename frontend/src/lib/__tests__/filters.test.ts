@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { filterCities, sanitizePostgrestSearch, sortOptions } from '@/lib/filters'
+import { normalizeCategory } from '@/lib/providers'
 
 describe('filters', () => {
+  it('keeps catalog slugs and rejects junk', () => {
+    expect(normalizeCategory('spa-facial')).toBe('spa-facial')
+    expect(normalizeCategory('Masajes')).toBe('masajes')
+    expect(normalizeCategory('a b')).toBe('masajes')
+  })
+
   it('includes Chile base cities and Todas', () => {
     expect(filterCities[0]).toBe('Todas')
     expect(filterCities).toContain('Santiago')

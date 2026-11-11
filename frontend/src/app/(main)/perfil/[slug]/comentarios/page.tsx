@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
 import { getProviderImage } from '@/lib/providers'
 import { ReviewForm } from '@/components/reviews/ReviewForm'
+import { ReportButton } from '@/components/reports/ReportButton'
 import { StarRating } from '@/components/reviews/StarRating'
 import { useToast } from '@/stores/uiStore'
 
@@ -265,6 +266,7 @@ export default function ComentariosPage() {
                     <p className="mt-4 text-foreground-secondary leading-relaxed">
                       {review.comment}
                     </p>
+                    <ReportButton reportedType="review" reportedId={review.id} />
                     <div className="mt-3">
                       <Button
                         type="button"

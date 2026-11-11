@@ -11,7 +11,11 @@ Detalle de automatización: **`ADMIN-AUTOMATION.md`**.
 2. Cuenta con `profiles.role = 'admin'`  
 3. **Admin** → `/admin`
 
-Si no entras: Supabase → Table Editor → `profiles` → `role = admin`.
+Si todavía no hay administrador, desde `frontend/` y con la service role en el entorno:
+
+`npm run admin:create -- tu-correo@dominio.cl`
+
+La cuenta tiene que existir (regístrate antes). Es la única vez que hace falta una terminal. Después todo se hace en `/admin`.
 
 ---
 

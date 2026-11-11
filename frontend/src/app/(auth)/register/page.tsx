@@ -11,6 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { filterCities } from '@/lib/filters'
+import { useCatalog } from '@/hooks/useCatalog'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
 import type { ProviderCategory } from '@/types'
 
 const REGISTER_CITIES = filterCities.filter((city) => city !== 'Todas')
@@ -19,6 +21,18 @@ function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { signUp } = useAuth()
+  const catalog = useCatalog()
+  const siteSettings = useSiteSettings()
+  const registrationOpen = siteSettings.data?.security.allowProviderRegistration !== false
+  const cities = catalog.data?.cities?.length
+    ? catalog.data.cities
+    : REGISTER_CITIES
+  const categories = catalog.data?.categories?.length
+    ? catalog.data.categories
+    : [
+        { slug: 'masajes', label: 'Masajes' },
+        { slug: 'modelaje', label: 'Modelaje' },
+      ]
   const isProviderFromUrl =
     searchParams.get('type') === 'provider' || searchParams.get('role') === 'provider'
 
@@ -310,19 +324,21 @@ function RegisterForm() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">Categoría</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {(['masajes', 'modelaje'] as const).map((cat) => (
+                    {categories.map((cat) => (
                       <button
-                        key={cat}
+                        key={cat.slug}
                         type="button"
-                        onClick={() => setFormData({ ...formData, category: cat })}
+                        onClick={() =>
+                          setFormData({ ...formData, category: cat.slug as ProviderCategory })
+                        }
                         className={cn(
                           'px-4 py-3 rounded-xl border text-sm font-medium transition-all',
-                          formData.category === cat
+                          formData.category === cat.slug
                             ? 'border-gold bg-gold/10 text-gold'
                             : 'border-border hover:border-gold/50'
                         )}
                       >
-                        {cat === 'masajes' ? '💆 Masajes' : '📸 Modelaje'}
+                        {cat.label}
                       </button>
                     ))}
                   </div>
@@ -343,7 +359,7 @@ function RegisterForm() {
                         errors.city && 'border-error'
                       )}
                     >
-                      {REGISTER_CITIES.map((city) => (
+                      {cities.map((city) => (
                         <option key={city} value={city}>
                           {city}
                         </option>
@@ -355,6 +371,7 @@ function RegisterForm() {
               </>
             )}
 
+            {registrationOpen && (
             <label className="flex items-start gap-3 cursor-pointer p-4 rounded-xl border border-border hover:border-gold/50 transition-colors">
               <input
                 type="checkbox"
@@ -371,6 +388,7 @@ function RegisterForm() {
                 </p>
               </div>
             </label>
+            )}
 
             <label className="flex items-start gap-3 cursor-pointer">
               <input

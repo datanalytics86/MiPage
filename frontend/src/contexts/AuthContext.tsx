@@ -23,7 +23,7 @@ interface AuthContextType extends AuthState {
     data?: {
       name?: string
       role?: 'user' | 'provider'
-      category?: 'masajes' | 'modelaje'
+      category?: string
       city?: string
       privacyConsent?: boolean
     }
@@ -84,6 +84,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (session?.user) {
           const { profile, provider } = await fetchUserData(session.user.id)
+          if (profile && (profile as { is_suspended?: boolean }).is_suspended) {
+            await supabase.auth.signOut()
+            setState((prev) => ({ ...prev, isLoading: false, isAuthenticated: false }))
+            return
+          }
           setState({
             user: session.user,
             profile,
@@ -108,6 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
           const { profile, provider } = await fetchUserData(session.user.id)
+          if (profile && (profile as { is_suspended?: boolean }).is_suspended) {
+            await supabase.auth.signOut()
+            return
+          }
           setState({
             user: session.user,
             profile,
@@ -157,7 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     data?: {
       name?: string
       role?: 'user' | 'provider'
-      category?: 'masajes' | 'modelaje'
+      category?: string
       city?: string
       privacyConsent?: boolean
     }
@@ -177,6 +186,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
+          emailRedirectTo:
+            typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
           data: {
             name: data?.name || '',
             role,

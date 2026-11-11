@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { clientIpFromRequest } from '@/lib/rateLimit'
 import { persistentRateLimit } from '@/lib/persistentRateLimit'
+import { createServiceRoleClient } from '@/lib/supabase/admin'
+import { sendAndLog } from '@/lib/notifications'
+import { escapeHtml } from '@/lib/email'
 import { z } from 'zod'
 
 const contactSchema = z.object({
@@ -24,13 +27,36 @@ export async function POST(request: Request) {
     const body = await request.json()
     const data = contactSchema.parse(body)
 
-    // Tier 1: persistimos en logs del servidor; integración SendGrid puede activarse con SENDGRID_API_KEY.
-    console.info('[contact]', {
-      at: new Date().toISOString(),
-      reason: data.reason,
-      email: data.email,
+    const admin = createServiceRoleClient()
+    if (!admin) {
+      return NextResponse.json(
+        { ok: false, error: 'No se pudo guardar el mensaje' },
+        { status: 503 }
+      )
+    }
+
+    const { error } = await admin.from('contact_messages').insert({
       name: data.name,
-      messagePreview: data.message.slice(0, 120),
+      email: data.email,
+      reason: data.reason,
+      message: data.message,
+      status: 'new',
+    })
+    if (error) {
+      return NextResponse.json({ ok: false, error: 'No se pudo guardar el mensaje' }, { status: 500 })
+    }
+
+    const { data: emailRow } = await admin.from('site_settings').select('value').eq('key', 'email').maybeSingle()
+    const notifyTo =
+      (emailRow?.value as { adminEmail?: string } | null)?.adminEmail ||
+      process.env.ADMIN_NOTIFY_EMAIL ||
+      null
+    await sendAndLog({
+      to: notifyTo,
+      subject: `Mensaje de contacto (${data.reason})`,
+      html: `<p><strong>${escapeHtml(data.name)}</strong> (${escapeHtml(data.email)})</p><p>${escapeHtml(data.message)}</p>`,
+      template: 'contact_reply',
+      payload: { reason: data.reason },
     })
 
     return NextResponse.json({ ok: true })

@@ -13,10 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 import { useAdminReports, useUpdateReport } from '@/hooks/useAdmin'
 import { useToast } from '@/stores/uiStore'
-import type { ReportStatus } from '@/types/database'
 
 const statusLabels: Record<string, string> = {
   pending: 'Pendiente',
@@ -33,35 +33,32 @@ const typeLabels: Record<string, string> = {
 
 export default function AdminReportesPage() {
   const toast = useToast()
-  const { data: reports = [], isLoading } = useAdminReports()
-  const updateReport = useUpdateReport()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-
-  const filteredReports = reports.filter((report) => {
-    const matchesSearch =
-      report.reason.toLowerCase().includes(search.toLowerCase()) ||
-      (report.description?.toLowerCase().includes(search.toLowerCase()) ?? false)
-    const matchesStatus = statusFilter === 'all' || report.status === statusFilter
-    return matchesSearch && matchesStatus
+  const [page, setPage] = useState(0)
+  const { data, isLoading } = useAdminReports({
+    q: search,
+    status: statusFilter,
+    page,
+    pageSize: 20,
   })
+  const reports = data?.rows ?? []
+  const updateReport = useUpdateReport()
 
-  const handleAction = async (id: string, status: ReportStatus) => {
+  const handleAction = async (
+    id: string,
+    action: 'dismiss' | 'suspend_profile' | 'hide_review'
+  ) => {
+    if (action !== 'dismiss' && !window.confirm('¿Aplicar esta acción sobre lo reportado?')) return
     try {
-      await updateReport.mutateAsync({
-        id,
-        updates: {
-          status,
-          resolved_at: new Date().toISOString(),
-        },
-      })
-      toast.success(status === 'resolved' ? 'Reporte resuelto' : 'Reporte descartado')
+      await updateReport.mutateAsync({ id, action })
+      toast.success('Reporte actualizado')
     } catch {
       toast.error('Error', 'No se pudo actualizar el reporte')
     }
   }
 
-  const pendingCount = reports.filter((r) => r.status === 'pending').length
+  const pendingCount = statusFilter === 'pending' ? data?.total ?? 0 : reports.filter((r) => r.status === 'pending').length
 
   return (
     <div className="space-y-6">
@@ -101,7 +98,7 @@ export default function AdminReportesPage() {
         <div className="h-32 rounded-xl bg-muted overflow-hidden relative before:absolute before:inset-0 before:animate-shimmer before:bg-gradient-to-r before:from-transparent before:via-white/[0.06] before:to-transparent" />
       ) : (
         <div className="space-y-4">
-          {filteredReports.map((report) => (
+          {reports.map((report) => (
             <Card key={report.id}>
               <CardContent className="p-4">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -117,16 +114,28 @@ export default function AdminReportesPage() {
                       <p className="text-sm text-foreground-secondary mt-2">{report.description}</p>
                     )}
                     <p className="text-xs text-foreground-muted mt-3">
-                      Reportado por {report.reporter.name || report.reporter.email} ·{' '}
+                      Reportado por {report.reporter?.name || report.reporter?.email || 'usuario'} ·{' '}
                       {formatDate(report.created_at)} · ID: {report.reported_id}
                     </p>
+                    {report.reported_type === 'profile' && (
+                      <Link className="text-sm text-gold" href={`/perfil/${report.reported_id}`}>
+                        Ver perfil reportado
+                      </Link>
+                    )}
                   </div>
                   {report.status === 'pending' && (
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleAction(report.id, 'resolved')}>
-                        <CheckCircle className="h-4 w-4 mr-1" />Resolver
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleAction(report.id, 'dismissed')}>
+                    <div className="flex flex-wrap gap-2">
+                      {report.reported_type === 'profile' && (
+                        <Button size="sm" variant="destructive" onClick={() => handleAction(report.id, 'suspend_profile')}>
+                          Suspender perfil
+                        </Button>
+                      )}
+                      {report.reported_type === 'review' && (
+                        <Button size="sm" onClick={() => handleAction(report.id, 'hide_review')}>
+                          <CheckCircle className="h-4 w-4 mr-1" />Ocultar reseña
+                        </Button>
+                      )}
+                      <Button size="sm" variant="outline" onClick={() => handleAction(report.id, 'dismiss')}>
                         <XCircle className="h-4 w-4 mr-1" />Descartar
                       </Button>
                     </div>
@@ -135,7 +144,7 @@ export default function AdminReportesPage() {
               </CardContent>
             </Card>
           ))}
-          {filteredReports.length === 0 && (
+          {reports.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center text-foreground-muted">
                 No hay reportes que mostrar
@@ -144,6 +153,19 @@ export default function AdminReportesPage() {
           )}
         </div>
       )}
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>
+          Anterior
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={(page + 1) * 20 >= (data?.total ?? 0)}
+          onClick={() => setPage((value) => value + 1)}
+        >
+          Siguiente
+        </Button>
+      </div>
     </div>
   )
 }

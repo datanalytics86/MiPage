@@ -9,6 +9,7 @@ export type EmailTemplate =
   | 'provider_pending'
   | 'provider_suspended'
   | 'admin_new_pending'
+  | 'contact_reply'
 
 export interface SendEmailInput {
   to: string

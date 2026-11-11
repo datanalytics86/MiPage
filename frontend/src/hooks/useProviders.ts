@@ -104,7 +104,17 @@ export function useProviders(filters: ProvidersFilters = {}) {
       const { data, error, count } = await query
 
       if (error) throw error
-      return { items: (data || []) as Provider[], total: count ?? 0 }
+      const items = ((data || []) as Provider[]).map((row) => {
+        const until = (row as Provider & { featured_until?: string | null }).featured_until
+        if (row.is_featured && until && Date.parse(until) <= Date.now()) {
+          return { ...row, is_featured: false }
+        }
+        return row
+      })
+      if (!filters.sort) {
+        items.sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
+      }
+      return { items, total: count ?? 0 }
     },
   })
 }
@@ -122,6 +132,7 @@ export function useFeaturedProviders(limit = 8) {
         .select('*')
         .eq('status', 'approved')
         .eq('is_featured', true)
+        .or(`featured_until.is.null,featured_until.gt.${new Date().toISOString()}`)
         .order('rating', { ascending: false })
         .limit(limit)
 

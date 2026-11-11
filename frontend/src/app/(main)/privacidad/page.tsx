@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { siteConfig } from '@/lib/site'
+import { SettingEmail } from '@/components/layout/SettingEmail'
 
 export const metadata: Metadata = {
   title: 'Política de Privacidad',
@@ -88,9 +88,9 @@ export default function PrivacidadPage() {
               <li>Portabilidad de datos</li>
             </ul>
             <p className="mt-4">
-              Para solicitar eliminación de cuenta y datos, inicia sesión y envía un POST autenticado a{' '}
-              <code className="text-sm bg-muted px-1 rounded">/api/account/delete-request</code>{' '}
-              o escribe a {siteConfig.emails.privacy}. Las solicitudes se procesan manualmente por el administrador.
+              Para solicitar eliminación de cuenta y datos, inicia sesión y entra a{' '}
+              <a href="/cuenta" className="text-gold hover:underline">tu cuenta</a>.
+              También puedes escribir a <SettingEmail kind="privacy" />. El administrador revisa cada solicitud.
             </p>
           </section>
 
@@ -132,9 +132,7 @@ export default function PrivacidadPage() {
             </h2>
             <p>
               Para ejercer tus derechos o consultas sobre privacidad, contáctanos en:{' '}
-              <a href={`mailto:${siteConfig.emails.privacy}`} className="text-gold hover:underline">
-                {siteConfig.emails.privacy}
-              </a>
+              <SettingEmail kind="privacy" />
             </p>
           </section>
         </div>

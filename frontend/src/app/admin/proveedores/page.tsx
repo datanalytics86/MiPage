@@ -41,6 +41,8 @@ import { cn, formatDate, formatPrice } from '@/lib/utils'
 import { useAdminProviders, useModerateProviders, useUpdateProvider, type AdminProviderRow } from '@/hooks/useAdmin'
 import { getProviderImage } from '@/lib/providers'
 import { useToast } from '@/stores/uiStore'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
+import { ProviderEditor } from '@/components/admin/ProviderEditor'
 import type { ProviderStatus } from '@/types/database'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -78,11 +80,16 @@ const REJECT_REASONS = [
 
 function AdminProveedoresInner() {
   const toast = useToast()
+  const { data: siteSettings } = useSiteSettings()
+  const rejectReasons =
+    siteSettings?.moderation.rejectionReasons?.length
+      ? siteSettings.moderation.rejectionReasons
+      : REJECT_REASONS
   const searchParams = useSearchParams()
-  const { data: providers = [], isLoading, error } = useAdminProviders()
   const updateProvider = useUpdateProvider()
   const moderateProviders = useModerateProviders()
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(0)
   const statusFromUrl = searchParams.get('status')
   const [statusFilter, setStatusFilter] = useState<string>(statusFromUrl || 'all')
   const [seenStatus, setSeenStatus] = useState(statusFromUrl)
@@ -91,6 +98,16 @@ function AdminProveedoresInner() {
     setStatusFilter(statusFromUrl)
   }
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const pageSize = 20
+  const { data: providerPage, isLoading, error } = useAdminProviders({
+    q: search,
+    status: statusFilter,
+    category: categoryFilter,
+    page,
+    pageSize,
+  })
+  const providers = providerPage?.rows ?? []
+  const providerTotal = providerPage?.total ?? 0
   const [preview, setPreview] = useState<AdminProviderRow | null>(null)
   const [rejectTarget, setRejectTarget] = useState<AdminProviderRow | null>(null)
   const [rejectReason, setRejectReason] = useState('')
@@ -270,7 +287,7 @@ function AdminProveedoresInner() {
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
-          { label: 'Total', value: providers.length, className: 'text-foreground' },
+          { label: 'Total', value: providerTotal, className: 'text-foreground' },
           { label: 'Pendientes', value: providers.filter((p) => p.status === 'pending').length, className: 'text-warning' },
           { label: 'Aprobados', value: providers.filter((p) => p.status === 'approved').length, className: 'text-success' },
           { label: 'Verificados', value: providers.filter((p) => p.is_verified).length, className: 'text-gold' },
@@ -594,6 +611,20 @@ function AdminProveedoresInner() {
         </Card>
       )}
 
+      <div className="flex items-center justify-between text-sm text-foreground-muted">
+        <span>
+          {providerTotal} avisos · <a className="text-gold" href="/api/admin/export?kind=providers">CSV</a>
+        </span>
+        <div className="flex gap-2">
+          <Button type="button" variant="ghost" size="sm" disabled={page === 0} onClick={() => setPage((value) => Math.max(0, value - 1))}>
+            Anterior
+          </Button>
+          <Button type="button" variant="ghost" size="sm" disabled={(page + 1) * pageSize >= providerTotal} onClick={() => setPage((value) => value + 1)}>
+            Siguiente
+          </Button>
+        </div>
+      </div>
+
       {preview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto border-gold/20 shadow-soft-lg">
@@ -604,6 +635,14 @@ function AdminProveedoresInner() {
                   <p className="text-sm text-foreground-muted">
                     {preview.category} · {preview.city} · {preview.email}
                   </p>
+                  {preview.whatsapp && <p className="text-sm">WhatsApp: {preview.whatsapp}</p>}
+                  {preview.instagram && <p className="text-sm">Instagram: {preview.instagram}</p>}
+                  {preview.featured_until && (
+                    <p className="text-sm text-gold">Destacado hasta {new Date(preview.featured_until).toLocaleDateString('es-CL')}</p>
+                  )}
+                  {preview.rejection_reason && (
+                    <p className="text-sm text-foreground-secondary">Motivo anterior: {preview.rejection_reason}</p>
+                  )}
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setPreview(null)}>
                   Cerrar
@@ -634,6 +673,56 @@ function AdminProveedoresInner() {
                 {!preview.photos?.length && !preview.cover_photo && (
                   <p className="text-sm text-foreground-muted col-span-full">Sin fotos</p>
                 )}
+              </div>
+              {preview.bio && <p className="text-sm whitespace-pre-wrap">{preview.bio}</p>}
+              <ProviderEditor key={preview.id} provider={preview} />
+              {preview.metadata && Object.keys(preview.metadata).length > 0 && (
+                <dl className="text-sm grid grid-cols-2 gap-2">
+                  {Object.entries(preview.metadata).map(([key, value]) => (
+                    <div key={key}>
+                      <dt className="text-foreground-muted">{key}</dt>
+                      <dd>{String(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {(preview.photos || []).map((url) => (
+                  <Button
+                    key={url}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      if (!window.confirm('¿Quitar esta foto del aviso y de Storage?')) return
+                      const res = await fetch(`/api/admin/providers/${preview.id}/photos`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url }),
+                      })
+                      if (!res.ok) toast.error('Error', 'No se pudo quitar la foto')
+                      else toast.success('Foto eliminada')
+                    }}
+                  >
+                    Quitar foto
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={async () => {
+                    if (!window.confirm(`¿Eliminar el aviso de ${preview.display_name}? Esta acción no se deshace.`)) return
+                    const res = await fetch(`/api/admin/providers/${preview.id}`, { method: 'DELETE' })
+                    if (!res.ok) toast.error('Error', 'No se pudo eliminar')
+                    else {
+                      toast.success('Aviso eliminado')
+                      setPreview(null)
+                    }
+                  }}
+                >
+                  Eliminar aviso
+                </Button>
               </div>
               {preview.status === 'pending' && (
                 <div className="flex gap-2 justify-end">
@@ -683,7 +772,7 @@ function AdminProveedoresInner() {
                 (Email si Resend está configurado.)
               </p>
               <div className="flex flex-wrap gap-2">
-                {REJECT_REASONS.map((reason) => (
+                {rejectReasons.map((reason) => (
                   <button
                     key={reason}
                     type="button"

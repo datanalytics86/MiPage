@@ -21,7 +21,7 @@ export default function DashboardPerfilPage() {
   const updateProvider = useUpdateOwnProvider()
   const [formData, setFormData] = useState({
     displayName: '',
-    category: 'masajes' as 'masajes' | 'modelaje',
+    category: 'masajes',
     age: 18,
     bio: '',
     city: '',

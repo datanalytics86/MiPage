@@ -2,13 +2,11 @@ import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { ExplorarContent } from '../ExplorarContent'
 import { ProviderGridSkeleton } from '@/components/ui/Skeleton'
-import type { ProviderCategory } from '@/types'
 
-/** Allowed category slugs — keep in sync with nav/header/footer. */
-const CATEGORY_SLUGS: ProviderCategory[] = ['masajes', 'modelaje']
+const STATIC_SLUGS = ['masajes', 'modelaje']
 
 export function generateStaticParams() {
-  return CATEGORY_SLUGS.map((category) => ({ category }))
+  return STATIC_SLUGS.map((category) => ({ category }))
 }
 
 /** Invalid slugs redirect to /explorar rather than platform 404. */
@@ -30,16 +28,14 @@ function ExplorarFallback() {
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category: rawCategory } = await params
-  const category = rawCategory?.toLowerCase()
-  const valid = CATEGORY_SLUGS.includes(category as ProviderCategory)
-
-  if (!valid) {
+  const category = rawCategory?.toLowerCase() || ''
+  if (!/^[a-z0-9-]{2,40}$/.test(category)) {
     redirect('/explorar')
   }
 
   return (
     <Suspense fallback={<ExplorarFallback />}>
-      <ExplorarContent initialCategory={category as ProviderCategory} />
+      <ExplorarContent initialCategory={category} />
     </Suspense>
   )
 }

@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { siteConfig } from '@/lib/site'
+import { SettingEmail } from '@/components/layout/SettingEmail'
 
 export const metadata: Metadata = {
   title: 'Centro de Ayuda',
@@ -145,13 +146,7 @@ export default function AyudaPage() {
               </Button>
             </Link>
             <p className="text-sm text-foreground-muted mt-4">
-              También puedes escribirnos a{' '}
-              <a
-                href={`mailto:${siteConfig.emails.support}`}
-                className="text-gold hover:underline"
-              >
-                {siteConfig.emails.support}
-              </a>
+              También puedes escribirnos a <SettingEmail kind="support" />
             </p>
           </div>
         </div>

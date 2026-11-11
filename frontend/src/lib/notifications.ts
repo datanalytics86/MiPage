@@ -73,7 +73,7 @@ export async function sendAndLog(input: {
     userId: input.userId,
     email: input.to,
     template: input.template,
-    payload: input.payload,
+    payload: { ...(input.payload ?? {}), subject: input.subject, html: input.html },
     status: result.sent ? 'sent' : result.skipped ? 'skipped' : 'failed',
     error: result.error ?? null,
   })

@@ -1,64 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { hasSupabaseEnv } from '@/lib/supabase/env'
+import {
+  mergeSettings,
+  publicSettingsDefaults,
+  type PublicSettings,
+} from '@/lib/publicSettings'
 
-export interface SiteSettings {
-  general: {
-    siteName: string
-    siteDescription: string
-    timezone: string
-    currency: string
-    maintenanceMode: boolean
-  }
-  email: {
-    supportEmail: string
-    adminEmail: string
-  }
-  security: {
-    requireEmailVerification: boolean
-    requireIdVerification: boolean
-    allowProviderRegistration: boolean
-  }
-  payments: {
-    commissionRate: number
-    minWithdrawal: number
-  }
-  stats: {
-    professionals: string
-    reviews: string
-    rating: string
-    cities: string
-  }
-}
-
-const defaults: SiteSettings = {
-  general: {
-    siteName: 'MiPage',
-    siteDescription: 'Marketplace de servicios profesionales en Chile',
-    timezone: 'America/Santiago',
-    currency: 'CLP',
-    maintenanceMode: false,
-  },
-  email: {
-    supportEmail: 'soporte@mipage.cl',
-    adminEmail: 'contacto@mipage.cl',
-  },
-  security: {
-    requireEmailVerification: true,
-    requireIdVerification: true,
-    allowProviderRegistration: true,
-  },
-  payments: {
-    commissionRate: 15,
-    minWithdrawal: 50000,
-  },
-  stats: {
-    professionals: '—',
-    reviews: '—',
-    rating: '—',
-    cities: '—',
-  },
-}
+export type SiteSettings = PublicSettings
 
 export const siteSettingsKeys = {
   all: ['site-settings'] as const,
@@ -67,24 +16,14 @@ export const siteSettingsKeys = {
 export function useSiteSettings() {
   return useQuery({
     queryKey: siteSettingsKeys.all,
-    enabled: hasSupabaseEnv(),
-    queryFn: async (): Promise<SiteSettings> => {
+    queryFn: async (): Promise<PublicSettings> => {
+      if (!hasSupabaseEnv()) return publicSettingsDefaults
       const supabase = getSupabaseClient()
       const { data, error } = await supabase.from('site_settings').select('key, value')
-
-      if (error) throw error
-
-      const settings: SiteSettings = { ...defaults }
-      for (const row of data || []) {
-        const key = row.key as keyof SiteSettings
-        if (key in settings && row.value && typeof row.value === 'object') {
-          // merge partial CMS blobs from site_settings rows
-          Object.assign(settings[key] as object, row.value as object)
-        }
-      }
-      return settings
+      if (error) return publicSettingsDefaults
+      return mergeSettings(data)
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
   })
 }
 
@@ -92,14 +31,15 @@ export function useUpdateSiteSettings() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (settings: Partial<SiteSettings>) => {
-      const supabase = getSupabaseClient()
-
-      for (const [key, value] of Object.entries(settings)) {
-        const { error } = await supabase
-          .from('site_settings')
-          .upsert({ key, value, updated_at: new Date().toISOString() })
-        if (error) throw error
+    mutationFn: async (settings: Partial<PublicSettings>) => {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error || 'No se pudo guardar')
       }
     },
     onSuccess: () => {

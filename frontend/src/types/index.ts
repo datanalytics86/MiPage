@@ -1,6 +1,6 @@
 export type UserRole = 'client' | 'provider' | 'admin'
 
-export type ProviderCategory = 'masajes' | 'modelaje'
+export type ProviderCategory = string
 
 export type ProviderStatus = 'pending' | 'active' | 'suspended' | 'inactive'
 

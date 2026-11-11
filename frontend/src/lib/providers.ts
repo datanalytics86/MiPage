@@ -12,10 +12,8 @@ export function getProviderImage(provider: {
 }
 
 export function normalizeCategory(category: string): ProviderCategory {
-  const lower = category.toLowerCase()
-  if (lower === 'masajes' || lower === 'modelaje') {
-    return lower
-  }
+  const lower = category.trim().toLowerCase()
+  if (/^[a-z0-9-]{2,40}$/.test(lower)) return lower
   return 'masajes'
 }
 
